@@ -1,6 +1,6 @@
 # Preflight
 
-[![CI](https://github.com/kabhijith447/preflight/actions/workflows/ci.yml/badge.svg)](https://github.com/kabhijith447/preflight/actions/workflows/ci.yml)
+[![CI](https://github.com/Abhijith-Kannan-p/preflight/actions/workflows/ci.yml/badge.svg)](https://github.com/Abhijith-Kannan-p/preflight/actions/workflows/ci.yml)
 
 **Content cleared before it goes live.** Preflight is a review gate that sits before
 publication. It holds a brand book as versioned rules, checks every draft against those
