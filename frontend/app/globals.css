@@ -2,6 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-white text-navy antialiased;
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    @apply bg-paper text-navy antialiased;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-teal ring-offset-2 ring-offset-paper;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-paper-200 bg-paper-50 shadow-card;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-navy text-paper-50 hover:bg-navy-700;
+  }
+  .btn-teal {
+    @apply btn bg-teal text-white hover:bg-teal-700;
+  }
+  .btn-ghost {
+    @apply btn border border-paper-200 bg-paper-50 text-navy hover:bg-paper-100;
+  }
+  .btn-danger {
+    @apply btn bg-danger text-white hover:bg-danger-700;
+  }
+  .input {
+    @apply w-full rounded-xl border border-paper-200 bg-white px-3 py-2 text-sm text-navy placeholder:text-navy-300 focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/30;
+  }
+  .label {
+    @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500;
+  }
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-paper-100;
+  }
+  .skeleton::after {
+    content: "";
+    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/60 to-transparent;
+  }
 }
