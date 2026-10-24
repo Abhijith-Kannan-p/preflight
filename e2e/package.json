@@ -1,0 +1,17 @@
+{
+  "name": "preflight-e2e",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "description": "",
+  "private": "true",
+  "devDependencies": {
+    "@playwright/test": "^1.49.1"
+  }
+}
