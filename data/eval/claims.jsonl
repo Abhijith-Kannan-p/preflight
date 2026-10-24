@@ -1,0 +1,150 @@
+{"id": "s01", "claim": "PayWise settles merchant payments in under 10 seconds.", "expected": "supported", "fact_id": "F-087"}
+{"id": "s02", "claim": "Merchants get their PayWise payments settled in under 10 seconds.", "expected": "supported", "fact_id": "F-087"}
+{"id": "s03", "claim": "With PayWise, merchant payments settle in under 10 seconds.", "expected": "supported", "fact_id": "F-087"}
+{"id": "s04", "claim": "PayWise protects payments with bank-grade AES-256 encryption.", "expected": "supported", "fact_id": "F-112"}
+{"id": "s05", "claim": "PayWise is PCI DSS certified.", "expected": "supported", "fact_id": "F-112"}
+{"id": "s06", "claim": "PayWise has more than 12 million registered users in India.", "expected": "supported", "fact_id": "F-031"}
+{"id": "s07", "claim": "Over 12 million people in India have registered with PayWise.", "expected": "supported", "fact_id": "F-031"}
+{"id": "s08", "claim": "PayWise Business serves over 2 million merchants across India.", "expected": "supported", "fact_id": "F-032"}
+{"id": "s09", "claim": "More than 2 million merchants use PayWise Business.", "expected": "supported", "fact_id": "F-032"}
+{"id": "s10", "claim": "PayWise processes over 400 million transactions every month.", "expected": "supported", "fact_id": "F-033"}
+{"id": "s11", "claim": "Every month, PayWise handles over 400 million transactions.", "expected": "supported", "fact_id": "F-033"}
+{"id": "s12", "claim": "Merchants can start accepting payments on PayWise Business in under 10 minutes.", "expected": "supported", "fact_id": "F-040"}
+{"id": "s13", "claim": "With digital KYC, merchants can start on PayWise Business in under 10 minutes.", "expected": "supported", "fact_id": "F-040"}
+{"id": "s14", "claim": "UPI payments on PayWise have zero merchant discount rate.", "expected": "supported", "fact_id": "F-045"}
+{"id": "s15", "claim": "There is zero MDR on UPI payments with PayWise.", "expected": "supported", "fact_id": "F-045"}
+{"id": "s16", "claim": "PayWise Card transactions carry a 1.5% merchant fee.", "expected": "supported", "fact_id": "F-046"}
+{"id": "s17", "claim": "Merchants pay a 1.5% fee on PayWise Card transactions.", "expected": "supported", "fact_id": "F-046"}
+{"id": "s18", "claim": "Net banking transactions on PayWise Business carry a 1.2% merchant fee.", "expected": "supported", "fact_id": "F-047"}
+{"id": "s19", "claim": "PayWise Card works on the Visa and RuPay networks.", "expected": "supported", "fact_id": "F-050"}
+{"id": "s20", "claim": "PayWise Card is available on the RuPay network.", "expected": "supported", "fact_id": "F-050"}
+{"id": "s21", "claim": "PayWise Card offers 1% cashback on online purchases.", "expected": "supported", "fact_id": "F-051"}
+{"id": "s22", "claim": "PayWise customer support is available 24x7 in English and Hindi.", "expected": "supported", "fact_id": "F-060"}
+{"id": "s23", "claim": "You can reach PayWise customer support 24x7 in Hindi.", "expected": "supported", "fact_id": "F-060"}
+{"id": "s24", "claim": "PayWise resolves 90% of customer disputes within 48 hours.", "expected": "supported", "fact_id": "F-061"}
+{"id": "s25", "claim": "The PayWise app is rated 4.6 out of 5 on the Google Play Store.", "expected": "supported", "fact_id": "F-070"}
+{"id": "s26", "claim": "The PayWise app has a rating of 4.6 out of 5 on Google Play.", "expected": "supported", "fact_id": "F-070"}
+{"id": "s27", "claim": "The PayWise app is available in 12 Indian languages.", "expected": "supported", "fact_id": "F-071"}
+{"id": "s28", "claim": "You can use the PayWise app in 12 Indian languages.", "expected": "supported", "fact_id": "F-071"}
+{"id": "s29", "claim": "PayWise supports UPI, cards, net banking and wallets at checkout.", "expected": "supported", "fact_id": "F-080"}
+{"id": "s30", "claim": "PayWise checkout supports UPI and wallets.", "expected": "supported", "fact_id": "F-080"}
+{"id": "s31", "claim": "PayWise was founded in 2019.", "expected": "supported", "fact_id": "F-090"}
+{"id": "s32", "claim": "PayWise is headquartered in Bengaluru.", "expected": "supported", "fact_id": "F-090"}
+{"id": "s33", "claim": "PayWise requires two-factor authentication for every login from a new device.", "expected": "supported", "fact_id": "F-113"}
+{"id": "s34", "claim": "Logins from a new device on PayWise need two-factor authentication.", "expected": "supported", "fact_id": "F-113"}
+{"id": "s35", "claim": "PayWise offers zero liability on unauthorised transactions reported within 3 days.", "expected": "supported", "fact_id": "F-114"}
+{"id": "s36", "claim": "PayWise maintained 99.95% platform uptime over the last 12 months.", "expected": "supported", "fact_id": "F-120"}
+{"id": "s37", "claim": "PayWise is regulated as a payment aggregator by the Reserve Bank of India.", "expected": "supported", "fact_id": "F-210"}
+{"id": "s38", "claim": "The Reserve Bank of India regulates PayWise as a payment aggregator.", "expected": "supported", "fact_id": "F-210"}
+{"id": "s39", "claim": "PayWise is ISO 27001 certified.", "expected": "supported", "fact_id": "F-211"}
+{"id": "s40", "claim": "PayWise Pay Later offers up to 30 interest-free days.", "expected": "supported", "fact_id": "F-301"}
+{"id": "s41", "claim": "Get up to 30 interest-free days with PayWise Pay Later.", "expected": "supported", "fact_id": "F-301"}
+{"id": "s42", "claim": "PayWise Pay Later credit limits range from ₹1,000 to ₹50,000.", "expected": "supported", "fact_id": "F-302"}
+{"id": "s43", "claim": "PayWise secures payments with AES-256 encryption.", "expected": "supported", "fact_id": "F-112"}
+{"id": "s44", "claim": "PayWise serves over 12 million registered users in India.", "expected": "supported", "fact_id": "F-031"}
+{"id": "s45", "claim": "PayWise is a regulated payment aggregator.", "expected": "supported", "fact_id": "F-210"}
+{"id": "o01", "claim": "PayWise settles merchant payments in under 5 seconds.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "o02", "claim": "Merchants receive PayWise settlements in under 5 seconds.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "o03", "claim": "PayWise settles in under 5 seconds for every merchant.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "o04", "claim": "With PayWise, payments settle in under 5 seconds.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "o05", "claim": "PayWise now settles merchant payments in under 5 seconds.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "o06", "claim": "Your PayWise merchant payments settle in under 5 seconds.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "o07", "claim": "PayWise serves over 8 million registered users in India.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "o08", "claim": "More than 8 million registered users in India use PayWise.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "o09", "claim": "PayWise has over 8 million registered users.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "o10", "claim": "Over 8 million registered users trust PayWise.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "o11", "claim": "PayWise is now used by 8 million registered users in India.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "o12", "claim": "Join over 8 million registered PayWise users.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "o13", "claim": "PayWise crossed 8 million registered users in India.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "o14", "claim": "PayWise settlements now reach merchants in under 5 seconds.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "o15", "claim": "Merchant payments on PayWise settle in under 5 seconds.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "o16", "claim": "Merchants in India get paid in under 5 seconds with PayWise.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "o17", "claim": "Over 8 million Indians have registered on PayWise.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "o18", "claim": "PayWise announced that it serves 8 million registered users.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "o19", "claim": "Today, PayWise has 8 million registered users in India.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "o20", "claim": "PayWise, which settles merchant payments in under 5 seconds, is built for shops.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "c01", "claim": "PayWise settles merchant payments in under 2 seconds.", "expected": "contradicted", "fact_id": "F-087"}
+{"id": "c02", "claim": "PayWise settles merchant payments in under 1 second.", "expected": "contradicted", "fact_id": "F-087"}
+{"id": "c03", "claim": "PayWise serves over 20 million registered users in India.", "expected": "contradicted", "fact_id": "F-031"}
+{"id": "c04", "claim": "PayWise has over 50 million registered users.", "expected": "contradicted", "fact_id": "F-031"}
+{"id": "c05", "claim": "PayWise Business serves over 5 million merchants across India.", "expected": "contradicted", "fact_id": "F-032"}
+{"id": "c06", "claim": "PayWise processes over 1 billion transactions every month.", "expected": "contradicted", "fact_id": "F-033"}
+{"id": "c07", "claim": "Merchants can start accepting payments on PayWise Business in under 2 minutes.", "expected": "contradicted", "fact_id": "F-040"}
+{"id": "c08", "claim": "PayWise Card transactions carry zero merchant fees.", "expected": "contradicted", "fact_id": "F-046"}
+{"id": "c09", "claim": "You pay zero fees on all PayWise Card payments.", "expected": "contradicted", "fact_id": "F-046"}
+{"id": "c10", "claim": "PayWise Card transactions carry a 0.5% merchant fee.", "expected": "contradicted", "fact_id": "F-046"}
+{"id": "c11", "claim": "PayWise Card transactions carry a 3% merchant fee.", "expected": "contradicted", "fact_id": "F-046"}
+{"id": "c12", "claim": "UPI payments on PayWise carry a 2% merchant discount rate.", "expected": "contradicted", "fact_id": "F-045"}
+{"id": "c13", "claim": "Net banking transactions on PayWise Business carry no fees.", "expected": "contradicted", "fact_id": "F-047"}
+{"id": "c14", "claim": "Net banking transactions on PayWise Business carry a 0.5% merchant fee.", "expected": "contradicted", "fact_id": "F-047"}
+{"id": "c15", "claim": "PayWise Card offers 5% cashback on online purchases.", "expected": "contradicted", "fact_id": "F-051"}
+{"id": "c16", "claim": "PayWise Card offers 2% cashback on online purchases.", "expected": "contradicted", "fact_id": "F-051"}
+{"id": "c17", "claim": "PayWise resolves 90% of customer disputes within 24 hours.", "expected": "contradicted", "fact_id": "F-061"}
+{"id": "c18", "claim": "PayWise resolves 99% of customer disputes within 48 hours.", "expected": "contradicted", "fact_id": "F-061"}
+{"id": "c19", "claim": "The PayWise app is rated 4.9 out of 5 on the Google Play Store.", "expected": "contradicted", "fact_id": "F-070"}
+{"id": "c20", "claim": "The PayWise app is available in 22 Indian languages.", "expected": "contradicted", "fact_id": "F-071"}
+{"id": "c21", "claim": "The PayWise app is available in 5 Indian languages.", "expected": "contradicted", "fact_id": "F-071"}
+{"id": "c22", "claim": "PayWise was founded in 2015.", "expected": "contradicted", "fact_id": "F-090"}
+{"id": "c23", "claim": "PayWise is headquartered in Mumbai.", "expected": "contradicted", "fact_id": "F-090"}
+{"id": "c24", "claim": "PayWise offers zero liability on unauthorised transactions reported within 30 days.", "expected": "contradicted", "fact_id": "F-114"}
+{"id": "c25", "claim": "PayWise maintained 100% platform uptime over the last 12 months.", "expected": "contradicted", "fact_id": "F-120"}
+{"id": "c26", "claim": "PayWise Pay Later offers up to 60 interest-free days.", "expected": "contradicted", "fact_id": "F-301"}
+{"id": "c27", "claim": "PayWise Pay Later offers up to 45 interest-free days.", "expected": "contradicted", "fact_id": "F-301"}
+{"id": "c28", "claim": "PayWise Pay Later credit limits go up to ₹5,00,000.", "expected": "contradicted", "fact_id": "F-302"}
+{"id": "c29", "claim": "PayWise customer support is available only in English.", "expected": "contradicted", "fact_id": "F-060"}
+{"id": "c30", "claim": "PayWise Card is available only on the Mastercard network.", "expected": "contradicted", "fact_id": "F-050"}
+{"id": "c31", "claim": "PayWise is regulated as a bank by the Reserve Bank of India.", "expected": "contradicted", "fact_id": "F-210"}
+{"id": "c32", "claim": "PayWise maintained 99.5% platform uptime over the last 12 months.", "expected": "contradicted", "fact_id": "F-120"}
+{"id": "c33", "claim": "PayWise Business serves 10 million merchants.", "expected": "contradicted", "fact_id": "F-032"}
+{"id": "c34", "claim": "PayWise processes 100 million transactions every month.", "expected": "contradicted", "fact_id": "F-033"}
+{"id": "c35", "claim": "PayWise settles merchant payments in under 3 seconds.", "expected": "contradicted", "fact_id": "F-087"}
+{"id": "u01", "claim": "PayWise is India's #1 payments app.", "expected": "unsupported"}
+{"id": "u02", "claim": "PayWise is the best payments app in India.", "expected": "unsupported"}
+{"id": "u03", "claim": "PayWise is the leading payment aggregator in India.", "expected": "unsupported"}
+{"id": "u04", "claim": "PayWise is 100% secure.", "expected": "unsupported"}
+{"id": "u05", "claim": "PayWise is completely safe for every transaction.", "expected": "unsupported"}
+{"id": "u06", "claim": "PayWise is unhackable.", "expected": "unsupported"}
+{"id": "u07", "claim": "PayWise guarantees returns on every payment.", "expected": "unsupported"}
+{"id": "u08", "claim": "With PayWise you will never worry again.", "expected": "unsupported"}
+{"id": "u09", "claim": "PayWise offers instant loans to all users.", "expected": "unsupported"}
+{"id": "u10", "claim": "PayWise has won the National Fintech Award 2026.", "expected": "unsupported"}
+{"id": "u11", "claim": "PayWise is used by 70% of Indian merchants.", "expected": "unsupported"}
+{"id": "u12", "claim": "PayWise offers 10% cashback on every UPI payment.", "expected": "unsupported"}
+{"id": "u13", "claim": "PayWise Business includes free GST filing.", "expected": "unsupported"}
+{"id": "u14", "claim": "PayWise is available in 30 countries.", "expected": "unsupported"}
+{"id": "u15", "claim": "PayWise has partnered with every major Indian bank.", "expected": "unsupported"}
+{"id": "u16", "claim": "PayWise Card has no annual fee.", "expected": "unsupported"}
+{"id": "u17", "claim": "PayWise saves merchants ₹10,000 a year on average.", "expected": "unsupported"}
+{"id": "u18", "claim": "PayWise is the most trusted fintech brand in India.", "expected": "unsupported"}
+{"id": "u19", "claim": "PayWise Pay Later approves every application in 60 seconds.", "expected": "unsupported"}
+{"id": "u20", "claim": "PayWise offers free international transfers.", "expected": "unsupported"}
+{"id": "u21", "claim": "PayWise customer support answers every call within 30 seconds.", "expected": "unsupported"}
+{"id": "u22", "claim": "PayWise has the lowest fees in India.", "expected": "unsupported"}
+{"id": "u23", "claim": "PayWise is the fastest payments app in the country.", "expected": "unsupported"}
+{"id": "u24", "claim": "PayWise is rated 4.8 out of 5 on the Apple App Store.", "expected": "unsupported"}
+{"id": "u25", "claim": "PayWise Business offers same-day loans to merchants.", "expected": "unsupported"}
+{"id": "u26", "claim": "PayWise was named Fintech of the Year 2025.", "expected": "unsupported"}
+{"id": "u27", "claim": "PayWise has over 1,000 employees.", "expected": "unsupported"}
+{"id": "u28", "claim": "PayWise plans to launch in Singapore next year.", "expected": "unsupported"}
+{"id": "u29", "claim": "PayWise rewards every user with free movie tickets.", "expected": "unsupported"}
+{"id": "u30", "claim": "PayWise is carbon neutral.", "expected": "unsupported"}
+{"id": "u31", "claim": "PayWise has zero downtime.", "expected": "unsupported"}
+{"id": "u32", "claim": "PayWise processes refunds in under 1 hour.", "expected": "unsupported"}
+{"id": "u33", "claim": "PayWise Business integrates with every accounting software.", "expected": "unsupported"}
+{"id": "u34", "claim": "PayWise offers a free credit score check every month.", "expected": "unsupported"}
+{"id": "u35", "claim": "PayWise has the largest merchant network in Asia.", "expected": "unsupported"}
+{"id": "n01", "claim": "PayWise settles payments in seconds.", "expected": "needs_review", "fact_id": "F-087", "note": "vague version of a real fact"}
+{"id": "n02", "claim": "PayWise is trusted by millions of users.", "expected": "needs_review", "fact_id": "F-031", "note": "registered is not trusted"}
+{"id": "n03", "claim": "PayWise keeps your money safe.", "expected": "needs_review", "fact_id": "F-112", "note": "soft safety claim"}
+{"id": "n04", "claim": "PayWise makes payments simple for merchants.", "expected": "needs_review", "note": "subjective"}
+{"id": "n05", "claim": "PayWise has very low fees for card payments.", "expected": "needs_review", "fact_id": "F-046", "note": "1.5% is a judgement call"}
+{"id": "n06", "claim": "PayWise support is always available.", "expected": "needs_review", "fact_id": "F-060", "note": "24x7 but only two languages"}
+{"id": "n07", "claim": "PayWise is popular with small businesses.", "expected": "needs_review", "fact_id": "F-032", "note": "subjective"}
+{"id": "n08", "claim": "PayWise payments are highly secure.", "expected": "needs_review", "fact_id": "F-112", "note": "partly backed"}
+{"id": "n09", "claim": "PayWise is growing fast in India.", "expected": "needs_review", "note": "no growth fact"}
+{"id": "n10", "claim": "PayWise Pay Later gives you about a month to pay.", "expected": "needs_review", "fact_id": "F-301", "note": "approximation of 30 days"}
+{"id": "n11", "claim": "Most disputes on PayWise are resolved within two days.", "expected": "needs_review", "fact_id": "F-061", "note": "90% within 48 hours, paraphrased"}
+{"id": "n12", "claim": "PayWise works in many Indian languages.", "expected": "needs_review", "fact_id": "F-071", "note": "vague version of 12"}
+{"id": "n13", "claim": "PayWise charges merchants less than most competitors.", "expected": "needs_review", "note": "comparative without data"}
+{"id": "n14", "claim": "PayWise is available almost everywhere in India.", "expected": "needs_review", "note": "vague"}
+{"id": "n15", "claim": "PayWise payments go through almost instantly.", "expected": "needs_review", "fact_id": "F-087", "note": "vague version of under 10 seconds"}
