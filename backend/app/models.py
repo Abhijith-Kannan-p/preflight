@@ -249,6 +249,8 @@ class Revision(Base):
     review_status: Mapped[str] = mapped_column(String(16), default="pending")
     brand_score: Mapped[int | None] = mapped_column(Integer)
     degraded: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Checker runs, score breakdown, tone profile and AI disclosure for this revision.
+    report: Mapped[dict[str, Any]] = mapped_column(default=dict)
     rulebook_version: Mapped[int | None] = mapped_column(Integer)
     factbook_version: Mapped[int | None] = mapped_column(Integer)
     created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
@@ -277,6 +279,9 @@ class Finding(Base):
     status: Mapped[str] = mapped_column(String(16), default="open")
     needs_review: Mapped[bool] = mapped_column(Boolean, default=False)
     related: Mapped[list[Any]] = mapped_column(default=list)
+    # Text that replaces the span in the next draft (accepted suggestion or author's edit).
+    applied_text: Mapped[str | None] = mapped_column(Text)
+    position: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class Claim(Base):
