@@ -35,6 +35,7 @@ CONTRADICT = 0.6
 AMBIGUOUS = (0.4, 0.6)
 MIN_DENSE_RELEVANCE = 0.55
 MIN_DENSE_CONTRADICT = 0.75
+MIN_DENSE_EVIDENCE = 0.7
 # Calibrated on data/eval: true numeric contradictions all had similarity >= 0.746,
 # numbers compared against loosely related facts sat at 0.68-0.73.
 MIN_DENSE_NUMERIC = 0.74
@@ -152,6 +153,7 @@ class ClaimLedger:
         self.embedder = embedder
         self.extractor = extractor
         self.records: list[ClaimRecord] = []
+        self._retriever: Retriever | None = None
 
     async def run(self, doc: NormalisedDoc, ctx: ReviewContext) -> list[Finding]:
         candidates = detect_claims(doc, ctx)
@@ -169,6 +171,7 @@ class ClaimLedger:
         else:
             scores = [_lexical_nli(fact, claim) for fact, claim in pairs]
 
+        self._retriever = retriever
         has_offer_disclaimer = "t&capply" in compact(doc.text)
         findings: list[Finding] = []
         cursor = 0
@@ -344,7 +347,10 @@ class ClaimLedger:
         findings: list[Finding] = []
         evidence = _evidence(record, scored)
         for hit in claim.hits:
-            finding = self._pattern_finding(hit, claim, record, ctx, evidence, has_offer_disclaimer)
+            hit_evidence = self._hit_evidence(hit, claim) or evidence
+            finding = self._pattern_finding(
+                hit, claim, record, ctx, hit_evidence, has_offer_disclaimer
+            )
             if finding:
                 findings.append(finding)
 
@@ -381,6 +387,29 @@ class ClaimLedger:
                 )
             )
         return findings
+
+    def _hit_evidence(self, hit: PatternHit, claim: ClaimCandidate) -> list[Evidence]:
+        """The approved fact closest to one risky phrase ("100% secure" -> the encryption
+        fact), so the author sees what the brand *can* say instead."""
+        others = [h for h in claim.hits if h is not hit]
+        query = _numeric_text(ClaimCandidate(claim.block, claim.span, claim.hypothesis,
+                                             claim.claim_type, others))  # fmt: skip
+        if self._retriever is None:
+            return []
+        current, _ = self._retriever.retrieve(query)
+        if not current:
+            return []
+        top = current[0]
+        if top.dense is not None and top.dense < MIN_DENSE_EVIDENCE:
+            return []
+        hypothesis = query.strip()
+        nli = (self.nli.predict([(top.fact.statement, hypothesis)])[0] if self.nli
+               else _lexical_nli(top.fact.statement, hypothesis))  # fmt: skip
+        label = max(nli, key=lambda k: nli[k])
+        quote = best_quote(hypothesis, top.fact.statement) or top.fact.statement.rstrip(".")
+        return [Evidence.model_validate(
+            {"fact_id": top.fact.id, "quote": quote, "nli": label, "score": round(nli[label], 3)}
+        )]  # fmt: skip
 
     @staticmethod
     def _pattern_finding(
@@ -512,6 +541,8 @@ def _evidence(record: ClaimRecord, scored: list[_Scored]) -> list[Evidence]:
     best = next((s for s in scored if s.fact.id == record.fact_id), None)
     if best is None or not best.relevant:
         return []
+    if best.candidate.dense is not None and best.candidate.dense < MIN_DENSE_EVIDENCE:
+        return []  # too loosely related to show as evidence
     quote = record.quote or best_quote(record.hypothesis, best.fact.statement)
     return [
         Evidence(

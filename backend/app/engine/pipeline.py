@@ -8,16 +8,21 @@ import asyncio
 import logging
 import time
 from collections.abc import Awaitable, Callable, Sequence
+from dataclasses import dataclass
 from typing import Any
 
 from pydantic import BaseModel
 
+from app.ai.claims import llm_extractor
+from app.ai.session import AiSession
+from app.ai.suggest import add_suggestions
 from app.engine.checkers.base import Checker
 from app.engine.checkers.channel import ChannelChecker
 from app.engine.checkers.disclaimer import DisclaimerChecker
 from app.engine.checkers.readability import ReadabilityChecker
 from app.engine.checkers.style import StyleChecker
 from app.engine.checkers.terminology import TerminologyChecker
+from app.engine.checkers.tone import ToneChecker
 from app.engine.claims.ledger import ClaimExtractor, ClaimLedger
 from app.engine.context import ReviewContext
 from app.engine.drift import attach_drift
@@ -53,14 +58,27 @@ class ReviewResult(BaseModel):
     degraded: bool
 
 
+@dataclass
+class ReviewPlan:
+    """The checkers for one review, keeping handles to those with extra outputs."""
+
+    checkers: list[Checker]
+    ledger: ClaimLedger
+    tone: ToneChecker
+
+
 def default_checkers(
     nli: NliModel | None,
     embedder: Embedder | None,
+    ai: AiSession | None = None,
     extractor: ClaimExtractor | None = None,
-) -> tuple[list[Checker], ClaimLedger]:
-    """All Round 2 checkers. The ledger is returned too, so callers can read its records."""
+) -> ReviewPlan:
+    """All Round 2 checkers. With an AI session, claims are also extracted by the LLM."""
+    if extractor is None and ai is not None:
+        extractor = llm_extractor(ai)
     ledger = ClaimLedger(nli, embedder, extractor)
-    return [*deterministic_checkers(), ledger], ledger
+    tone = ToneChecker(ai)
+    return ReviewPlan([*deterministic_checkers(), tone, ledger], ledger, tone)
 
 
 def deterministic_checkers() -> list[Checker]:
@@ -79,6 +97,7 @@ async def run_review(
     checkers: Sequence[Checker],
     embedder: Embedder | None = None,
     emit: EventSink = _ignore,
+    ai: AiSession | None = None,
 ) -> ReviewResult:
     async def run_one(checker: Checker) -> tuple[CheckerRun, list[Finding]]:
         await emit("checker_started", {"checker": checker.name, "label": checker.label})
@@ -112,10 +131,27 @@ async def run_review(
     results = await asyncio.gather(*(run_one(c) for c in checkers))
     runs = [r for r, _ in results]
     findings = merge_findings([f for _, found in results for f in found])
+    await emit("checker_started", {"checker": "suggestions", "label": "Suggestions"})
+    started = time.perf_counter()
+    await add_suggestions(doc, findings, ctx, ai)
     attach_drift(doc, findings, embedder)
+    await emit(
+        "checker_done",
+        CheckerRun(name="suggestions", label="Suggestions", ok=True,
+                   findings=sum(f.suggestion is not None for f in findings),
+                   ms=int((time.perf_counter() - started) * 1000)).model_dump(),
+    )  # fmt: skip
+    # AI is "limited" when a hosted LLM is configured but a call failed or the breaker is open.
+    ai_limited = (
+        ai is not None
+        and ai.gateway.provider is not None
+        and (not ai.gateway.available or any(not c.ok for c in ai.log.calls))
+    )
+    if ai_limited:
+        await emit("degraded", {"checker": "ai", "reason": "AI checks temporarily limited"})
     return ReviewResult(
         findings=findings,
         score=brand_score(findings),
         checkers=runs,
-        degraded=not all(r.ok for r in runs),
+        degraded=ai_limited or not all(r.ok for r in runs),
     )

@@ -142,7 +142,7 @@ def test_pipeline_on_linkedin_sample(session: Session) -> None:
     assert {"TRM-02", "TON-03"} <= rules
     assert not result.degraded
     assert all(f.suggestion is None or f.suggestion.drift is not None for f in result.findings)
-    assert events.count("checker_done") == len(deterministic_checkers())
+    assert events.count("checker_done") == len(deterministic_checkers()) + 1  # + suggestions
     assert result.score.score < 100
 
 
