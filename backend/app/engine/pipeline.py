@@ -137,10 +137,14 @@ async def run_review(
     attach_drift(doc, findings, embedder)
     await emit(
         "checker_done",
-        CheckerRun(name="suggestions", label="Suggestions", ok=True,
-                   findings=sum(f.suggestion is not None for f in findings),
-                   ms=int((time.perf_counter() - started) * 1000)).model_dump(),
-    )  # fmt: skip
+        CheckerRun(
+            name="suggestions",
+            label="Suggestions",
+            ok=True,
+            findings=sum(f.suggestion is not None for f in findings),
+            ms=int((time.perf_counter() - started) * 1000),
+        ).model_dump(),
+    )
     # AI is "limited" when a hosted LLM is configured but a call failed or the breaker is open.
     ai_limited = (
         ai is not None

@@ -52,8 +52,7 @@ def test_mask_round_trip_hides_confidential_data() -> None:
         "or call +91 98765 43210. project falcon again."
     )
     masked = masker.mask(text)
-    for secret in ("Project Falcon", "PayWise Gold", "₹499/month", "ops@paywise.example",
-                   "98765"):  # fmt: skip
+    for secret in ("Project Falcon", "PayWise Gold", "₹499/month", "ops@paywise.example", "98765"):
         assert secret.lower() not in masked.lower()
     assert "[CONFIDENTIAL_1]" in masked and "[PRICE_1]" in masked
     assert masker.mask("Project Falcon") == "[CONFIDENTIAL_1]"  # same value, same token
@@ -74,7 +73,7 @@ def test_gateway_masks_prompt_and_unmasks_response() -> None:
     result = asyncio.run(
         gateway.complete_json(
             "Tell me about Project Falcon", Answer, purpose="t", masker=masker, log_to=log
-        )  # fmt: skip
+        )
     )
     assert "Project Falcon" not in provider.prompts[0]
     assert result and result.answer == "About Project Falcon"
@@ -130,8 +129,10 @@ def test_heuristic_tone_flags_hype_and_passes_calm_copy(session: Session) -> Non
 
 
 def test_llm_tone_scores_are_compared_with_profile(session: Session) -> None:
-    traits = {t: {"score": 0.5, "evidence": "Download today"} for t in
-              ("formal", "warm", "confident", "technical")}  # fmt: skip
+    traits = {
+        t: {"score": 0.5, "evidence": "Download today"}
+        for t in ("formal", "warm", "confident", "technical")
+    }
     traits["playful"] = {"score": 0.95, "evidence": "never worry again"}
     gateway, _ = _gateway(json.dumps({"traits": traits}))
     checker = ToneChecker(AiSession(gateway, Masker()))
@@ -171,11 +172,21 @@ def test_suggestions_prefer_rule_fallback_and_reject_invented_numbers(session: S
         explanation="e",
         confidence=0.95,
     )
-    awards = make_finding(ctx.rules["CLM-05"], type="unsupported_claim", block=0, start=24,
-                          end=58, text="PayWise has won 7 national awards.", explanation="e",
-                          confidence=0.85)  # fmt: skip
-    gateway, provider = _gateway(json.dumps({"rewrites": [
-        {"id": awards.id, "replacement": "PayWise has won 9 national awards."}]}))  # fmt: skip
+    awards = make_finding(
+        ctx.rules["CLM-05"],
+        type="unsupported_claim",
+        block=0,
+        start=24,
+        end=58,
+        text="PayWise has won 7 national awards.",
+        explanation="e",
+        confidence=0.85,
+    )
+    gateway, provider = _gateway(
+        json.dumps(
+            {"rewrites": [{"id": awards.id, "replacement": "PayWise has won 9 national awards."}]}
+        )
+    )
     asyncio.run(add_suggestions(doc, [absolute, awards], ctx, AiSession(gateway, Masker())))
     assert absolute.suggestion and absolute.suggestion.text == "bank-grade encrypted"
     assert awards.suggestion is None  # "9" is not in the sentence or any approved fact

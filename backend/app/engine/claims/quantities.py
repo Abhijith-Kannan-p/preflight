@@ -11,14 +11,42 @@ from dataclasses import dataclass
 from app.engine.text import TextSpan
 
 _NUMBER_WORDS = {
-    "zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
-    "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "fifteen": 15, "twenty": 20,
+    "zero": 0,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "fifteen": 15,
+    "twenty": 20,
     "thirty": 30,
-}  # fmt: skip
-_MULTIPLIERS = {"thousand": 1e3, "k": 1e3, "lakh": 1e5, "million": 1e6, "crore": 1e7,
-                "billion": 1e9}  # fmt: skip
-_TIME = {"second": 1, "sec": 1, "minute": 60, "min": 60, "hour": 3600, "day": 86400,
-         "week": 604800, "month": 2592000, "year": 31536000}  # fmt: skip
+}
+_MULTIPLIERS = {
+    "thousand": 1e3,
+    "k": 1e3,
+    "lakh": 1e5,
+    "million": 1e6,
+    "crore": 1e7,
+    "billion": 1e9,
+}
+_TIME = {
+    "second": 1,
+    "sec": 1,
+    "minute": 60,
+    "min": 60,
+    "hour": 3600,
+    "day": 86400,
+    "week": 604800,
+    "month": 2592000,
+    "year": 31536000,
+}
 _FEE_WORDS = re.compile(r"\b(fees?|charges?|mdr|merchant discount rate|commission)\b", re.I)
 
 _QUALIFIER = (
@@ -37,8 +65,19 @@ _QUANTITY = re.compile(
     re.IGNORECASE,
 )
 _NEXT_WORDS = re.compile(r"\s*([A-Za-z-]+)(?:\s+([A-Za-z-]+))?")
-_COUNT_ADJECTIVES = {"registered", "active", "new", "more", "indian", "happy", "different",
-                     "unique", "monthly", "daily", "of"}  # fmt: skip
+_COUNT_ADJECTIVES = {
+    "registered",
+    "active",
+    "new",
+    "more",
+    "indian",
+    "happy",
+    "different",
+    "unique",
+    "monthly",
+    "daily",
+    "of",
+}
 _ZERO_FEE = re.compile(
     r"\b(?:zero|no|nil)\s+(?:[a-z]+\s+){0,2}?(?:fees?|charges?|mdr|merchant discount rate|"
     r"commission)\b",

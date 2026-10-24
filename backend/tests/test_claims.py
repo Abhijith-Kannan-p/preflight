@@ -31,8 +31,9 @@ class TableNli:
         ]
 
 
-def _run(session: Session, text: str, nli: TableNli | None = None, channel: str = "linkedin"
-         ) -> tuple[ClaimLedger, list[Finding]]:  # fmt: skip
+def _run(
+    session: Session, text: str, nli: TableNli | None = None, channel: str = "linkedin"
+) -> tuple[ClaimLedger, list[Finding]]:
     ledger = ClaimLedger(nli or TableNli(), embedder=None)
     findings = asyncio.run(ledger.run(from_text(text), context(session, channel)))
     return ledger, findings

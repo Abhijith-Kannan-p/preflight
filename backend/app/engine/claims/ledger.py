@@ -86,8 +86,12 @@ class _Scored:
 
     @property
     def label(self) -> NliLabel:
-        best = max(("entailment", self.entail), ("contradiction", self.contradict),
-                   ("neutral", self.nli["neutral"]), key=lambda kv: kv[1])  # fmt: skip
+        best = max(
+            ("entailment", self.entail),
+            ("contradiction", self.contradict),
+            ("neutral", self.nli["neutral"]),
+            key=lambda kv: kv[1],
+        )
         return best[0]  # type: ignore[return-value]
 
 
@@ -132,8 +136,9 @@ def _lexically_supported(claim: ClaimCandidate, s: "_Scored") -> bool:
 
 
 def _relevant(claim: str, candidate: Candidate) -> bool:
-    shared = {t for t in set(tokens(claim)) & set(tokens(candidate.fact.statement))
-              if not t.isdigit()}  # fmt: skip
+    shared = {
+        t for t in set(tokens(claim)) & set(tokens(candidate.fact.statement)) if not t.isdigit()
+    }
     if not shared:
         return False
     return candidate.dense is None or candidate.dense >= MIN_DENSE_RELEVANCE
@@ -287,8 +292,13 @@ class ClaimLedger:
                     f'says: "{successor.statement}"'
                 )
                 steps.append("Verdict: outdated")
-                return record("outdated", stale, confidence, current_fact_id=successor.id,
-                              quote=best_quote(claim.hypothesis, stale.fact.statement))  # fmt: skip
+                return record(
+                    "outdated",
+                    stale,
+                    confidence,
+                    current_fact_id=successor.id,
+                    quote=best_quote(claim.hypothesis, stale.fact.statement),
+                )
 
         # A numeric mismatch counts unless a more on-topic fact agrees on the number
         # (e.g. "zero MDR on UPI" should not be contradicted by the net-banking fee).
@@ -392,8 +402,9 @@ class ClaimLedger:
         """The approved fact closest to one risky phrase ("100% secure" -> the encryption
         fact), so the author sees what the brand *can* say instead."""
         others = [h for h in claim.hits if h is not hit]
-        query = _numeric_text(ClaimCandidate(claim.block, claim.span, claim.hypothesis,
-                                             claim.claim_type, others))  # fmt: skip
+        query = _numeric_text(
+            ClaimCandidate(claim.block, claim.span, claim.hypothesis, claim.claim_type, others)
+        )
         if self._retriever is None:
             return []
         current, _ = self._retriever.retrieve(query)
@@ -403,13 +414,23 @@ class ClaimLedger:
         if top.dense is not None and top.dense < MIN_DENSE_EVIDENCE:
             return []
         hypothesis = query.strip()
-        nli = (self.nli.predict([(top.fact.statement, hypothesis)])[0] if self.nli
-               else _lexical_nli(top.fact.statement, hypothesis))  # fmt: skip
+        nli = (
+            self.nli.predict([(top.fact.statement, hypothesis)])[0]
+            if self.nli
+            else _lexical_nli(top.fact.statement, hypothesis)
+        )
         label = max(nli, key=lambda k: nli[k])
         quote = best_quote(hypothesis, top.fact.statement) or top.fact.statement.rstrip(".")
-        return [Evidence.model_validate(
-            {"fact_id": top.fact.id, "quote": quote, "nli": label, "score": round(nli[label], 3)}
-        )]  # fmt: skip
+        return [
+            Evidence.model_validate(
+                {
+                    "fact_id": top.fact.id,
+                    "quote": quote,
+                    "nli": label,
+                    "score": round(nli[label], 3),
+                }
+            )
+        ]
 
     @staticmethod
     def _pattern_finding(

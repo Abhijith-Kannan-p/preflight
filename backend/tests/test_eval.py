@@ -29,8 +29,12 @@ def test_labelled_set_covers_all_verdicts() -> None:
     items = load_items(get_settings().data_dir / "eval" / "claims.jsonl")
     assert len(items) >= 150
     assert {i["expected"] for i in items} == {
-        "supported", "outdated", "contradicted", "unsupported", "needs_review"
-    }  # fmt: skip
+        "supported",
+        "outdated",
+        "contradicted",
+        "unsupported",
+        "needs_review",
+    }
     assert len({i["id"] for i in items}) == len(items)
 
 

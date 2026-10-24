@@ -88,8 +88,13 @@ def heuristic_scores(doc: NormalisedDoc) -> ToneScores:
 
 
 def _strongest_sentence(doc: NormalisedDoc, trait: str) -> str | None:
-    pattern = {"formal": _HYPE, "confident": _HYPE, "playful": re.compile("!"),
-               "warm": _WARM, "technical": _TECH}[trait]  # fmt: skip
+    pattern = {
+        "formal": _HYPE,
+        "confident": _HYPE,
+        "playful": re.compile("!"),
+        "warm": _WARM,
+        "technical": _TECH,
+    }[trait]
     best = max(
         (s.text for b in doc.blocks for s in sentences(b.text)),
         key=lambda s: len(pattern.findall(s)),
@@ -127,9 +132,12 @@ class ToneChecker:
         scores: ToneScores | None = None
         if self.ai is not None and self.ai.llm_available:
             scores = await self.ai.gateway.complete_json(
-                _prompt(doc, ctx), ToneScores, purpose="tone", masker=self.ai.masker,
+                _prompt(doc, ctx),
+                ToneScores,
+                purpose="tone",
+                masker=self.ai.masker,
                 log_to=self.ai.log,
-            )  # fmt: skip
+            )
         source = "llm" if scores else "heuristic"
         scores = scores or heuristic_scores(doc)
         self.profile = ToneProfile(

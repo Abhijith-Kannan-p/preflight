@@ -40,9 +40,11 @@ def compute(pairs: list[tuple[str, str]]) -> tuple[Metrics, dict[str, dict[str, 
         recall = tp / support if support else 0.0
         f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
         per_label[label] = LabelMetrics(
-            precision=round(precision, 3), recall=round(recall, 3), f1=round(f1, 3),
+            precision=round(precision, 3),
+            recall=round(recall, 3),
+            f1=round(f1, 3),
             support=support,
-        )  # fmt: skip
+        )
 
     # "Problem" claims are everything that must not be published unchanged.
     problems = [(e, p) for e, p in pairs if e != "supported"]

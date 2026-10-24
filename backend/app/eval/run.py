@@ -97,16 +97,22 @@ def save(session: Session, result: dict[str, Any]) -> EvalRun:
 
 def _print(result: dict[str, Any]) -> None:
     m = result["metrics"]
-    print(f"\nClaim Ledger evaluation: {result['n_items']} labelled claims "
-          f"({result['config']['nli_model']})")  # fmt: skip
+    print(
+        f"\nClaim Ledger evaluation: {result['n_items']} labelled claims "
+        f"({result['config']['nli_model']})"
+    )
     print(f"{'verdict':14} {'prec':>6} {'recall':>6} {'f1':>6} {'n':>4}")
     for label in VERDICTS:
         lm = m["per_label"][label]
-        print(f"{label:14} {lm['precision']:6.2f} {lm['recall']:6.2f} {lm['f1']:6.2f} "
-              f"{lm['support']:4}")  # fmt: skip
-    print(f"\naccuracy {m['accuracy']:.2f} | macro recall {m['macro_recall']:.2f} | "
-          f"problem-claim recall {m['problem_recall']:.2f} | problem-claim precision "
-          f"{m['problem_precision']:.2f} | detection {m['detection_rate']:.2f}")  # fmt: skip
+        print(
+            f"{label:14} {lm['precision']:6.2f} {lm['recall']:6.2f} {lm['f1']:6.2f} "
+            f"{lm['support']:4}"
+        )
+    print(
+        f"\naccuracy {m['accuracy']:.2f} | macro recall {m['macro_recall']:.2f} | "
+        f"problem-claim recall {m['problem_recall']:.2f} | problem-claim precision "
+        f"{m['problem_precision']:.2f} | detection {m['detection_rate']:.2f}"
+    )
     print(f"latency p50 {result['latency_ms_p50']} ms, p95 {result['latency_ms_p95']} ms")
     print(f"\n{len(result['failures'])} failures:")
     for f in result["failures"]:

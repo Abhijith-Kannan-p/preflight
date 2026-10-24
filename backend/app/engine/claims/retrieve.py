@@ -17,10 +17,43 @@ TOP_K = 5
 SUPERSEDED_K = 3
 
 _STOPWORDS = {
-    "a", "an", "the", "and", "or", "of", "on", "in", "to", "for", "with", "by", "is", "are",
-    "it", "its", "every", "all", "your", "you", "our", "we", "now", "that", "this", "at", "as",
-    "be", "can", "from", "today", "paywise", "over", "under", "up", "than",
-}  # fmt: skip
+    "a",
+    "an",
+    "the",
+    "and",
+    "or",
+    "of",
+    "on",
+    "in",
+    "to",
+    "for",
+    "with",
+    "by",
+    "is",
+    "are",
+    "it",
+    "its",
+    "every",
+    "all",
+    "your",
+    "you",
+    "our",
+    "we",
+    "now",
+    "that",
+    "this",
+    "at",
+    "as",
+    "be",
+    "can",
+    "from",
+    "today",
+    "paywise",
+    "over",
+    "under",
+    "up",
+    "than",
+}
 
 
 def _stem(token: str) -> str:

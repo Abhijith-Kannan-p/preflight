@@ -28,8 +28,12 @@ _CLAUSE_SPLIT = re.compile(r",\s+and\s+|;\s+|\s+while\s+")
 _RELATIVE = re.compile(r"^(?P<subj>[A-Z][\w ]{1,40}?),\s+which\s+(?P<rel>[^,]+),\s+(?P<rest>.+)$")
 _POSSESSIVE_BEFORE = re.compile(r"[A-Z][\w]*['\u2019]s\s+$")
 
-PATTERN_RULES = {"CLM-01": "superlative", "CLM-04": "absolute", "CLM-06": "guarantee",
-                 "CLM-08": "offer"}  # fmt: skip
+PATTERN_RULES = {
+    "CLM-01": "superlative",
+    "CLM-04": "absolute",
+    "CLM-06": "guarantee",
+    "CLM-08": "offer",
+}
 
 
 @dataclass
@@ -60,11 +64,15 @@ def _clauses(sentence: TextSpan) -> list[tuple[TextSpan, str]]:
         subj = rel.group("subj")
         base = sentence.start
         return [
-            (TextSpan(base + rel.start("rel"), base + rel.end("rel"), rel.group("rel")),
-             f"{subj} {rel.group('rel')}"),
-            (TextSpan(base + rel.start("rest"), base + rel.end("rest"), rel.group("rest")),
-             f"{subj} {rel.group('rest')}"),
-        ]  # fmt: skip
+            (
+                TextSpan(base + rel.start("rel"), base + rel.end("rel"), rel.group("rel")),
+                f"{subj} {rel.group('rel')}",
+            ),
+            (
+                TextSpan(base + rel.start("rest"), base + rel.end("rest"), rel.group("rest")),
+                f"{subj} {rel.group('rest')}",
+            ),
+        ]
     bounds: list[tuple[int, int]] = []
     start = 0
     for m in _CLAUSE_SPLIT.finditer(text):

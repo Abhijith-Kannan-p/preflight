@@ -65,7 +65,7 @@ class GeminiProvider:
                         "responseMimeType": "application/json",
                         "temperature": 0.2,
                     },
-                },  # fmt: skip
+                },
             )
         if response.status_code != 200:
             raise ProviderError(f"gemini HTTP {response.status_code}")
@@ -108,8 +108,9 @@ class GroqProvider:
 
 
 class CircuitBreaker:
-    def __init__(self, threshold: int = BREAKER_THRESHOLD,
-                 cooldown: float = BREAKER_COOLDOWN_SECONDS) -> None:  # fmt: skip
+    def __init__(
+        self, threshold: int = BREAKER_THRESHOLD, cooldown: float = BREAKER_COOLDOWN_SECONDS
+    ) -> None:
         self.threshold, self.cooldown = threshold, cooldown
         self._failures = 0
         self._opened_at: float | None = None
@@ -160,8 +161,9 @@ class CallLog:
 
 
 class Gateway:
-    def __init__(self, provider: Provider | None, timeout: float,
-                 breaker: CircuitBreaker | None = None) -> None:  # fmt: skip
+    def __init__(
+        self, provider: Provider | None, timeout: float, breaker: CircuitBreaker | None = None
+    ) -> None:
         self.provider = provider
         self.timeout = timeout
         self.breaker = breaker or CircuitBreaker()
@@ -200,8 +202,14 @@ class Gateway:
                 result = schema.model_validate(_unmask_json(json.loads(completion.text), masker))
                 error = None
                 break
-            except (httpx.HTTPError, ProviderError, TimeoutError, json.JSONDecodeError,
-                    ValidationError, KeyError) as exc:  # fmt: skip
+            except (
+                httpx.HTTPError,
+                ProviderError,
+                TimeoutError,
+                json.JSONDecodeError,
+                ValidationError,
+                KeyError,
+            ) as exc:
                 error = f"{type(exc).__name__}: {str(exc)[:120]}"
                 log.warning("LLM %s attempt %d failed: %s", purpose, attempt + 1, error)
         self.breaker.record(result is not None)

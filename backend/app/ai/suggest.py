@@ -106,9 +106,12 @@ async def add_suggestions(
             for f in pending
         ]
         result = await ai.gateway.complete_json(
-            _prompt(items, facts, ctx), Rewrites, purpose="suggestions", masker=ai.masker,
+            _prompt(items, facts, ctx),
+            Rewrites,
+            purpose="suggestions",
+            masker=ai.masker,
             log_to=ai.log,
-        )  # fmt: skip
+        )
         if result is not None:
             rewrites = {r.id: r.replacement.strip() for r in result.rewrites}
 

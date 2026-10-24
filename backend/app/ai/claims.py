@@ -12,8 +12,7 @@ from app.engine.context import ReviewContext
 from app.engine.schema import NormalisedDoc
 from app.engine.text import TextSpan
 
-CLAIM_TYPES = {"numeric", "superlative", "absolute", "comparative", "offer", "guarantee",
-               "factual"}  # fmt: skip
+CLAIM_TYPES = {"numeric", "superlative", "absolute", "comparative", "offer", "guarantee", "factual"}
 
 
 class ExtractedClaim(BaseModel):
@@ -42,9 +41,12 @@ def llm_extractor(ai: AiSession) -> ClaimExtractor:
         if not ai.llm_available:
             return []
         result = await ai.gateway.complete_json(
-            _prompt(doc), ExtractedClaims, purpose="claim_detection", masker=ai.masker,
+            _prompt(doc),
+            ExtractedClaims,
+            purpose="claim_detection",
+            masker=ai.masker,
             log_to=ai.log,
-        )  # fmt: skip
+        )
         if result is None:
             return []
         candidates: list[ClaimCandidate] = []
