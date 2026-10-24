@@ -18,6 +18,7 @@ from app.engine.checkers.disclaimer import DisclaimerChecker
 from app.engine.checkers.readability import ReadabilityChecker
 from app.engine.checkers.style import StyleChecker
 from app.engine.checkers.terminology import TerminologyChecker
+from app.engine.claims.ledger import ClaimExtractor, ClaimLedger
 from app.engine.context import ReviewContext
 from app.engine.drift import attach_drift
 from app.engine.merge import merge_findings
@@ -25,6 +26,7 @@ from app.engine.schema import Finding, NormalisedDoc
 from app.engine.score import BrandScore, brand_score
 from app.engine.validate import valid_findings
 from app.ml.embeddings import Embedder
+from app.ml.nli import NliModel
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +51,16 @@ class ReviewResult(BaseModel):
     score: BrandScore
     checkers: list[CheckerRun]
     degraded: bool
+
+
+def default_checkers(
+    nli: NliModel | None,
+    embedder: Embedder | None,
+    extractor: ClaimExtractor | None = None,
+) -> tuple[list[Checker], ClaimLedger]:
+    """All Round 2 checkers. The ledger is returned too, so callers can read its records."""
+    ledger = ClaimLedger(nli, embedder, extractor)
+    return [*deterministic_checkers(), ledger], ledger
 
 
 def deterministic_checkers() -> list[Checker]:
