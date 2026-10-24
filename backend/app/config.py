@@ -10,13 +10,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # Real environment variables win; otherwise read the repo-root .env (works from any cwd).
+    model_config = SettingsConfigDict(env_file=(REPO_ROOT / ".env", ".env"), extra="ignore")
 
     database_url: str = "postgresql+psycopg://preflight:preflight@localhost:5432/preflight"
     jwt_secret: str = "dev-only-secret"
 
     llm_provider: Literal["gemini", "groq", "none"] = "none"
-    llm_model: str = "gemini-2.0-flash"
+    llm_model: str = "gemini-3.5-flash-lite"
     llm_api_key: str = ""
     llm_timeout_seconds: float = 8.0
 
