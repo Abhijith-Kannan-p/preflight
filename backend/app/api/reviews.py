@@ -55,6 +55,7 @@ from app.seed import WORKSPACE_ID
 from app.services import runner
 from app.services.events import TERMINAL, bus
 from app.services.notify import notify_roles, notify_users
+from app.services.webhooks import dispatch_approval
 from app.workflow import (
     TransitionError,
     apply_suggestions,
@@ -694,6 +695,8 @@ def transition(
     )
     _notify_transition(session, submission, body.action, user)
     session.commit()
+    if body.action == "approve":
+        dispatch_approval(submission.id)
     return get_review(review_id, None, user, session)
 
 
