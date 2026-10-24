@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 os.environ.setdefault("SKIP_MODEL_LOAD", "true")
 os.environ.setdefault("LLM_PROVIDER", "none")
+os.environ.setdefault("BOOTSTRAP_DEMO", "false")
 
 from app.config import get_settings
 from app.db import get_session

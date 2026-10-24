@@ -1,0 +1,43 @@
+[
+  {
+    "author": "usr_abhi1", "channel": "linkedin", "days_ago": 20, "fix": true, "outcome": "approved",
+    "title": "Merchant onboarding post",
+    "content": "Getting started with Paywise Business is hassle-free! Merchants can start accepting payments in under 10 minutes with digital KYC. Join the leading payments platform today!"
+  },
+  {
+    "author": "usr_abhi3", "channel": "email", "days_ago": 18, "fix": true, "outcome": "approved",
+    "title": "Card cashback email",
+    "content": "Subject: Earn more with PayWise Card this month\n\nPayWise Card offers 1% cashback on online purchases, capped at ₹500 per month.\n\nShop online and enjoy cashback on every eligible purchase.\n\nThe PayWise team"
+  },
+  {
+    "author": "usr_abhi1", "channel": "x", "days_ago": 15, "fix": false, "outcome": "changes_requested",
+    "dispute": ["CLM-01", "CLM-04"],
+    "title": "X post: fastest settlements",
+    "content": "PayWise is the fastest payments app in India! Merchants get paid in under 5 seconds. Totally secure. #Payments #Fintech #India"
+  },
+  {
+    "author": "usr_abhi1", "channel": "blog", "days_ago": 12, "fix": true, "outcome": "approved",
+    "title": "Blog: how we protect payments",
+    "content": "Security sits at the heart of everything we build. PayWise secures payments with bank-grade AES-256 encryption and is PCI DSS certified. PayWise requires two-factor authentication for every login from a new device, and PayWise is ISO 27001 certified for information security management. If something goes wrong, PayWise offers zero liability on unauthorised transactions reported within 3 days."
+  },
+  {
+    "author": "usr_abhi3", "channel": "linkedin", "days_ago": 9, "fix": true, "outcome": "approved",
+    "title": "Pay Later launch teaser",
+    "content": "Meet PayWise Pay Later: up to 30 interest-free days on your purchases. Shop now, pay later, never worry again. Get your instant loan today!"
+  },
+  {
+    "author": "usr_abhi1", "channel": "press_release", "days_ago": 6, "fix": false, "outcome": "in_review",
+    "title": "Press note: app milestone",
+    "content": "PayWise reaches a new milestone\n\nBengaluru, 18 October 2026. The PayWise app is rated 4.6 out of 5 on the Google Play Store and is available in 12 Indian languages. PayWise processes over 400 million transactions every month and maintained 99.95% platform uptime over the last 12 months."
+  },
+  {
+    "author": "usr_abhi3", "channel": "x", "days_ago": 3, "fix": true, "outcome": "approved",
+    "title": "X post: UPI pricing",
+    "content": "UPI payments on PayWise have zero merchant discount rate. Cheap, simple and guaranteed! #UPI"
+  },
+  {
+    "author": "usr_abhi1", "channel": "email", "days_ago": 1, "fix": false, "outcome": "draft",
+    "title": "Weekend offer email",
+    "content": "Subject: A FREE weekend of zero fees on every PayWise Card payment for all our amazing merchants\n\nThis weekend only, PayWise Card payments are free for merchants. No risk, no paperwork. Try PayWise Pay Later at checkout too."
+  }
+]

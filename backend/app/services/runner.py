@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import audit
-from app.ai.gateway import get_gateway
+from app.ai.gateway import Gateway, get_gateway
 from app.ai.masking import Masker
 from app.ai.session import AiSession
 from app.config import get_settings
@@ -62,7 +62,7 @@ def _wait_for_models() -> None:
 session_factory: Callable[[], Session] = SessionLocal
 
 
-def run_revision(revision_id: str) -> None:
+def run_revision(revision_id: str, use_llm: bool = True) -> None:
     with session_factory() as session:
         revision = session.get_one(Revision, revision_id)
         submission = session.get_one(Submission, revision.submission_id)
@@ -74,7 +74,8 @@ def run_revision(revision_id: str) -> None:
             _wait_for_models()
             embedder, nli = get_embedder(), get_nli()
             masking = bool(ctx.settings.get("masking_enabled", get_settings().masking_enabled))
-            ai = AiSession(get_gateway(), Masker(ctx.confidential, enabled=masking))
+            gateway = get_gateway() if use_llm else Gateway(None, timeout=1)
+            ai = AiSession(gateway, Masker(ctx.confidential, enabled=masking))
             plan = default_checkers(nli, embedder, ai)
             doc = NormalisedDoc.model_validate(revision.normalised_doc)
             result = asyncio.run(

@@ -4,6 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -26,11 +27,22 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     nli_model: str = "cross-encoder/nli-deberta-v3-xsmall"
     skip_model_load: bool = False
+    # Generate demo history and precompute the evaluation after boot (off in tests).
+    bootstrap_demo: bool = True
 
     cors_origins: str = "http://localhost:3000"
     public_app_url: str = "http://localhost:3000"
 
     data_dir: Path = REPO_ROOT / "data"
+
+    @field_validator("database_url")
+    @classmethod
+    def use_psycopg_driver(cls, url: str) -> str:
+        """Accept plain postgres:// URLs (as Neon and Supabase hand them out)."""
+        for prefix in ("postgresql://", "postgres://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url.removeprefix(prefix)
+        return url
 
     @property
     def seed_dir(self) -> Path:

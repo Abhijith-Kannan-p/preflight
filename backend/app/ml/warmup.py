@@ -6,6 +6,7 @@
 import logging
 import threading
 import time
+from collections.abc import Callable
 
 from app.ml.embeddings import get_embedder
 from app.ml.nli import get_nli
@@ -16,7 +17,7 @@ _ready = threading.Event()
 _status: dict[str, str | float | None] = {"embedder": None, "nli": None, "seconds": None}
 
 
-def _warm() -> None:
+def _warm(after: Callable[[], None] | None = None) -> None:
     started = time.perf_counter()
     try:
         embedder = get_embedder()
@@ -33,10 +34,15 @@ def _warm() -> None:
         _status["seconds"] = round(time.perf_counter() - started, 1)
         _ready.set()
         log.info("models warm: %s", _status)
+    if after is not None:
+        try:
+            after()
+        except Exception:
+            log.exception("post-warm-up task failed")
 
 
-def start_warmup() -> None:
-    threading.Thread(target=_warm, name="model-warmup", daemon=True).start()
+def start_warmup(after: Callable[[], None] | None = None) -> None:
+    threading.Thread(target=_warm, args=(after,), name="model-warmup", daemon=True).start()
 
 
 def models_ready() -> bool:
