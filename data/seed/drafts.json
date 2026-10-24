@@ -27,7 +27,7 @@
     "format": "pdf",
     "filename": "paywise_press_release.pdf",
     "description": "Mostly accurate, but it quotes an outdated user count and mentions the confidential codename Project Falcon (masked before any AI call).",
-    "content": "PayWise reaches a new milestone in digital payments\n\nBengaluru, 20 October 2026. PayWise, which is regulated as a payment aggregator by the Reserve Bank of India, today announced that it now serves over 8 million registered users in India.\n\nPayWise Business serves over 2 million merchants across India, and UPI payments on PayWise continue to carry zero merchant discount rate (MDR). PayWise secures payments with bank-grade AES-256 encryption and is PCI DSS certified.\n\nThe company also shared early plans for Project Falcon, its next platform for merchants.\n\nAbout PayWise\nPayWise was founded in 2019 and is headquartered in Bengaluru. The PayWise app is available in 12 Indian languages."
+    "content": "PayWise reaches a new milestone in digital payments\n\nBengaluru, 20 October 2026. PayWise, which is regulated as a payment aggregator by the Reserve Bank of India, today announced that it now serves over 8 million registered users in India.\n\nPayWise Business serves over 2 million merchants across India, and UPI payments on PayWise continue to carry zero merchant discount rate (MDR). PayWise secures payments with bank-grade AES-256 encryption and is PCI DSS certified.\n\nThe company also shared early plans for Project Falcon, its next platform for merchants.\n\nAbout PayWise\n\nPayWise was founded in 2019 and is headquartered in Bengaluru. The PayWise app is available in 12 Indian languages."
   },
   {
     "id": "sample_clean",
