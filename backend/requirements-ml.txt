@@ -1,0 +1,5 @@
+# Local NLI model runtime. Installed in the Docker image (CPU wheels), not in CI,
+# because CI runs with SKIP_MODEL_LOAD=true and never loads models.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0
+sentence-transformers==3.3.1

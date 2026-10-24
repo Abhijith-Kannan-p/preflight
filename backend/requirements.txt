@@ -14,3 +14,4 @@ pymupdf==1.25.1
 rapidfuzz==3.11.0
 textstat==0.7.10
 reportlab==4.2.5
+rank-bm25==0.2.2

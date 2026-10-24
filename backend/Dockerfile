@@ -10,6 +10,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+COPY backend/requirements-ml.txt .
+RUN pip install -r requirements-ml.txt
 COPY backend/requirements.txt .
 RUN pip install -r requirements.txt
 
