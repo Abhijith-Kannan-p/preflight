@@ -1,0 +1,42 @@
+[
+  {
+    "id": "sample_linkedin",
+    "label": "LinkedIn post (off-brand)",
+    "title": "Launch post: India's payments app",
+    "channel": "linkedin",
+    "format": "text",
+    "filename": null,
+    "description": "The Round 1 scenario: superlatives, an absolute security claim, an outdated settlement time and a misspelt product name.",
+    "content": "Say hello to India's #1 and 100% secure payments app! Paywise now settles in under 5 seconds for every merchant. Download today and never worry again!"
+  },
+  {
+    "id": "sample_newsletter",
+    "label": "Email newsletter (DOCX)",
+    "title": "October merchant newsletter",
+    "channel": "email",
+    "format": "docx",
+    "filename": "paywise_october_newsletter.docx",
+    "description": "A Word file with a free offer missing \"T&C apply.\", a Pay Later mention without \"Subject to eligibility.\" and a fee claim that contradicts the pricing sheet.",
+    "content": "Subject: More savings for your shop this festive season\n\nHi there,\n\nThis festive season, enjoy free setup on PayWise Business and earn cashback on your first ten bill payments.\n\nRunning a busy shop? With PayWise Business you pay zero fees on all card payments, so you keep more of every sale.\n\nNeed a little breathing room for stock? Try PayWise Pay Later and get up to 30 interest-free days on your purchases.\n\nWarm regards,\nThe PayWise team"
+  },
+  {
+    "id": "sample_press",
+    "label": "Press release (PDF)",
+    "title": "Press release: user milestone",
+    "channel": "press_release",
+    "format": "pdf",
+    "filename": "paywise_press_release.pdf",
+    "description": "Mostly accurate, but it quotes an outdated user count and mentions the confidential codename Project Falcon (masked before any AI call).",
+    "content": "PayWise reaches a new milestone in digital payments\n\nBengaluru, 20 October 2026. PayWise, which is regulated as a payment aggregator by the Reserve Bank of India, today announced that it now serves over 8 million registered users in India.\n\nPayWise Business serves over 2 million merchants across India, and UPI payments on PayWise continue to carry zero merchant discount rate (MDR). PayWise secures payments with bank-grade AES-256 encryption and is PCI DSS certified.\n\nThe company also shared early plans for Project Falcon, its next platform for merchants.\n\nAbout PayWise\nPayWise was founded in 2019 and is headquartered in Bengaluru. The PayWise app is available in 12 Indian languages."
+  },
+  {
+    "id": "sample_clean",
+    "label": "Clean post (passes)",
+    "title": "Small business settlement post",
+    "channel": "linkedin",
+    "format": "text",
+    "filename": null,
+    "description": "On-brand copy where every claim matches an approved fact. Shows that Preflight does not over-flag.",
+    "content": "Running a small business means every minute counts. With PayWise Business, you can start taking payments in under 10 minutes with digital KYC. PayWise settles merchant payments in under 10 seconds, and UPI payments on PayWise have zero merchant discount rate. Every payment is protected with bank-grade AES-256 encryption. See how PayWise can help your business grow. #SmallBusiness #Payments"
+  }
+]

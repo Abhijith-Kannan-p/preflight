@@ -1,0 +1,7 @@
+[
+  { "id": "linkedin", "name": "LinkedIn post", "max_chars": 3000, "max_hashtags": 5, "subject_max_chars": null, "consumer": true, "rule_code": "CHN-01" },
+  { "id": "x", "name": "X (Twitter) post", "max_chars": 280, "max_hashtags": 2, "subject_max_chars": null, "consumer": true, "rule_code": "CHN-02" },
+  { "id": "email", "name": "Email newsletter", "max_chars": null, "max_hashtags": null, "subject_max_chars": 60, "consumer": true, "rule_code": "CHN-03" },
+  { "id": "press_release", "name": "Press release", "max_chars": null, "max_hashtags": null, "subject_max_chars": null, "consumer": false, "rule_code": null },
+  { "id": "blog", "name": "Blog article", "max_chars": null, "max_hashtags": null, "subject_max_chars": null, "consumer": true, "rule_code": null }
+]

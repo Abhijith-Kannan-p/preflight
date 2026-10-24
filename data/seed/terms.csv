@@ -1,0 +1,12 @@
+term,kind,variants,replacement,case_sensitive,rule_id,note
+PayWise,product_name,Paywise|Pay Wise|PAYWISE|Pay-Wise|paywise,,true,TRM-02,"Company and app name. One word, capital P and W."
+PayWise Business,product_name,Paywise Business|PayWise business|Pay Wise Business|PayWise for Business,,true,TRM-02,Merchant product.
+PayWise Card,product_name,PayWise card|Paywise Card|Paywise card|PayWise Credit Card,,true,TRM-02,Card product. Capital C.
+PayWise Pay Later,product_name,PayWise PayLater|PayWise pay later|Paywise Pay Later|PayWise BNPL,,true,TRM-02,Buy-now-pay-later product.
+cheap,banned,,affordable,false,TRM-05,Undermines trust in a financial product.
+hassle-free guaranteed,banned,,simple,false,TRM-05,Guarantee language plus cliché.
+no risk,banned,,,false,TRM-05,Absolute risk claim. Not allowed for a regulated payments business.
+instant loan,banned,,quick credit decision,false,TRM-05,PayWise does not offer loans; regulatory risk.
+hassle-free,discouraged,,simple,false,TRM-05,Overused cliché.
+world-class,discouraged,,reliable,false,TRM-05,Unverifiable hype.
+cutting-edge,discouraged,,modern,false,TRM-05,Unverifiable hype.

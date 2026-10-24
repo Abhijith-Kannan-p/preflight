@@ -1,0 +1,24 @@
+{
+  "id": "ws_paywise",
+  "name": "PayWise",
+  "voice_profile": {
+    "description": "Clear, warm and trustworthy. Confident without hype. No slang, no excessive exclamation marks, no fear-based language.",
+    "traits": {
+      "formal": 0.6,
+      "warm": 0.75,
+      "confident": 0.7,
+      "playful": 0.3,
+      "technical": 0.5
+    }
+  },
+  "settings": {
+    "masking_enabled": true
+  },
+  "users": [
+    { "id": "usr_riya", "name": "Riya Sharma", "email": "riya@paywise.example", "role": "creator", "title": "Content Marketer" },
+    { "id": "usr_dev", "name": "Dev Patel", "email": "dev@paywise.example", "role": "reviewer", "title": "Compliance Reviewer" },
+    { "id": "usr_arjun", "name": "Arjun Mehta", "email": "arjun@paywise.example", "role": "brand_manager", "title": "Brand Manager" },
+    { "id": "usr_neha", "name": "Neha Iyer", "email": "neha@paywise.example", "role": "approver", "title": "Head of Communications" },
+    { "id": "usr_admin", "name": "Admin", "email": "admin@paywise.example", "role": "admin", "title": "Workspace Admin" }
+  ]
+}
