@@ -9,6 +9,17 @@ submitted product or in building it.
   (scaffolding, code, tests and documentation drafts). All commits were reviewed and
   made by the author.
 
+## Models
+
+| Model | Where it runs | Purpose | License |
+|---|---|---|---|
+| `BAAI/bge-small-en-v1.5` (via fastembed, ONNX) | Locally on the backend CPU | 384-d embeddings of approved facts for dense retrieval | MIT |
+
+## Data
+
+All brand data (PayWise rules, facts, terms, channels, confidential terms, sample
+drafts) is fictional and was written for this project. It lives in `data/seed/`.
+
 ## Backend libraries
 
 | Library | Purpose | License |
@@ -20,6 +31,8 @@ submitted product or in building it.
 | psycopg 3 | PostgreSQL driver | LGPL-3.0 |
 | Alembic | Database migrations | MIT |
 | pgvector (Python) | Vector column type | MIT |
+| fastembed | Local ONNX embedding runtime | Apache-2.0 |
+| NumPy | Vector maths | BSD-3 |
 | pytest, pytest-asyncio, httpx | Tests | MIT / Apache-2.0 / BSD |
 | ruff, mypy | Lint, format, type check | MIT |
 
