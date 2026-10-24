@@ -4,7 +4,8 @@ Each change from the Round 1 plan, with the reason. Kept short and honest.
 
 | Area | Round 1 plan | Round 2 build | Why |
 |---|---|---|---|
-| Demo users | Three roles plus admin | Added a seeded **Reviewer** (Dev Patel) alongside Creator, Brand Manager, Approver and Admin | The permission table has a Reviewer column; a seeded reviewer lets judges see the "Needs a human look" queue |
+| Demo users | Three roles plus admin | Added a seeded **Reviewer** (abhi2) alongside Creator, Brand Manager, Approver and Admin | The permission table has a Reviewer column; a seeded reviewer lets judges see the "Needs a human look" queue |
+| Demo user names | Riya Sharma, Arjun Mehta, Neha Iyer, Admin | **abhi1** (Creator), **abhi2** (Reviewer), **abhi3** (Brand Manager), **abhi4** (Approver), **abhi5** (Admin) | The author's preference: neutral demo identities |
 | Frontend framework version | Next.js 14+ | Next.js 15.5 | The 15.1 template had published security advisories |
 | Claim rules | CLM-01, 04, 06, 08 | Added **CLM-02** (contradicts an approved fact, critical), **CLM-03** (uses a superseded fact, major) and **CLM-05** (factual claim with no approved fact, major) | Every finding must cite a rule; the plan's verdicts `contradicted`, `outdated` and `unsupported` had no rule to cite |
 | NLI model | DeBERTa-v3 NLI | `cross-encoder/nli-deberta-v3-xsmall` (22M params) | Fits comfortably in free CPU hosting with fast warm-up |
@@ -18,4 +19,6 @@ Each change from the Round 1 plan, with the reason. Kept short and honest.
 | Live progress | WebSocket | Server-Sent Events (`/api/reviews/{id}/events`) with replay of earlier events | Progress is one-way; SSE is simpler, proxies well and reconnects by itself |
 | Disputes | Disputed critical findings block approval | Same, but a disputed critical **can be submitted**: the approver then either overrides it with a written reason (shown on the receipt) or requests changes | The dispute is a question for the approver; blocking submission would leave it nowhere to go |
 | Readability library | textstat | textstat 0.7.4 (pyphen syllables) | Newer textstat downloads the CMU dictionary through NLTK at runtime (22 s, needs network) |
+| UI kit | shadcn/ui | Small hand-written Tailwind components (`components/ui.tsx`) on a warm paper theme | Fewer moving parts under deadline; same accessible patterns (native `<dialog>`, focus rings, tooltips on focus) |
+| Diff viewer | react-diff-viewer | jsdiff word diff rendered inline | react-diff-viewer does not support React 19 |
 | Python ML runtime | Single requirements file | `requirements-ml.txt` (PyTorch CPU, sentence-transformers) installed only in the Docker image | CI never loads models, so it stays fast |

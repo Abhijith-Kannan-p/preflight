@@ -60,6 +60,20 @@ drafts) is fictional and was written for this project. It lives in `data/seed/`.
 | Next.js 15, React 19 | Web app | MIT |
 | Tailwind CSS 3 | Styling | MIT |
 | Inter (Google Fonts via next/font) | Typeface | OFL |
+| framer-motion | Splash, perspective-tunnel hero, gauge and tour animation | MIT |
+| lucide-react | Icons | ISC |
+| SWR | Data fetching and cache revalidation | MIT |
+| jsdiff (`diff`) | Word-level revision diff | BSD-3 |
+| Recharts | Insights and evaluation charts | MIT |
+| clsx | Class name composition | MIT |
+| Playwright | Golden-path end-to-end test | Apache-2.0 |
+
+## Templates and design inspiration
+
+- The landing hero's perspective-tunnel motion was adapted from a "Perspective Tunnel
+  Hero" component snippet (framer-motion) shared by the author. It was rewritten to fly
+  Preflight finding cards instead of photos and to follow normal page scroll.
+- No UI kit or page template was copied; components are hand-written with Tailwind.
 
 ## Infrastructure
 
