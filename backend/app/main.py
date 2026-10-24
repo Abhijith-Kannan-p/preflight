@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import health, reviews, rulebook, session
+from app.api import health, receipts, reviews, rulebook, session
 from app.config import get_settings
 from app.ml.warmup import start_warmup
 
@@ -36,6 +36,7 @@ def create_app() -> FastAPI:
     app.include_router(rulebook.router)
     app.include_router(session.router)
     app.include_router(reviews.router)
+    app.include_router(receipts.router)
     return app
 
 
