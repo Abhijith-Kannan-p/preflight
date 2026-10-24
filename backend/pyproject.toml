@@ -14,7 +14,8 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 ignore = ["B008"]  # FastAPI Depends() in defaults
 
 [tool.mypy]
-python_version = "3.11"
+# Runtime target is 3.11; 3.12 here only lets mypy parse numpy's newer stub syntax.
+python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
 ignore_missing_imports = true

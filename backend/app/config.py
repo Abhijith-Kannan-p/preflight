@@ -1,9 +1,12 @@
 """Application settings, read from environment variables (see .env.example)."""
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
@@ -25,6 +28,12 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
     public_app_url: str = "http://localhost:3000"
+
+    data_dir: Path = REPO_ROOT / "data"
+
+    @property
+    def seed_dir(self) -> Path:
+        return self.data_dir / "seed"
 
     @property
     def cors_origin_list(self) -> list[str]:
