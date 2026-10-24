@@ -1,10 +1,20 @@
 """FastAPI application entry point."""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import health, rulebook
 from app.config import get_settings
+from app.ml.warmup import start_warmup
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    start_warmup()  # loads models in the background; /health reports when ready
+    yield
 
 
 def create_app() -> FastAPI:
@@ -12,7 +22,8 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Preflight API",
         description="Content cleared before it goes live. Pre-publication brand governance.",
-        version="0.1.0",
+        version="0.2.0",
+        lifespan=lifespan,
     )
     app.add_middleware(
         CORSMiddleware,
