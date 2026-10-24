@@ -13,7 +13,15 @@ submitted product or in building it.
 
 | Model | Where it runs | Purpose | License |
 |---|---|---|---|
-| `BAAI/bge-small-en-v1.5` (via fastembed, ONNX) | Locally on the backend CPU | 384-d embeddings of approved facts for dense retrieval | MIT |
+| `BAAI/bge-small-en-v1.5` (via fastembed, ONNX) | Locally on the backend CPU | 384-d embeddings for dense fact retrieval and semantic-drift scores | MIT |
+| `cross-encoder/nli-deberta-v3-xsmall` (sentence-transformers) | Locally on the backend CPU | Natural-language inference (fact ⇒ claim) in the Claim Ledger | Apache-2.0 |
+| Google Gemini `gemini-3.5-flash-lite` (Gemini API) | Google, via HTTPS, **after masking** | Claim extraction (proposals only), tone scoring, suggestion wording where the rulebook has none | Google API terms |
+| Groq-hosted model (optional, `LLM_PROVIDER=groq`) | Groq, via HTTPS, after masking | Same as Gemini; alternative provider | Groq API terms |
+
+The hosted LLM never decides whether a claim is true. Verdicts come from retrieval, the local
+NLI model and exact numeric comparison. Every LLM call is logged (provider, model, latency,
+tokens, how many values were masked) and summarised in the "AI used in this review" panel.
+With `LLM_PROVIDER=none` the product runs fully offline in deterministic mode.
 
 ## Data
 
@@ -39,6 +47,9 @@ drafts) is fictional and was written for this project. It lives in `data/seed/`.
 | rapidfuzz | Fuzzy product-name matching | MIT |
 | textstat | Flesch Reading Ease | MIT |
 | reportlab | Sample PDF and Review Receipt PDF | BSD |
+| rank-bm25 | Lexical (BM25) fact retrieval | Apache-2.0 |
+| PyTorch (CPU), sentence-transformers | Runtime for the local NLI model | BSD-3 / Apache-2.0 |
+| httpx | Async HTTP client for LLM providers | BSD-3 |
 | pytest, pytest-asyncio, httpx | Tests | MIT / Apache-2.0 / BSD |
 | ruff, mypy | Lint, format, type check | MIT |
 
