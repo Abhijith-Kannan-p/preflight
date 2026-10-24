@@ -33,6 +33,12 @@ drafts) is fictional and was written for this project. It lives in `data/seed/`.
 | pgvector (Python) | Vector column type | MIT |
 | fastembed | Local ONNX embedding runtime | Apache-2.0 |
 | NumPy | Vector maths | BSD-3 |
+| python-multipart | File uploads | Apache-2.0 |
+| python-docx | DOCX intake and sample generation | MIT |
+| PyMuPDF | PDF text extraction | AGPL-3.0 (used unmodified; source of this project is public) |
+| rapidfuzz | Fuzzy product-name matching | MIT |
+| textstat | Flesch Reading Ease | MIT |
+| reportlab | Sample PDF and Review Receipt PDF | BSD |
 | pytest, pytest-asyncio, httpx | Tests | MIT / Apache-2.0 / BSD |
 | ruff, mypy | Lint, format, type check | MIT |
 
