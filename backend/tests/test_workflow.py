@@ -95,7 +95,7 @@ def test_apply_suggestions_right_to_left_and_skips_overlaps() -> None:
 
 
 def test_golden_path_from_draft_to_approval(api: TestClient, session: Session) -> None:
-    riya, neha = login(api, "usr_riya"), login(api, "usr_neha")
+    riya, neha = login(api, "usr_abhi1"), login(api, "usr_abhi4")
     review = create(api, riya, "sample_linkedin", "linkedin")
     review_id = review["submission"]["id"]
     rules = by_rule(review)
@@ -154,7 +154,7 @@ def test_golden_path_from_draft_to_approval(api: TestClient, session: Session) -
     )
     assert approved.status_code == 200, approved.text
     assert approved.json()["submission"]["state"] == "approved"
-    assert approved.json()["submission"]["approved_by"]["id"] == "usr_neha"
+    assert approved.json()["submission"]["approved_by"]["id"] == "usr_abhi4"
 
     again = api.post(
         f"/api/reviews/{review_id}/transition", json={"action": "approve"}, headers=neha
@@ -169,7 +169,7 @@ def test_golden_path_from_draft_to_approval(api: TestClient, session: Session) -
 
 
 def test_critical_override_needs_written_reason(api: TestClient) -> None:
-    riya, neha = login(api, "usr_riya"), login(api, "usr_neha")
+    riya, neha = login(api, "usr_abhi1"), login(api, "usr_abhi4")
     review = create(api, riya, "sample_newsletter", "email")
     review_id = review["submission"]["id"]
     criticals = [
@@ -214,12 +214,12 @@ def test_critical_override_needs_written_reason(api: TestClient) -> None:
 
 
 def test_permissions_are_enforced_in_backend(api: TestClient) -> None:
-    admin, neha = login(api, "usr_admin"), login(api, "usr_neha")
+    admin, neha = login(api, "usr_abhi5"), login(api, "usr_abhi4")
     assert (
         api.post("/api/reviews", data={"channel": "x", "content": "Hi"}, headers=neha).status_code
         == 403
     )
-    riya = login(api, "usr_riya")
+    riya = login(api, "usr_abhi1")
     review = create(api, riya, "sample_clean", "linkedin")
     comment = api.post(
         f"/api/reviews/{review['submission']['id']}/comments",
@@ -231,14 +231,14 @@ def test_permissions_are_enforced_in_backend(api: TestClient) -> None:
 
 
 def test_clean_post_scores_high(api: TestClient) -> None:
-    review = create(api, login(api, "usr_riya"), "sample_clean", "linkedin")
+    review = create(api, login(api, "usr_abhi1"), "sample_clean", "linkedin")
     assert review["revision"]["brand_score"] >= 90
     assert review["gate"]["can_submit"] is True
     assert all(c["verdict"] == "supported" for c in review["claims"])
 
 
 def test_audit_chain_detects_tampering(api: TestClient, session: Session) -> None:
-    create(api, login(api, "usr_riya"), "sample_clean", "linkedin")
+    create(api, login(api, "usr_abhi1"), "sample_clean", "linkedin")
     assert audit.verify_chain(session).intact
     session.execute(
         text(
@@ -252,9 +252,25 @@ def test_audit_chain_detects_tampering(api: TestClient, session: Session) -> Non
 
 
 def test_events_stream_replays_completed_review(api: TestClient) -> None:
-    riya = login(api, "usr_riya")
+    riya = login(api, "usr_abhi1")
     review = create(api, riya, "sample_clean", "linkedin")
     token = riya["Authorization"].removeprefix("Bearer ")
     with api.stream("GET", f"/api/reviews/{review['submission']['id']}/events?token={token}") as r:
         body = "".join(r.iter_text())
     assert "event: review_complete" in body
+
+
+def test_receipt_is_issued_only_after_approval(api: TestClient) -> None:
+    riya, neha = login(api, "usr_abhi1"), login(api, "usr_abhi4")
+    review = create(api, riya, "sample_clean", "linkedin")
+    review_id = review["submission"]["id"]
+    assert api.get(f"/api/receipts/{review_id}").status_code == 409
+    api.post(f"/api/reviews/{review_id}/transition", json={"action": "submit"}, headers=riya)
+    api.post(f"/api/reviews/{review_id}/transition", json={"action": "approve"}, headers=neha)
+    receipt = api.get(f"/api/receipts/{review_id}").json()
+    assert receipt["audit_intact"] is True
+    assert receipt["approver"]["id"] == "usr_abhi4"
+    assert receipt["final_score"] == review["revision"]["brand_score"]
+    pdf = api.get(f"/api/receipts/{review_id}/pdf")
+    assert pdf.headers["content-type"] == "application/pdf"
+    assert pdf.content.startswith(b"%PDF")

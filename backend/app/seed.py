@@ -107,7 +107,7 @@ def seed_facts(
         fact.valid_until = _date(row["valid_until"])
         fact.superseded_by = row["superseded_by"] or None
         fact.status = RuleStatus.active
-        fact.created_by, fact.approved_by = "usr_arjun", "usr_neha"
+        fact.created_by, fact.approved_by = "usr_abhi3", "usr_abhi4"
         session.add(fact)
         if fact.embedding is None:
             to_embed.append(fact)
