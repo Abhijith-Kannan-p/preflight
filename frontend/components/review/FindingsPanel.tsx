@@ -21,7 +21,7 @@ interface Props {
   onFocus: (id: string | null) => void;
   canDecide: boolean;
   canEscalate: boolean;
-  onChanged: () => void;
+  onChanged: () => Promise<unknown>;
 }
 
 export function FindingsPanel({ findings, focused, onFocus, canDecide, canEscalate, onChanged }: Props) {
@@ -30,6 +30,7 @@ export function FindingsPanel({ findings, focused, onFocus, canDecide, canEscala
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState<string | null>(null);
   const [showReview, setShowReview] = useState(false);
 
   const main = findings.filter((f) => !f.needs_review);
@@ -42,19 +43,22 @@ export function FindingsPanel({ findings, focused, onFocus, canDecide, canEscala
 
   async function decide(finding: Finding, kind: DecisionKind, extra: { reason?: string; text?: string } = {}) {
     setBusy(true);
+    setSaving(finding.id);
     setError(null);
     try {
       await post(`/api/findings/${finding.id}/decisions`, { kind, ...extra });
       setDialog(null);
-      onChanged();
+      await onChanged(); // keep the card locked until it shows its new status
     } catch (e) {
       setError(e instanceof Error ? e.message : "That did not work.");
     } finally {
       setBusy(false);
+      setSaving(null);
     }
   }
 
   function start(finding: Finding, kind: DecisionKind) {
+    if (saving) return;
     setError(null);
     if (kind === "accept" || kind === "reopen") return void decide(finding, kind);
     setText(kind === "edit" ? finding.suggestion?.text ?? finding.text : "");
@@ -110,6 +114,8 @@ export function FindingsPanel({ findings, focused, onFocus, canDecide, canEscala
                   focused={focused === f.id}
                   canDecide={canDecide}
                   canEscalate={canEscalate}
+                  saving={saving === f.id}
+                  locked={saving !== null}
                   onFocus={() => onFocus(f.id)}
                   onDecide={(kind) => start(f, kind)}
                 />
@@ -129,7 +135,7 @@ export function FindingsPanel({ findings, focused, onFocus, canDecide, canEscala
           {showReview && (
             <div className="mt-3 space-y-3">
               {humanLook.map((f) => (
-                <FindingCard key={f.id} finding={f} focused={focused === f.id} canDecide={canDecide} canEscalate={canEscalate} onFocus={() => onFocus(f.id)} onDecide={(kind) => start(f, kind)} />
+                <FindingCard key={f.id} finding={f} focused={focused === f.id} canDecide={canDecide} canEscalate={canEscalate} saving={saving === f.id} locked={saving !== null} onFocus={() => onFocus(f.id)} onDecide={(kind) => start(f, kind)} />
               ))}
             </div>
           )}

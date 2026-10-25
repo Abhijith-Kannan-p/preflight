@@ -43,6 +43,7 @@ function Workspace() {
   const [focused, setFocused] = useState<string | null>(null);
   const pending = data?.revision.review_status === "pending";
   const refresh = useCallback(() => void mutate(), [mutate]);
+  const reload = useCallback(() => mutate(), [mutate]);
   const stream = useReviewStream(id, data?.revision.number, Boolean(pending), refresh);
 
   useEffect(() => {
@@ -141,7 +142,7 @@ function Workspace() {
               </div>
             ) : (
               <>
-                {tab === "Findings" && <FindingsPanel findings={findings} focused={focused} onFocus={setFocused} canDecide={isAuthor && editable && revision.number === latest} canEscalate={can("escalate")} onChanged={refresh} />}
+                {tab === "Findings" && <FindingsPanel findings={findings} focused={focused} onFocus={setFocused} canDecide={isAuthor && editable && revision.number === latest} canEscalate={can("escalate")} onChanged={reload} />}
                 {tab === "Claim Ledger" && <ClaimLedger claims={claims} />}
                 {tab === "Revisions" && <Revisions reviewId={id} revisions={data.revisions} />}
                 {tab === "Comments" && <Comments reviewId={id} decisions={data.decisions} />}

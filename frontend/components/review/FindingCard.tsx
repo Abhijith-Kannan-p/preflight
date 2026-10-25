@@ -1,7 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
-import { ArrowRight, BookOpen, Check, Flag, MessageSquareWarning, Pencil, Quote, RotateCcw } from "lucide-react";
+import { ArrowRight, BookOpen, Check, Flag, Loader2, MessageSquareWarning, Pencil, Quote, RotateCcw } from "lucide-react";
 import { forwardRef } from "react";
 
 import { SEVERITY_STYLE, driftLabel, pct } from "@/lib/format";
@@ -30,11 +30,15 @@ interface Props {
   focused: boolean;
   canDecide: boolean;
   canEscalate: boolean;
+  /** This card's decision is being saved. */
+  saving?: boolean;
+  /** Another decision is in flight: hold all buttons until it lands. */
+  locked?: boolean;
   onFocus: () => void;
   onDecide: (kind: DecisionKind) => void;
 }
 
-export const FindingCard = forwardRef<HTMLDivElement, Props>(function FindingCard({ finding: f, focused, canDecide, canEscalate, onFocus, onDecide }, ref) {
+export const FindingCard = forwardRef<HTMLDivElement, Props>(function FindingCard({ finding: f, focused, canDecide, canEscalate, saving = false, locked = false, onFocus, onDecide }, ref) {
   const sev = SEVERITY_STYLE[f.severity];
   const drift = driftLabel(f.suggestion?.drift);
   const status = STATUS_LABEL[f.status];
@@ -112,7 +116,12 @@ export const FindingCard = forwardRef<HTMLDivElement, Props>(function FindingCar
         </p>
       )}
 
-      <div className="mt-3 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+      {saving && (
+        <p role="status" className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-navy-500">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Saving your decision…
+        </p>
+      )}
+      <fieldset disabled={locked} className="mt-3 flex flex-wrap gap-2 disabled:opacity-60" onClick={(e) => e.stopPropagation()}>
         {actionable && canDecide && f.suggestion && (
           <button type="button" className="btn-teal py-1.5 text-xs" onClick={() => onDecide("accept")}>
             <Check className="h-3.5 w-3.5" aria-hidden="true" /> Accept
@@ -138,7 +147,7 @@ export const FindingCard = forwardRef<HTMLDivElement, Props>(function FindingCar
             <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" /> Undo
           </button>
         )}
-      </div>
+      </fieldset>
     </div>
   );
 });
