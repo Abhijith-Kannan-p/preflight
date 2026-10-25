@@ -13,8 +13,8 @@ submitted product or in building it.
 
 | Model | Where it runs | Purpose | License |
 |---|---|---|---|
-| `BAAI/bge-small-en-v1.5` (via fastembed, ONNX) | Locally on the backend CPU | 384-d embeddings for dense fact retrieval and semantic-drift scores | MIT |
-| `cross-encoder/nli-deberta-v3-xsmall` (sentence-transformers) | Locally on the backend CPU | Natural-language inference (fact ⇒ claim) in the Claim Ledger | Apache-2.0 |
+| `BAAI/bge-small-en-v1.5`, int8 ONNX export `Xenova/bge-small-en-v1.5` (`onnx/model_quantized.onnx`) | Locally on the backend CPU (ONNX Runtime) | 384-d embeddings for dense fact retrieval and semantic-drift scores | MIT |
+| `cross-encoder/nli-deberta-v3-xsmall`, official int8 ONNX export (`onnx/model_quint8_avx2.onnx`) | Locally on the backend CPU (ONNX Runtime + SentencePiece) | Natural-language inference (fact ⇒ claim) in the Claim Ledger | Apache-2.0 |
 | Google Gemini `gemini-3.5-flash-lite` (Gemini API) | Google, via HTTPS, **after masking** | Claim extraction (proposals only), tone scoring, suggestion wording where the rulebook has none | Google API terms |
 | Groq-hosted model (optional, `LLM_PROVIDER=groq`) | Groq, via HTTPS, after masking | Same as Gemini; alternative provider | Groq API terms |
 
@@ -39,7 +39,6 @@ drafts) is fictional and was written for this project. It lives in `data/seed/`.
 | psycopg 3 | PostgreSQL driver | LGPL-3.0 |
 | Alembic | Database migrations | MIT |
 | pgvector (Python) | Vector column type | MIT |
-| fastembed | Local ONNX embedding runtime | Apache-2.0 |
 | NumPy | Vector maths | BSD-3 |
 | python-multipart | File uploads | Apache-2.0 |
 | python-docx | DOCX intake and sample generation | MIT |
@@ -48,7 +47,11 @@ drafts) is fictional and was written for this project. It lives in `data/seed/`.
 | textstat | Flesch Reading Ease | MIT |
 | reportlab | Sample PDF and Review Receipt PDF | BSD |
 | rank-bm25 | Lexical (BM25) fact retrieval | Apache-2.0 |
-| PyTorch (CPU), sentence-transformers | Runtime for the local NLI model | BSD-3 / Apache-2.0 |
+| ONNX Runtime | Runs both quantised models | MIT |
+| tokenizers (Hugging Face) | bge-small tokenisation | Apache-2.0 |
+| sentencepiece | DeBERTa-v3 tokenisation (lower memory than tokenizers) | Apache-2.0 |
+| huggingface-hub | Downloads model files at build time | Apache-2.0 |
+| PyTorch (CPU), sentence-transformers | Optional NLI backend (`NLI_BACKEND=torch`) | BSD-3 / Apache-2.0 |
 | httpx | Async HTTP client for LLM providers | BSD-3 |
 | pytest, pytest-asyncio, httpx | Tests | MIT / Apache-2.0 / BSD |
 | ruff, mypy | Lint, format, type check | MIT |

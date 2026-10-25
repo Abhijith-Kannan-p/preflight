@@ -15,9 +15,9 @@ data/eval/  150 labelled claims
 e2e/        Playwright tests
 ```
 
-Hosting: frontend on **Vercel**; backend as a Docker image on **Hugging Face Spaces**
-(CPU basic, 16 GB RAM, which fits PyTorch and the NLI model comfortably; Render's free tier
-has 512 MB, too little); Postgres with pgvector on **Neon**.
+Hosting: frontend on **Vercel**; backend on **Render's free plan** (512 MB RAM, 0.1 CPU) from
+`render.yaml`; Postgres with pgvector on **Neon**. `deploy/hf-space/` holds an equivalent Hugging
+Face Docker Space package.
 
 ## Data flow for one review
 
@@ -80,8 +80,8 @@ embedding model is unavailable.
 2. **Retrieve.** Over current facts and, separately, superseded facts: BM25 (rank-bm25) and
    dense cosine over bge-small embeddings stored in a pgvector column, fused with reciprocal
    rank fusion (k = 60), top 5 current and top 3 superseded.
-3. **Verify.** A local CrossEncoder (`cross-encoder/nli-deberta-v3-xsmall`, premise = fact,
-   hypothesis = claim) gives entailment, contradiction and neutral probabilities. **Exact
+3. **Verify.** A local cross-encoder (`cross-encoder/nli-deberta-v3-xsmall` as its official
+   int8 ONNX export, premise = fact, hypothesis = claim) gives entailment, contradiction and neutral probabilities. **Exact
    numeric comparison** extracts quantities with families (time in seconds, counts with the
    counted noun, fees, ratings, currency); a mismatch on the same topic is a contradiction
    regardless of NLI. Rule phrases such as "100% secure" are masked out first so they are not
@@ -167,12 +167,12 @@ precomputes one at boot and shows it on the Evaluation page.
 |---|---|---|---|---|
 | supported | 1.00 | 0.93 | 0.97 | 45 |
 | outdated | 1.00 | 1.00 | 1.00 | 20 |
-| contradicted | 0.94 | 0.97 | 0.96 | 35 |
-| unsupported | 0.86 | 0.91 | 0.89 | 35 |
-| needs_review | 0.67 | 0.67 | 0.67 | 15 |
+| contradicted | 0.94 | 0.94 | 0.94 | 35 |
+| unsupported | 0.85 | 0.94 | 0.89 | 35 |
+| needs_review | 0.71 | 0.67 | 0.69 | 15 |
 
 Accuracy 0.92, macro recall 0.90 (plan target ≥ 0.85, met), problem-claim recall 1.00
-(every claim that must not be published unchanged is flagged), `unsupported` precision 0.86
+(every claim that must not be published unchanged is flagged), `unsupported` precision 0.85
 (plan target 0.90, not met). Failure analysis: five misses are vague claims labelled
 needs_review that the ledger calls unsupported (shown in "Needs a human look" in the app);
 two are claims about a different product or store whose numbers clash ("10% cashback on
@@ -180,8 +180,30 @@ UPI", "4.8 on the Apple App Store"); three are true paraphrases the small NLI mo
 entail. Caveat: the topical-similarity thresholds were calibrated on this same set; a
 held-out split is planned.
 
+## Running in 512 MB
+
+Both models are int8 ONNX files run by ONNX Runtime (no PyTorch). Each was measured inside a
+container capped at 512 MiB and 0.1 CPU, Render's free plan:
+
+| Stage | Resident memory |
+|---|---|
+| App imported | 108 MiB |
+| + bge-small int8 embedder | 223 MiB |
+| + NLI int8 session and SentencePiece | 345 MiB |
+| Full boot + demo history + a LinkedIn review | **362 MiB peak**, no OOM |
+
+What made it fit (`app/ml/onnx.py`, `app/ml/nli.py`): graph optimisation off (it expanded the
+int8 weights to 408 MiB at load; identical outputs without it), no memory arena, one thread;
+SentencePiece instead of `tokenizers` for the 128k DeBERTa vocabulary (56 vs 106 MiB, identical
+ids); `NLI_BATCH_SIZE=2` because DeBERTa's relative attention needs about 20 MiB per pair in
+flight; one inference at a time; `MODEL_LOADING=lazy`; and the evaluation loaded from
+`data/eval/precomputed_run.json` (`EVAL_AT_BOOT=precomputed`). Models are downloaded during
+the build (`backend/scripts/fetch_models.py`) and used with `HF_HUB_OFFLINE=1`. If a model
+fails to load, the Claim Ledger falls back to numeric and lexical checks and every
+deterministic checker still runs.
+
 ## Testing
 
-108 backend tests (pytest, a real Postgres per test with rollback), Playwright end-to-end
+112 backend tests (pytest, a real Postgres per test with rollback), Playwright end-to-end
 tests for the golden path and every page, and CI (ruff, mypy --strict, pytest, eslint, tsc,
 production build) on every push.

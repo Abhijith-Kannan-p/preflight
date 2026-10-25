@@ -22,7 +22,7 @@ abhi5 Admin).
 | 13 | **Privacy and AI transparency**: masking before LLM calls, "AI used in this review" panel | ✅ Done | Review → AI disclosure tab; Rulebook → Confidential terms; Settings → masking switch; receipt footer |
 | 14 | **Evaluation page**: labelled test set, live precision/recall, confusion matrix | ✅ Done | **Evaluation**: 150 labelled claims, per-verdict metrics, confusion matrix, failure cases, Run button |
 | 15 | **Zero-setup demo**: PayWise brand, samples, role switcher, guided tour | ✅ Done | Landing → Try the live demo; four sample drafts; generated demo history; 5-step tour (re-open with "?") |
-| 16 | **Deployed** frontend and backend with health check, plus CI | ✅ Done | Vercel + Hugging Face Spaces; `/health`; "Waking up the engine…" screen; GitHub Actions badge |
+| 16 | **Deployed** frontend and backend with health check, plus CI | ✅ Done | Vercel + Render (free, 512 MB); `/health`; "Waking up the engine…" screen; GitHub Actions badge |
 
 ## Also built
 
@@ -45,11 +45,13 @@ Creator Coach; Rulebook Compiler (brand-book PDF to rules) and Voice Fingerprint
 
 ## Known limitations
 
-- Claim Ledger `unsupported` precision is 0.86 against a 0.90 target. Most misses are vague
+- Claim Ledger `unsupported` precision is 0.85 against a 0.90 target. Most misses are vague
   claims ("trusted by millions") that we labelled `needs_review`; in the app they land in the
   "Needs a human look" group and cost no points.
 - Two retrieval-similarity thresholds were calibrated on the same labelled set we report on;
   there is no held-out split yet.
 - Text inside images and scanned PDFs is not read (Round 3: OCR).
 - Demo authentication is a role switcher with signed tokens, not real accounts.
-- On free hosting the backend sleeps when idle; the first visit can take up to a minute.
+- On Render's free plan the backend sleeps after 15 idle minutes; the first visit takes about a
+  minute, and the first review after waking loads the models (about 10–20 s extra). With 0.1
+  CPU a full review takes roughly 30–40 s; deterministic findings still appear first.

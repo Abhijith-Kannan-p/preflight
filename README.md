@@ -4,7 +4,7 @@
 
 **Content cleared before it goes live.**
 
-**Live demo: https://preflight-eight-smoky.vercel.app** · API: https://kabhijith-preflight-api.hf.space ([OpenAPI docs](https://kabhijith-preflight-api.hf.space/docs))
+**Live demo: https://preflight-eight-smoky.vercel.app** · API: https://preflight-api.onrender.com ([OpenAPI docs](https://preflight-api.onrender.com/docs))
 
 Content is written by many employees, agencies and AI tools, and off-brand language,
 outdated facts and unsupported claims reach the public before the brand owner sees them.
@@ -73,11 +73,11 @@ Full checklist mapped to the Round 1 plan: [docs/FEATURES.md](docs/FEATURES.md).
 
 ```mermaid
 flowchart LR
-  Browser["Next.js 15 on Vercel\n(paper UI, SSE progress)"] -->|REST + SSE| API["FastAPI on HF Spaces"]
+  Browser["Next.js 15 on Vercel\n(paper UI, SSE progress)"] -->|REST + SSE| API["FastAPI on Render"]
   CMS["CMS / pipeline"] -->|"POST /api/v1/preflight\nX-API-Key"| API
   API --> Engine["Review engine\n(checkers run concurrently)"]
   Engine --> Det["Terminology · Disclaimers · Channel\nReadability · Style"]
-  Engine --> Ledger["Claim Ledger\nBM25 + bge-small + RRF\nNLI DeBERTa-v3-xsmall\nnumbers + quote check"]
+  Engine --> Ledger["Claim Ledger\nBM25 + bge-small + RRF\nNLI DeBERTa-v3-xsmall int8 ONNX\nnumbers + quote check"]
   Engine --> Gateway["AI gateway\nmask → Gemini → validate → unmask\ntimeout · retry · circuit breaker"]
   API --> DB[("Postgres + pgvector\n(Neon)")]
   API -->|"HMAC-signed"| Hooks["Webhooks / Slack"]
@@ -89,10 +89,11 @@ Details, data flow and design decisions: [docs/TECHNICAL.md](docs/TECHNICAL.md).
 
 Frontend: Next.js 15, React 19, TypeScript, Tailwind, framer-motion, SWR, Recharts, jsdiff.
 Backend: Python 3.11, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic, PostgreSQL + pgvector,
-fastembed (BAAI/bge-small-en-v1.5), sentence-transformers CrossEncoder
-(cross-encoder/nli-deberta-v3-xsmall), rank-bm25, rapidfuzz, textstat, PyMuPDF, python-docx,
+ONNX Runtime with int8 models (BAAI/bge-small-en-v1.5 embeddings,
+cross-encoder/nli-deberta-v3-xsmall NLI), SentencePiece, rank-bm25, rapidfuzz, textstat, PyMuPDF, python-docx,
 reportlab, httpx. LLM: Google Gemini `gemini-3.5-flash-lite` (Groq also supported, or none).
-Hosting: Vercel (frontend), Hugging Face Spaces Docker (backend), Neon (Postgres).
+Hosting: Vercel (frontend), Render free plan (backend, 512 MB, `render.yaml`), Neon (Postgres).
+A Hugging Face Docker Space package is kept in `deploy/hf-space/` as an alternative.
 
 ## Local setup
 
@@ -106,13 +107,13 @@ The database migrates and seeds itself on first boot. Every variable is document
 [.env.example](.env.example).
 
 Without Docker: `docker compose up -d db`, then in `backend/` create a virtualenv,
-`pip install -r requirements-ml.txt -r requirements-dev.txt`, `alembic upgrade head`,
+`pip install -r requirements-dev.txt`, `python scripts/fetch_models.py`, `alembic upgrade head`,
 `python -m app.seed`, `uvicorn app.main:app`; in `frontend/` run `npm ci && npm run dev`.
 
 ## API example
 
 ```bash
-curl -X POST https://kabhijith-preflight-api.hf.space/api/v1/preflight \
+curl -X POST https://preflight-api.onrender.com/api/v1/preflight \
   -H "X-API-Key: pf_live_..." -H "Content-Type: application/json" \
   -d '{"content": "PayWise is 100% secure!", "channel": "linkedin"}'
 ```
@@ -133,8 +134,9 @@ finding is open. Create a key in **Settings → API keys** (as abhi5).
 - **CI:** ruff, mypy --strict, pytest, eslint, tsc and a production build on every push.
 - **Claim Ledger evaluation** (`python -m app.eval.run`, 150 labelled claims, live on the
   Evaluation page): accuracy **0.92**, macro recall **0.90** (target ≥ 0.85), problem-claim
-  recall **1.00**, `unsupported` precision **0.86** (target 0.90, not yet met; failure cases
-  are listed openly), p50 latency about 125–195 ms per claim on CPU.
+  recall **1.00**, `unsupported` precision **0.85** (target 0.90, not yet met; failure cases
+  are listed openly). Models run as int8 ONNX; the whole backend peaks at 362 MiB under a
+  512 MiB cap.
 
 ## AI and library disclosure
 
