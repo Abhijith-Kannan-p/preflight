@@ -1,5 +1,6 @@
 """Claim Ledger evaluation: the latest run (precomputed at boot) and on-demand re-runs."""
 
+import json
 import logging
 import threading
 from datetime import datetime
@@ -58,11 +59,29 @@ def run_evaluation() -> None:
         _running.release()
 
 
+PRECOMPUTED = "precomputed_run.json"
+
+
+def load_precomputed(session: Session) -> bool:
+    """Store the run shipped in data/eval (made with the same models) as the first EvalRun."""
+    path = get_settings().data_dir / "eval" / PRECOMPUTED
+    if not path.exists():
+        return False
+    result = json.loads(path.read_text(encoding="utf-8"))
+    result["config"] = {**result["config"], "precomputed": True}
+    save(session, result)
+    return True
+
+
 def ensure_evaluation() -> None:
-    """Called after models warm up: make sure judges see results instantly."""
+    """Called after start-up: make sure judges see results instantly. On slow hosts
+    (EVAL_AT_BOOT=precomputed) the shipped run is loaded instead of running 150 claims."""
     with SessionLocal() as session:
-        if session.scalar(select(EvalRun.id).limit(1)) is None:
-            run_evaluation()
+        if session.scalar(select(EvalRun.id).limit(1)) is not None:
+            return
+        if get_settings().eval_at_boot == "precomputed" and load_precomputed(session):
+            return
+    run_evaluation()
 
 
 @router.get("", response_model=EvalStatus)

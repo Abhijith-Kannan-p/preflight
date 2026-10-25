@@ -33,8 +33,10 @@ def bootstrap() -> None:
     from app.api.evaluation import ensure_evaluation
     from app.services.history import ensure_demo_history
 
-    ensure_demo_history()
+    # Evaluation first: when precomputed it is instant, so the page is ready immediately even
+    # while the history is still being generated on a slow host.
     ensure_evaluation()
+    ensure_demo_history()
 
 
 def create_app() -> FastAPI:

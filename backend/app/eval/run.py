@@ -124,12 +124,18 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--no-save", action="store_true", help="do not write an EvalRun")
+    parser.add_argument(
+        "--export", type=Path, help="also write the result as JSON (for EVAL_AT_BOOT=precomputed)"
+    )
     args = parser.parse_args()
     items = load_items(get_settings().data_dir / "eval" / "claims.jsonl")
     with SessionLocal() as session:
         ctx = load_context(session, WORKSPACE_ID, "blog", today=EVAL_DATE)
         result = evaluate(items, ctx, get_nli(), get_embedder())
         _print(result)
+        if args.export:
+            args.export.write_text(json.dumps(result, indent=1, default=str), encoding="utf-8")
+            print(f"Wrote {args.export}")
         if not args.no_save:
             run = save(session, result)
             print(f"\nSaved EvalRun {run.id}")
