@@ -1,0 +1,44 @@
+# Render Blueprint for the Preflight backend on the free plan (512 MB RAM, 0.1 CPU, no card).
+# New → Blueprint → pick this repository. Secrets marked sync: false are asked for once.
+services:
+  - type: web
+    name: preflight-api
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r backend/requirements.txt && python backend/scripts/fetch_models.py
+    startCommand: cd backend && sh start.sh
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      # Fit 512 MB: quantised ONNX models (no PyTorch), lean sessions, loaded on first use.
+      - key: NLI_BACKEND
+        value: onnx
+      - key: MODEL_LOADING
+        value: lazy
+      # Each NLI pair in flight needs about 20 MiB; small batches keep the peak low.
+      - key: NLI_BATCH_SIZE
+        value: "2"
+      # 0.1 CPU is too slow to run 150 claims at boot; load the shipped run (same models).
+      - key: EVAL_AT_BOOT
+        value: precomputed
+      # Models are downloaded during the build into the project folder, then used offline.
+      - key: HF_HOME
+        value: /opt/render/project/src/.models/hf
+      - key: HF_HUB_OFFLINE
+        value: "1"
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: LLM_MODEL
+        value: gemini-3.5-flash-lite
+      - key: LLM_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://preflight-eight-smoky.vercel.app
+      - key: PUBLIC_APP_URL
+        value: https://preflight-eight-smoky.vercel.app
