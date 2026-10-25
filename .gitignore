@@ -18,6 +18,7 @@ htmlcov/
 # Model caches
 .cache/
 models_cache/
+.models/
 
 # Node
 node_modules/

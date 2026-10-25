@@ -8,6 +8,7 @@ import threading
 import time
 from collections.abc import Callable
 
+from app.config import get_settings
 from app.ml.embeddings import get_embedder
 from app.ml.nli import get_nli
 
@@ -19,6 +20,21 @@ _status: dict[str, str | float | None] = {"embedder": None, "nli": None, "second
 
 def _warm(after: Callable[[], None] | None = None) -> None:
     started = time.perf_counter()
+    if get_settings().model_loading == "lazy":
+        # Small hosts: report ready now; models load on the first review that needs them.
+        _status.update(embedder="lazy", nli="lazy", seconds=0.0)
+        _ready.set()
+        log.info("lazy model loading: models load on first use")
+    else:
+        _load(started)
+    if after is not None:
+        try:
+            after()
+        except Exception:
+            log.exception("post-warm-up task failed")
+
+
+def _load(started: float) -> None:
     try:
         embedder = get_embedder()
         if embedder:
@@ -34,11 +50,6 @@ def _warm(after: Callable[[], None] | None = None) -> None:
         _status["seconds"] = round(time.perf_counter() - started, 1)
         _ready.set()
         log.info("models warm: %s", _status)
-    if after is not None:
-        try:
-            after()
-        except Exception:
-            log.exception("post-warm-up task failed")
 
 
 def start_warmup(after: Callable[[], None] | None = None) -> None:

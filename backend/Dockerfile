@@ -5,13 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     HF_HOME=/app/.cache/huggingface \
-    FASTEMBED_CACHE_PATH=/app/.cache/fastembed \
     DATA_DIR=/app/data
 
 WORKDIR /app
 
-COPY backend/requirements-ml.txt .
-RUN pip install -r requirements-ml.txt
 COPY backend/requirements.txt .
 RUN pip install -r requirements.txt
 

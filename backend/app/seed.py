@@ -174,6 +174,30 @@ def seed_samples(session: Session, data_dir: Path, workspace_id: str) -> int:
     return len(rows)
 
 
+def _identity(embedder: Embedder) -> str:
+    return str(getattr(embedder, "identity", embedder.name))
+
+
+def ensure_fact_embeddings(session: Session, workspace_id: str, embedder: Embedder | None) -> int:
+    """Re-embed every fact if the stored vectors came from a different embedding model, so
+    queries and facts always share one vector space. Returns how many facts were embedded."""
+    if embedder is None:
+        return 0
+    workspace = session.get_one(Workspace, workspace_id)
+    identity = _identity(embedder)
+    if workspace.settings.get("embedding_identity") == identity:
+        return 0
+    facts = list(session.scalars(select(Fact).where(Fact.workspace_id == workspace_id)))
+    if facts:
+        vectors = embedder.embed([f.statement for f in facts])
+        for fact, vector in zip(facts, vectors, strict=True):
+            fact.embedding = vector
+    workspace.settings = {**workspace.settings, "embedding_identity": identity}
+    session.commit()
+    log.info("re-embedded %d facts with %s", len(facts), identity)
+    return len(facts)
+
+
 def seed_all(session: Session, data_dir: Path, embedder: Embedder | None) -> dict[str, int]:
     ws = seed_workspace(session, data_dir)
     counts = {
@@ -185,6 +209,7 @@ def seed_all(session: Session, data_dir: Path, embedder: Embedder | None) -> dic
         "sample_drafts": seed_samples(session, data_dir, ws.id),
     }
     session.commit()
+    ensure_fact_embeddings(session, ws.id, embedder)
     return counts
 
 
@@ -203,7 +228,9 @@ def main() -> None:
     data_dir = get_settings().seed_dir
     with SessionLocal() as session:
         if args.if_empty and not is_empty(session):
-            log.info("database already seeded; skipping")
+            # Still align fact vectors with the configured embedding model after an upgrade.
+            reembedded = ensure_fact_embeddings(session, WORKSPACE_ID, get_embedder())
+            log.info("database already seeded; re-embedded %d facts", reembedded)
             return
         counts = seed_all(session, data_dir, get_embedder())
     log.info("seeded PayWise: %s", counts)

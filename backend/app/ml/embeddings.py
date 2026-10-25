@@ -1,4 +1,8 @@
-"""Sentence embeddings with fastembed (BAAI/bge-small-en-v1.5, ONNX on CPU).
+"""Sentence embeddings with BAAI/bge-small-en-v1.5 (384-d), as a quantised ONNX model.
+
+Uses the same quantised export fastembed ships (qdrant/bge-small-en-v1.5-onnx-q), run with a
+lean ONNX Runtime session: CLS pooling and L2 normalisation, exactly as fastembed does for
+bge models, so similarity thresholds calibrated earlier still hold.
 
 The model is loaded once and shared. When SKIP_MODEL_LOAD is set (tests, CI) no model is
 loaded and callers fall back to lexical retrieval only.
@@ -12,8 +16,11 @@ from typing import Protocol
 import numpy as np
 
 from app.config import get_settings
+from app.ml.onnx import lean_session
 
 log = logging.getLogger(__name__)
+MAX_TOKENS = 256
+BATCH = 16
 
 
 class Embedder(Protocol):
@@ -22,15 +29,35 @@ class Embedder(Protocol):
     def embed(self, texts: Sequence[str]) -> list[list[float]]: ...
 
 
-class FastEmbedder:
-    def __init__(self, model_name: str) -> None:
-        from fastembed import TextEmbedding
+class OnnxEmbedder:
+    def __init__(self, model_name: str, onnx_repo: str, onnx_file: str) -> None:
+        from huggingface_hub import hf_hub_download
+        from tokenizers import Tokenizer
 
         self.name = model_name
-        self._model = TextEmbedding(model_name=model_name)
+        self.identity = f"{onnx_repo}/{onnx_file}"  # which exact weights produced the vectors
+        self._tokenizer = Tokenizer.from_file(hf_hub_download(onnx_repo, "tokenizer.json"))
+        self._tokenizer.enable_truncation(max_length=MAX_TOKENS)
+        self._tokenizer.enable_padding()
+        self._session = lean_session(hf_hub_download(onnx_repo, onnx_file))
+        self._inputs = {i.name for i in self._session.get_inputs()}
 
     def embed(self, texts: Sequence[str]) -> list[list[float]]:
-        return [vector.tolist() for vector in self._model.embed(list(texts))]
+        vectors: list[list[float]] = []
+        for start in range(0, len(texts), BATCH):
+            encodings = self._tokenizer.encode_batch(list(texts[start : start + BATCH]))
+            feed = {
+                "input_ids": np.array([e.ids for e in encodings], dtype=np.int64),
+                "attention_mask": np.array([e.attention_mask for e in encodings], dtype=np.int64),
+                "token_type_ids": np.array([e.type_ids for e in encodings], dtype=np.int64),
+            }
+            hidden = self._session.run(None, {k: v for k, v in feed.items() if k in self._inputs})[
+                0
+            ]
+            cls = hidden[:, 0]
+            cls = cls / np.linalg.norm(cls, axis=1, keepdims=True).clip(min=1e-12)
+            vectors += cls.astype(float).tolist()
+        return vectors
 
 
 _lock = threading.Lock()
@@ -43,11 +70,15 @@ def get_embedder() -> Embedder | None:
     global _embedder, _load_failed
     settings = get_settings()
     if settings.skip_model_load or _load_failed:
-        return None
+        return _embedder
     with _lock:
         if _embedder is None:
             try:
-                _embedder = FastEmbedder(settings.embedding_model)
+                _embedder = OnnxEmbedder(
+                    settings.embedding_model,
+                    settings.embedding_onnx_repo,
+                    settings.embedding_onnx_file,
+                )
             except Exception:
                 log.exception("embedding model failed to load; dense retrieval disabled")
                 _load_failed = True

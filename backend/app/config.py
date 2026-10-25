@@ -25,10 +25,24 @@ class Settings(BaseSettings):
     masking_enabled: bool = True
 
     embedding_model: str = "BAAI/bge-small-en-v1.5"
+    # Its int8-quantised ONNX export (34 MB; about 40 MiB resident with a lean session).
+    embedding_onnx_repo: str = "Xenova/bge-small-en-v1.5"
+    embedding_onnx_file: str = "onnx/model_quantized.onnx"
     nli_model: str = "cross-encoder/nli-deberta-v3-xsmall"
+    # "onnx" runs the official int8-quantised export without PyTorch (fits 512 MB hosts).
+    nli_backend: Literal["onnx", "torch"] = "onnx"
+    nli_onnx_file: str = "onnx/model_quint8_avx2.onnx"
+    # Pairs per NLI forward pass; each costs about 20 MiB of working memory (2 on 512 MB hosts).
+    nli_batch_size: int = 16
+    # "lazy" loads models on first use instead of at boot (small hosts that sleep when idle).
+    model_loading: Literal["eager", "lazy"] = "eager"
+    # ONNX graph optimisation: faster, but expands int8 weights in memory (see app/ml/onnx.py).
+    onnx_optimize: bool = False
     skip_model_load: bool = False
     # Generate demo history and precompute the evaluation after boot (off in tests).
     bootstrap_demo: bool = True
+    # "precomputed" loads data/eval/precomputed_run.json instead of running 150 claims at boot.
+    eval_at_boot: Literal["run", "precomputed"] = "run"
 
     cors_origins: str = "http://localhost:3000"
     public_app_url: str = "http://localhost:3000"
