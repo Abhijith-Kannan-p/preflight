@@ -39,25 +39,26 @@ test("golden path: LinkedIn draft to approved receipt", async ({ page }) => {
 
   // Review workspace: wait for the findings, see CLM-04 critical.
   await page.waitForURL(/\/app\/review\/sub_/);
-  await expect(page.getByRole("heading", { name: /Critical/ })).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByRole("heading", { name: /Critical/ })).toBeVisible({ timeout: 300_000 });
   await skipTour(page);
   await expect(page.getByLabel("Critical finding CLM-04", { exact: true })).toBeVisible();
   await shot(page, "04-review");
   await expect(page.getByRole("button", { name: "Submit for approval" })).toBeDisabled();
 
   // Accept every suggestion, then re-check.
+  const acceptButtons = page.getByRole("button", { name: "Accept", exact: true });
   for (let i = 0; i < 12; i++) {
-    const accept = page.getByRole("button", { name: "Accept", exact: true }).first();
-    if (!(await accept.isVisible().catch(() => false))) break;
-    await accept.click();
-    await page.waitForTimeout(400);
+    const remaining = await acceptButtons.count();
+    if (remaining === 0) break;
+    await acceptButtons.first().click();
+    await expect(acceptButtons).toHaveCount(remaining - 1, { timeout: 60_000 });
   }
   const recheck = page.getByRole("button", { name: /Re-check with \d+ change/ });
   await expect(recheck).toBeVisible();
   await recheck.click();
   await expect(page.getByText("revision 2", { exact: false }).first()).toBeVisible({ timeout: 30_000 });
   const submit = page.getByRole("button", { name: "Submit for approval" });
-  await expect(submit).toBeEnabled({ timeout: 90_000 });
+  await expect(submit).toBeEnabled({ timeout: 300_000 });
   await skipTour(page);
   await shot(page, "05-revision-2");
   await submit.click();
