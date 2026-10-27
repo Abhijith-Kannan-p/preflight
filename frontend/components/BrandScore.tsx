@@ -1,37 +1,53 @@
 "use client";
 
-import { motion } from "framer-motion";
+// Instrument-style dial: a thin 240° arc with tick marks and a mono readout. No rainbow donut.
 
 import { InfoTip } from "./ui";
 
-const COLOR = (s: number) => (s >= 85 ? "#0F8B7E" : s >= 60 ? "#D98E1F" : "#C8463D");
+const START = 150; // degrees, measured clockwise from +x (SVG convention)
+const SWEEP = 240;
 
-/** Semicircle gauge from 0 to 100. */
-export function BrandScoreGauge({ score, size = 168, pending = false }: { score: number | null; size?: number; pending?: boolean }) {
-  const value = score ?? 0;
-  const r = size / 2 - 12;
-  const length = Math.PI * r;
-  const shown = pending ? 0 : value / 100;
+function point(cx: number, cy: number, r: number, deg: number) {
+  const rad = (deg * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function arc(cx: number, cy: number, r: number, from: number, to: number) {
+  const a = point(cx, cy, r, from);
+  const b = point(cx, cy, r, to);
+  const large = to - from > 180 ? 1 : 0;
+  return `M ${a.x} ${a.y} A ${r} ${r} 0 ${large} 1 ${b.x} ${b.y}`;
+}
+
+const tone = (s: number) => (s >= 85 ? "rgb(var(--cleared))" : s >= 60 ? "rgb(var(--amber))" : "rgb(var(--signal))");
+
+export function BrandScoreGauge({ score, size = 148, pending = false }: { score: number | null; size?: number; pending?: boolean }) {
+  const value = Math.max(0, Math.min(100, score ?? 0));
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size / 2 - 10;
+  const end = START + (SWEEP * value) / 100;
+  const ticks = Array.from({ length: 11 }, (_, i) => START + (SWEEP * i) / 10);
   return (
     <div className="flex flex-col items-center" data-tour="brand-score">
-      <svg width={size} height={size / 2 + 14} viewBox={`0 0 ${size} ${size / 2 + 14}`} role="img" aria-label={pending ? "Brand Score pending" : `Brand Score ${value} out of 100`}>
-        <path d={`M 12 ${size / 2} A ${r} ${r} 0 0 1 ${size - 12} ${size / 2}`} fill="none" stroke="#ECE4CF" strokeWidth="12" strokeLinecap="round" />
-        <motion.path
-          d={`M 12 ${size / 2} A ${r} ${r} 0 0 1 ${size - 12} ${size / 2}`}
-          fill="none"
-          stroke={COLOR(value)}
-          strokeWidth="12"
-          strokeLinecap="round"
-          strokeDasharray={length}
-          initial={{ strokeDashoffset: length }}
-          animate={{ strokeDashoffset: length * (1 - shown) }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        />
-        <text x="50%" y={size / 2 - 4} textAnchor="middle" className="fill-navy text-4xl font-bold" style={{ fontSize: size / 4.4 }}>
-          {pending ? "…" : value}
+      <svg width={size} height={size * 0.82} viewBox={`0 0 ${size} ${size * 0.82}`} role="img" aria-label={pending ? "Brand Score pending" : `Brand Score ${value} out of 100`}>
+        <path d={arc(cx, cy, r, START, START + SWEEP)} fill="none" stroke="rgb(var(--rule))" strokeWidth="2" />
+        {ticks.map((deg, i) => {
+          const outer = point(cx, cy, r + 5, deg);
+          const inner = point(cx, cy, r - (i % 5 === 0 ? 7 : 3), deg);
+          return <line key={i} x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y} stroke="rgb(var(--graphite))" strokeWidth={i % 5 === 0 ? 1.25 : 0.75} />;
+        })}
+        {!pending && value > 0 && <path d={arc(cx, cy, r, START, end)} fill="none" stroke={tone(value)} strokeWidth="3" strokeLinecap="butt" />}
+        {!pending && (() => {
+          const tip = point(cx, cy, r - 12, end);
+          return <line x1={cx} y1={cy} x2={tip.x} y2={tip.y} stroke="rgb(var(--ink))" strokeWidth="1.25" />;
+        })()}
+        <circle cx={cx} cy={cy} r="3" fill="rgb(var(--ink))" />
+        <text x={cx} y={cy + size * 0.27} textAnchor="middle" className="fill-ink font-mono" style={{ fontSize: size / 5.2, fontWeight: 500 }}>
+          {pending ? "––" : String(value).padStart(2, "0")}
         </text>
       </svg>
-      <span className="-mt-1 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-navy-500">
+      <span className="label -mt-1 flex items-center gap-1">
         Brand Score
         <InfoTip text="100 minus 25 per critical, 10 per major and 3 per minor open finding. Fixing, or disputing with a reason, raises it." />
       </span>
@@ -40,10 +56,11 @@ export function BrandScoreGauge({ score, size = 168, pending = false }: { score:
 }
 
 export function ScorePill({ score }: { score: number | null }) {
-  if (score == null) return <span className="text-sm text-navy-300">—</span>;
+  if (score == null) return <span className="font-mono text-sm text-graphite">––</span>;
   return (
-    <span className="inline-flex min-w-10 justify-center rounded-lg px-2 py-0.5 text-sm font-bold text-white" style={{ backgroundColor: COLOR(score) }}>
-      {score}
+    <span className="inline-flex min-w-[2.5rem] items-center gap-1.5 font-mono text-sm font-medium text-ink">
+      <span className="h-2 w-2" style={{ background: tone(score) }} aria-hidden="true" />
+      {String(score).padStart(2, "0")}
     </span>
   );
 }

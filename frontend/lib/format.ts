@@ -1,25 +1,27 @@
 import type { Severity, State, Verdict } from "./types";
 
-export const SEVERITY_STYLE: Record<Severity, { chip: string; mark: string; dot: string; label: string }> = {
-  critical: { chip: "bg-danger-50 text-danger-700 ring-danger/30", mark: "bg-danger-100 decoration-danger", dot: "bg-danger", label: "Critical" },
-  major: { chip: "bg-amber-50 text-amber-700 ring-amber/30", mark: "bg-amber-100 decoration-amber", dot: "bg-amber", label: "Major" },
-  minor: { chip: "bg-info-50 text-info-700 ring-info/30", mark: "bg-info-100 decoration-info", dot: "bg-info", label: "Minor" },
+// Proof marks on the sheet and matching margin-note accents. Colour carries meaning only.
+export const SEVERITY_STYLE: Record<Severity, { chip: string; mark: string; dot: string; rule: string; stroke: string; label: string }> = {
+  critical: { chip: "border-signal/40 bg-signal-50 text-signal-700", mark: "mark-critical", dot: "bg-signal", rule: "border-signal", stroke: "rgb(var(--signal))", label: "Critical" },
+  major: { chip: "border-amber/40 bg-amber-50 text-amber-700", mark: "mark-major", dot: "bg-amber", rule: "border-amber", stroke: "rgb(var(--amber))", label: "Major" },
+  minor: { chip: "border-slate/40 bg-slate-50 text-slate-700", mark: "mark-minor", dot: "bg-slate", rule: "border-slate", stroke: "rgb(var(--slate))", label: "Minor" },
 };
 
+// Departures-board status codes.
 export const STATE_STYLE: Record<State, { chip: string; label: string }> = {
-  draft: { chip: "bg-paper-100 text-navy-500 ring-paper-200", label: "Draft" },
-  in_review: { chip: "bg-info-50 text-info-700 ring-info/30", label: "In review" },
-  changes_requested: { chip: "bg-amber-50 text-amber-700 ring-amber/30", label: "Changes requested" },
-  approved: { chip: "bg-teal-50 text-teal-700 ring-teal/30", label: "Approved" },
-  published: { chip: "bg-purple-50 text-purple-700 ring-purple/30", label: "Published" },
+  draft: { chip: "border-rule bg-paper text-graphite", label: "Draft" },
+  in_review: { chip: "border-slate/40 bg-slate-50 text-slate-700", label: "Holding" },
+  changes_requested: { chip: "border-amber/40 bg-amber-50 text-amber-700", label: "Changes requested" },
+  approved: { chip: "border-cleared/40 bg-cleared-50 text-cleared-700", label: "Cleared" },
+  published: { chip: "border-ink/30 bg-paper-100 text-ink", label: "Published" },
 };
 
 export const VERDICT_STYLE: Record<Verdict, { chip: string; label: string }> = {
-  supported: { chip: "bg-teal-50 text-teal-700 ring-teal/30", label: "Supported" },
-  outdated: { chip: "bg-amber-50 text-amber-700 ring-amber/30", label: "Outdated" },
-  contradicted: { chip: "bg-danger-50 text-danger-700 ring-danger/30", label: "Contradicted" },
-  unsupported: { chip: "bg-danger-50 text-danger-700 ring-danger/30", label: "Unsupported" },
-  needs_review: { chip: "bg-purple-50 text-purple-700 ring-purple/30", label: "Needs review" },
+  supported: { chip: "border-cleared/40 bg-cleared-50 text-cleared-700", label: "Supported" },
+  outdated: { chip: "border-amber/40 bg-amber-50 text-amber-700", label: "Outdated" },
+  contradicted: { chip: "border-signal/40 bg-signal-50 text-signal-700", label: "Contradicted" },
+  unsupported: { chip: "border-signal/40 bg-signal-50 text-signal-700", label: "Unsupported" },
+  needs_review: { chip: "border-slate/40 bg-slate-50 text-slate-700", label: "Needs review" },
 };
 
 export const CHANNEL_LABEL: Record<string, string> = {

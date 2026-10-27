@@ -36,8 +36,8 @@ export function EngineGate({ children }: { children: React.ReactNode }) {
               ? "Connecting to the database…"
               : "Loading the local verification models (embeddings and NLI). This happens once after a restart."}
         </p>
-        <div className="mt-6 h-1 w-48 overflow-hidden rounded-full bg-paper-100">
-          <motion.div className="h-full w-1/3 rounded-full bg-teal" animate={{ x: ["-100%", "300%"] }} transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }} />
+        <div className="mt-6 h-1 w-48 overflow-hidden rounded-none bg-paper-100">
+          <motion.div className="h-full w-1/3 rounded-none bg-teal" animate={{ x: ["-100%", "300%"] }} transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }} />
         </div>
       </div>
     );

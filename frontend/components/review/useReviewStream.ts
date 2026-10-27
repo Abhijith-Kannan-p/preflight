@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 
 import { API_URL, getToken } from "@/lib/api";
+import type { Verdict } from "@/lib/types";
 
 export type CheckerState = "waiting" | "running" | "done" | "failed";
 
@@ -23,6 +24,7 @@ export const CHECKERS: { name: string; label: string }[] = [
 export interface StreamState {
   checkers: Record<string, { state: CheckerState; findings?: number; ms?: number }>;
   findingsSoFar: number;
+  claims: { text: string; verdict: Verdict }[];
   degraded: string | null;
   done: boolean;
   failed: string | null;
@@ -31,6 +33,7 @@ export interface StreamState {
 const initial = (): StreamState => ({
   checkers: Object.fromEntries(CHECKERS.map((c) => [c.name, { state: "waiting" as CheckerState }])),
   findingsSoFar: 0,
+  claims: [],
   degraded: null,
   done: false,
   failed: null,
@@ -56,6 +59,10 @@ export function useReviewStream(reviewId: string, revisionNumber: number | undef
       update((s) => ({ ...s, checkers: { ...s.checkers, [run.name]: { state: run.ok ? "done" : "failed", findings: run.findings, ms: run.ms } } }));
     });
     source.addEventListener("finding", () => update((s) => ({ ...s, findingsSoFar: s.findingsSoFar + 1 })));
+    source.addEventListener("claim", (e) => {
+      const { text, verdict } = JSON.parse((e as MessageEvent).data);
+      update((s) => ({ ...s, claims: [...s.claims, { text, verdict }] }));
+    });
     source.addEventListener("degraded", (e) => {
       const { reason } = JSON.parse((e as MessageEvent).data);
       update((s) => ({ ...s, degraded: reason ?? "AI checks temporarily limited" }));

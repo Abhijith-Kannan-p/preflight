@@ -2,48 +2,137 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Proof Desk tokens (RGB triplets so Tailwind can apply opacity). */
+:root {
+  --paper: 247 244 236; /* #F7F4EC app background */
+  --paper-deep: 239 234 223; /* table heads, quiet fills */
+  --sheet: 255 253 248; /* #FFFDF8 document surface */
+  --ink: 27 42 74; /* #1B2A4A text and primary */
+  --ink-soft: 42 59 95;
+  --graphite: 91 101 115; /* #5B6573 secondary text */
+  --graphite-light: 150 157 168;
+  --rule: 227 222 210; /* #E3DED2 hairlines */
+  --teal: 15 139 126; /* #0F8B7E primary action */
+  --teal-deep: 11 107 97;
+  --teal-wash: 232 244 241;
+  --teal-wash-strong: 205 233 227;
+  --signal: 200 70 61; /* #C8463D critical */
+  --signal-deep: 158 53 46;
+  --signal-wash: 251 236 234;
+  --signal-wash-strong: 245 210 206;
+  --amber: 217 142 31; /* #D98E1F major */
+  --amber-deep: 138 88 10;
+  --amber-wash: 252 243 228;
+  --amber-wash-strong: 247 226 188;
+  --slate: 47 111 179; /* #2F6FB3 info and minor */
+  --slate-deep: 36 86 137;
+  --slate-wash: 234 241 249;
+  --slate-wash-strong: 211 226 243;
+  --cleared: 30 142 90; /* #1E8E5A cleared */
+  --cleared-deep: 22 104 66;
+  --cleared-wash: 231 244 237;
+}
+
 @layer base {
   html {
     color-scheme: light;
+    font-feature-settings: "tnum" 1; /* tabular numbers everywhere */
   }
   body {
-    @apply bg-paper text-navy antialiased;
+    @apply bg-paper font-sans text-ink antialiased;
   }
   :focus-visible {
     @apply outline-none ring-2 ring-teal ring-offset-2 ring-offset-paper;
   }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+    }
+  }
 }
 
 @layer components {
+  /* Surfaces: hairlines, not shadows. Only the document sheet gets a paper shadow. */
   .card {
-    @apply rounded-2xl border border-paper-200 bg-paper-50 shadow-card;
+    @apply rounded border border-rule bg-sheet;
+  }
+  .sheet {
+    @apply border border-rule bg-sheet shadow-sheet;
+  }
+  .hairline {
+    @apply border-rule;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded px-4 py-2 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-navy text-paper-50 hover:bg-navy-700;
+    @apply btn bg-ink text-sheet hover:bg-ink-soft;
   }
   .btn-teal {
     @apply btn bg-teal text-white hover:bg-teal-700;
   }
   .btn-ghost {
-    @apply btn border border-paper-200 bg-paper-50 text-navy hover:bg-paper-100;
+    @apply btn border border-rule bg-sheet text-ink hover:border-graphite/40 hover:bg-paper;
   }
   .btn-danger {
-    @apply btn bg-danger text-white hover:bg-danger-700;
+    @apply btn bg-signal text-white hover:bg-signal-700;
   }
   .input {
-    @apply w-full rounded-xl border border-paper-200 bg-white px-3 py-2 text-sm text-navy placeholder:text-navy-300 focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/30;
+    @apply w-full rounded border border-rule bg-white px-3 py-2 text-sm text-ink placeholder:text-graphite/70 focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/25;
   }
   .label {
-    @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500;
+    @apply mb-1 block font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-graphite;
+  }
+  .page-title {
+    @apply font-serif text-[28px] font-medium leading-tight tracking-tight text-ink;
+  }
+  .tag {
+    @apply inline-flex items-center gap-1 rounded-sm border border-rule bg-paper px-1.5 py-0.5 font-mono text-[11px] font-medium text-ink;
   }
   .skeleton {
-    @apply relative overflow-hidden rounded-lg bg-paper-100;
+    @apply relative overflow-hidden rounded bg-paper-100;
   }
   .skeleton::after {
     content: "";
     @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/60 to-transparent;
+  }
+
+  /* Proof marks used on the sheet. */
+  .mark-critical {
+    text-decoration: underline wavy rgb(var(--signal));
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 4px;
+    background: rgb(var(--signal-wash));
+  }
+  .mark-major {
+    text-decoration: underline solid rgb(var(--amber));
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+    background: rgb(var(--amber-wash));
+  }
+  .mark-minor {
+    text-decoration: underline dotted rgb(var(--slate));
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  .mark-settled {
+    text-decoration: underline solid rgb(var(--teal) / 0.55);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+  .mark-active {
+    outline: 1.5px solid rgb(var(--ink));
+    outline-offset: 2px;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
   }
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import useSWR from "swr";
 
 import { ReviewList, NoReviews } from "@/components/ReviewList";
-import { EmptyState, ErrorState, PageHeader } from "@/components/ui";
+import { EmptyState, ErrorState, NextStep, PageHeader } from "@/components/ui";
 import { ROLE_LABEL, useSession } from "@/lib/session";
 import type { ReviewListItem } from "@/lib/types";
 
@@ -20,6 +20,7 @@ export default function Dashboard() {
   return (
     <div className="animate-fade-in">
       <PageHeader
+        eyebrow="The desk"
         title={`Welcome, ${user?.name.split(" ")[0]}`}
         subtitle={`You are signed in as ${ROLE_LABEL[user?.role ?? "creator"]}. Switch roles from the top right to see the approver's side.`}
         actions={
@@ -32,26 +33,33 @@ export default function Dashboard() {
       />
 
       {can("submit_content") && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          <div className="card p-5">
-            <p className="label">My reviews</p>
-            <p className="text-3xl font-bold">{mine.data?.length ?? "…"}</p>
+        <>
+          <dl className="mb-6 grid grid-cols-3 divide-x divide-rule border-y border-rule">
+            {[
+              ["My reviews", mine.data ? String(mine.data.length) : "…"],
+              ["Average Brand Score", average != null ? String(average) : "––"],
+              ["Holding for approval", mine.data ? String(mine.data.filter((r) => r.state === "in_review").length) : "…"],
+            ].map(([label, value]) => (
+              <div key={label} className="px-4 py-3 first:pl-0">
+                <dt className="label">{label}</dt>
+                <dd className="font-mono text-[28px] leading-none text-ink">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="mb-8">
+            <NextStep>
+              {mine.data?.some((r) => r.state === "draft" || r.state === "changes_requested")
+                ? "Open a draft below and work through its margin notes."
+                : "Start a new review. The LinkedIn sample shows every kind of mark."}
+            </NextStep>
           </div>
-          <div className="card p-5">
-            <p className="label">Average Brand Score</p>
-            <p className="text-3xl font-bold">{average ?? "—"}</p>
-          </div>
-          <div className="card p-5">
-            <p className="label">Waiting for approval</p>
-            <p className="text-3xl font-bold">{mine.data?.filter((r) => r.state === "in_review").length ?? "…"}</p>
-          </div>
-        </div>
+        </>
       )}
 
       {can("approve") && (
         <section className="mb-8" aria-labelledby="queue">
           <div className="mb-3 flex items-center justify-between">
-            <h2 id="queue" className="text-lg font-semibold">Approval queue</h2>
+            <h2 id="queue" className="font-serif text-xl text-ink">Approval queue</h2>
             <Link href="/app/queue" className="text-sm font-medium text-teal-700 hover:underline">Open queue</Link>
           </div>
           {queue.error ? (
@@ -67,13 +75,13 @@ export default function Dashboard() {
 
       {can("submit_content") ? (
         <section aria-labelledby="mine">
-          <h2 id="mine" className="mb-3 text-lg font-semibold">My reviews</h2>
+          <h2 id="mine" className="mb-3 font-serif text-xl text-ink">My reviews</h2>
           {mine.error ? <ErrorState message={mine.error.message} onRetry={() => mine.mutate()} /> : <ReviewList items={mine.data} empty={<NoReviews />} showAuthor={false} />}
         </section>
       ) : (
         !can("approve") && (
           <section aria-labelledby="all">
-            <h2 id="all" className="mb-3 text-lg font-semibold">All reviews</h2>
+            <h2 id="all" className="mb-3 font-serif text-xl text-ink">All reviews</h2>
             <ReviewList items={all.data} empty={<EmptyState title="No reviews yet" text="Reviews created by creators and brand managers appear here." />} />
           </section>
         )

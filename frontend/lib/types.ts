@@ -139,6 +139,7 @@ export interface Review {
   findings: Finding[];
   claims: Claim[];
   decisions: Decision[];
+  clearance: Clearance | null;
   gate: { can_submit: boolean; can_approve: boolean; blocking: string[]; message: string };
   pending_edits: number;
   permissions: string[];
@@ -204,4 +205,38 @@ export interface Health {
   nli_model: string | null;
   llm_provider: string;
   version: string;
+}
+
+export interface RuleInfo {
+  code: string;
+  category: string;
+  title: string;
+  description: string;
+  severity: string;
+  source_doc: string;
+  source_page: number | null;
+  source_ref: string;
+  version: number;
+  status: string;
+}
+
+export interface FactInfo {
+  id: string;
+  statement: string;
+  source_doc: string;
+  source_page: number | null;
+  source_ref: string;
+  valid_from: string | null;
+  valid_until: string | null;
+  superseded_by: string | null;
+  version: number;
+  status: string;
+  is_current: boolean;
+}
+
+export interface Clearance {
+  approver: string;
+  at: string;
+  audit_hash: string;
+  overrides: number;
 }

@@ -382,8 +382,8 @@ function FactsTab({ canEdit }: { canEdit: boolean }) {
                 )}
               </p>
             </div>
-            <div className="relative mt-1 h-3 self-center rounded-full bg-paper-100" aria-label={`Valid ${f.valid_from ?? "always"} to ${f.valid_until ?? "open-ended"}`}>
-              <span className={clsx("absolute inset-y-0 rounded-full", f.is_current ? "bg-teal" : "bg-navy-300")} style={{ left: `${pos(f.valid_from, TIMELINE_START)}%`, right: `${100 - pos(f.valid_until, TIMELINE_END)}%` }} />
+            <div className="relative mt-1 h-3 self-center rounded-none bg-paper-100" aria-label={`Valid ${f.valid_from ?? "always"} to ${f.valid_until ?? "open-ended"}`}>
+              <span className={clsx("absolute inset-y-0 rounded-none", f.is_current ? "bg-teal" : "bg-navy-300")} style={{ left: `${pos(f.valid_from, TIMELINE_START)}%`, right: `${100 - pos(f.valid_until, TIMELINE_END)}%` }} />
               <span className="absolute -top-1 h-5 w-0.5 bg-navy" style={{ left: `${today}%` }} />
             </div>
             <div className="flex items-center justify-end gap-1">

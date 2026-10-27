@@ -45,7 +45,7 @@ drafts) is fictional and was written for this project. It lives in `data/seed/`.
 | PyMuPDF | PDF text extraction | AGPL-3.0 (used unmodified; source of this project is public) |
 | rapidfuzz | Fuzzy product-name matching | MIT |
 | textstat | Flesch Reading Ease | MIT |
-| reportlab | Sample PDF and Review Receipt PDF | BSD |
+| reportlab | Sample PDF and Clearance Certificate PDF (including its built-in QR widget) | BSD |
 | rank-bm25 | Lexical (BM25) fact retrieval | Apache-2.0 |
 | ONNX Runtime | Runs both quantised models | MIT |
 | tokenizers (Hugging Face) | bge-small tokenisation | Apache-2.0 |
@@ -62,20 +62,22 @@ drafts) is fictional and was written for this project. It lives in `data/seed/`.
 |---|---|---|
 | Next.js 15, React 19 | Web app | MIT |
 | Tailwind CSS 3 | Styling | MIT |
-| Inter (Google Fonts via next/font) | Typeface | OFL |
-| framer-motion | Splash, perspective-tunnel hero, gauge and tour animation | MIT |
+| Newsreader, IBM Plex Sans, IBM Plex Mono (Google Fonts via next/font) | Proof Desk typefaces: serif, sans and mono | OFL |
+| framer-motion | Splash and tour animation | MIT |
 | lucide-react | Icons | ISC |
 | SWR | Data fetching and cache revalidation | MIT |
 | jsdiff (`diff`) | Word-level revision diff | BSD-3 |
 | Recharts | Insights and evaluation charts | MIT |
 | clsx | Class name composition | MIT |
+| qrcode (node-qrcode) | QR code on the Clearance Certificate | MIT |
 | Playwright | Golden-path end-to-end test | Apache-2.0 |
 
 ## Templates and design inspiration
 
-- The landing hero's perspective-tunnel motion was adapted from a "Perspective Tunnel
-  Hero" component snippet (framer-motion) shared by the author. It was rewritten to fly
-  Preflight finding cards instead of photos and to follow normal page scroll.
+- Round 2's landing hero adapted a "Perspective Tunnel Hero" framer-motion snippet shared
+  by the author. Round 3 removed it: the landing now shows a live Proof Sheet specimen.
+- The Round 3 "Proof Desk" visual language (proof marks, margin notes, clearance stamp,
+  boarding-pass certificate) follows the author's design brief; it is not taken from a kit.
 - No UI kit or page template was copied; components are hand-written with Tailwind.
 
 ## Infrastructure

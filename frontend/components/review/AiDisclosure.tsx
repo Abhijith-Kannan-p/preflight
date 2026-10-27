@@ -52,8 +52,8 @@ export function AiDisclosure({ ai, tone }: { ai?: AiSummary; tone?: ToneProfile 
               return (
                 <li key={trait} className="grid grid-cols-[90px_1fr_80px] items-center gap-3 text-xs">
                   <span className="font-medium capitalize">{trait}</span>
-                  <span className="relative h-2 rounded-full bg-paper-100">
-                    <span className={`absolute inset-y-0 left-0 rounded-full ${off ? "bg-amber" : "bg-teal"}`} style={{ width: `${score * 100}%` }} />
+                  <span className="relative h-2 rounded-none bg-paper-100">
+                    <span className={`absolute inset-y-0 left-0 rounded-none ${off ? "bg-amber" : "bg-teal"}`} style={{ width: `${score * 100}%` }} />
                     <span className="absolute -top-1 h-4 w-0.5 bg-navy" style={{ left: `${target * 100}%` }} title={`Target ${target}`} />
                   </span>
                   <span className="text-right font-mono text-navy-500">

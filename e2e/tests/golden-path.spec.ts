@@ -25,7 +25,7 @@ test("golden path: LinkedIn draft to approved receipt", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("status", { name: "Loading Preflight" })).toBeVisible();
   await shot(page, "01-splash");
-  const demo = page.getByRole("link", { name: "Try the live demo" }).first();
+  const demo = page.getByRole("link", { name: "Open the demo desk" }).first();
   await expect(demo).toBeVisible({ timeout: 10_000 });
   await page.waitForTimeout(2200);
   await shot(page, "02-landing");
@@ -37,11 +37,10 @@ test("golden path: LinkedIn draft to approved receipt", async ({ page }) => {
   await shot(page, "03-new-review");
   await page.getByRole("button", { name: "Run Preflight" }).click();
 
-  // Review workspace: wait for the findings, see CLM-04 critical.
+  // Review workspace: wait for the margin notes, see CLM-04 critical.
   await page.waitForURL(/\/app\/review\/sub_/);
-  await expect(page.getByRole("heading", { name: /Critical/ })).toBeVisible({ timeout: 300_000 });
+  await expect(page.getByLabel("Critical finding CLM-04", { exact: true })).toBeVisible({ timeout: 300_000 });
   await skipTour(page);
-  await expect(page.getByLabel("Critical finding CLM-04", { exact: true })).toBeVisible();
   await shot(page, "04-review");
   await expect(page.getByRole("button", { name: "Submit for approval" })).toBeDisabled();
 
@@ -62,7 +61,7 @@ test("golden path: LinkedIn draft to approved receipt", async ({ page }) => {
   await skipTour(page);
   await shot(page, "05-revision-2");
   await submit.click();
-  await expect(page.getByText("In review").first()).toBeVisible();
+  await expect(page.getByText("Holding", { exact: true }).first()).toBeVisible();
 
   // Switch to abhi4 (Approver) and approve.
   await page.locator('[data-tour="role-switcher"] button').first().click();
@@ -70,7 +69,8 @@ test("golden path: LinkedIn draft to approved receipt", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Approve", exact: true }).first()).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: "Approve", exact: true }).first().click();
   await page.getByRole("dialog").getByRole("button", { name: "Approve" }).click();
-  await expect(page.getByText("Approved").first()).toBeVisible();
+  await expect(page.getByText("Cleared", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("img", { name: /Cleared for publication by abhi4/ })).toBeVisible();
 
   // Receipt with a verified audit chain.
   await page.getByRole("link", { name: "View Review Receipt" }).click();
