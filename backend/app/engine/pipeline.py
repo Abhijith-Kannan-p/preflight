@@ -128,6 +128,9 @@ async def run_review(
         await emit("checker_done", run.model_dump())
         return run, found
 
+    for checker in checkers:
+        if isinstance(checker, ClaimLedger):
+            checker.emit = emit
     results = await asyncio.gather(*(run_one(c) for c in checkers))
     runs = [r for r, _ in results]
     findings = merge_findings([f for _, found in results for f in found])

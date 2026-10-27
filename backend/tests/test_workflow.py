@@ -274,3 +274,18 @@ def test_receipt_is_issued_only_after_approval(api: TestClient) -> None:
     pdf = api.get(f"/api/receipts/{review_id}/pdf")
     assert pdf.headers["content-type"] == "application/pdf"
     assert pdf.content.startswith(b"%PDF")
+
+
+def test_clearance_records_approver_and_audit_hash(api: TestClient) -> None:
+    riya, neha = login(api, "usr_abhi1"), login(api, "usr_abhi4")
+    review = create(api, riya, "sample_clean", "linkedin")
+    review_id = review["submission"]["id"]
+    assert review["clearance"] is None
+    api.post(f"/api/reviews/{review_id}/transition", json={"action": "submit"}, headers=riya)
+    approved = api.post(
+        f"/api/reviews/{review_id}/transition", json={"action": "approve"}, headers=neha
+    ).json()
+    clearance = approved["clearance"]
+    assert clearance["approver"] == "abhi4"
+    assert len(clearance["audit_hash"]) == 64
+    assert clearance["overrides"] == 0

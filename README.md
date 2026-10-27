@@ -4,7 +4,7 @@
 
 **Content cleared before it goes live.**
 
-**Live demo: https://preflight-eight-smoky.vercel.app** · API: https://preflight-api.onrender.com ([OpenAPI docs](https://preflight-api.onrender.com/docs))
+**Live demo: https://preflight-eight-smoky.vercel.app** · API: https://preflight-api-nauz.onrender.com ([OpenAPI docs](https://preflight-api-nauz.onrender.com/docs))
 
 Content is written by many employees, agencies and AI tools, and off-brand language,
 outdated facts and unsupported claims reach the public before the brand owner sees them.
@@ -113,7 +113,7 @@ Without Docker: `docker compose up -d db`, then in `backend/` create a virtualen
 ## API example
 
 ```bash
-curl -X POST https://preflight-api.onrender.com/api/v1/preflight \
+curl -X POST https://preflight-api-nauz.onrender.com/api/v1/preflight \
   -H "X-API-Key: pf_live_..." -H "Content-Type: application/json" \
   -d '{"content": "PayWise is 100% secure!", "channel": "linkedin"}'
 ```

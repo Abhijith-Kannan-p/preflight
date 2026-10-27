@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import audit
+from app.config import get_settings
 from app.db import get_session
 from app.models import (
     AuditEvent,
@@ -172,7 +173,9 @@ def receipt(review_id: str, session: Session = Depends(get_session)) -> Receipt:
 def receipt_pdf(review_id: str, session: Session = Depends(get_session)) -> Response:
     from app.services.receipt_pdf import render_receipt_pdf
 
-    data = render_receipt_pdf(build_receipt(session, review_id))
+    origins = get_settings().cors_origin_list
+    url = f"{origins[0]}/receipt/{review_id}" if origins else None
+    data = render_receipt_pdf(build_receipt(session, review_id), url)
     return Response(
         data,
         media_type="application/pdf",

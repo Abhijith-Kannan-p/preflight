@@ -8,7 +8,7 @@ from collections.abc import AsyncIterator
 import jwt
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import audit
@@ -18,6 +18,7 @@ from app.db import get_session
 from app.engine.normalise import IntakeError, from_text, from_upload
 from app.engine.schema import NormalisedDoc
 from app.models import (
+    AuditEvent,
     ChannelProfile,
     Claim,
     Comment,
@@ -33,6 +34,7 @@ from app.models import (
 )
 from app.schemas.reviews import (
     ClaimOut,
+    Clearance,
     CommentIn,
     CommentOut,
     CreatedReview,
@@ -364,6 +366,31 @@ def get_review(
             f.status in ("accepted", "edited") for f in _findings(session, latest.id)
         ),
         permissions=permissions_for(user.role),
+        clearance=_clearance(session, submission),
+    )
+
+
+def _clearance(session: Session, submission: Submission) -> Clearance | None:
+    """Who cleared the item, when, and the audit hash that proves it (for the stamp)."""
+    if submission.approved_by is None or submission.approved_at is None:
+        return None
+    event = session.scalar(
+        select(AuditEvent)
+        .where(AuditEvent.entity_id == submission.id, AuditEvent.action == "approve")
+        .order_by(AuditEvent.id.desc())
+        .limit(1)
+    )
+    overrides = session.scalar(
+        select(func.count())
+        .select_from(Decision)
+        .where(Decision.submission_id == submission.id, Decision.kind == "override")
+    )
+    approver = session.get(User, submission.approved_by)
+    return Clearance(
+        approver=approver.name if approver else submission.approved_by,
+        at=submission.approved_at,
+        audit_hash=event.hash if event else "",
+        overrides=overrides or 0,
     )
 
 

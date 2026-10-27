@@ -37,3 +37,6 @@ e2e/playwright-report/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local commit queue (see docs/PROGRESS.md)
+PENDING_COMMITS.md

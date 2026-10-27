@@ -13,7 +13,7 @@ The LLM never decides truth: it can only propose claims and wording.
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -44,6 +44,7 @@ MIN_LEXICAL_COVERAGE = 0.6
 LEXICAL_SUPPORT_CONFIDENCE = 0.75
 
 ClaimExtractor = Callable[[NormalisedDoc, ReviewContext], Awaitable[list[ClaimCandidate]]]
+ClaimEventSink = Callable[[str, dict[str, Any]], Awaitable[None]]
 
 
 class ClaimRecord(BaseModel):
@@ -159,6 +160,8 @@ class ClaimLedger:
         self.extractor = extractor
         self.records: list[ClaimRecord] = []
         self._retriever: Retriever | None = None
+        # Set by the pipeline to stream each verified claim to the browser.
+        self.emit: ClaimEventSink | None = None
 
     async def run(self, doc: NormalisedDoc, ctx: ReviewContext) -> list[Finding]:
         candidates = detect_claims(doc, ctx)
@@ -191,6 +194,11 @@ class ClaimLedger:
             ]
             record = self._decide(claim, scored[: len(current)], scored[len(current) :], ctx)
             self.records.append(record)
+            if self.emit is not None:
+                await self.emit(
+                    "claim",
+                    {"text": record.text, "verdict": record.verdict, "fact_id": record.fact_id},
+                )
             findings += self._findings(claim, record, scored, ctx, has_offer_disclaimer)
         return findings
 

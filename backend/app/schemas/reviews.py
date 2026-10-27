@@ -96,6 +96,13 @@ class SubmissionOut(ORM):
     updated_at: datetime
 
 
+class Clearance(BaseModel):
+    approver: str
+    at: datetime
+    audit_hash: str
+    overrides: int
+
+
 class ReviewOut(BaseModel):
     submission: SubmissionOut
     revision: RevisionOut
@@ -106,6 +113,7 @@ class ReviewOut(BaseModel):
     gate: Gate
     pending_edits: int
     permissions: list[str]
+    clearance: Clearance | None = None
 
 
 class ReviewListItem(BaseModel):
