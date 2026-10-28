@@ -24,6 +24,16 @@ def test_correct_product_names_are_not_flagged(session: Session) -> None:
     assert check(TerminologyChecker(), text, context(session)) == []
 
 
+def test_web_addresses_are_not_product_name_mistakes(session: Session) -> None:
+    text = (
+        "Learn more at paywise.example or https://paywise.example/merchants, "
+        "or mail help@paywise.in."
+    )
+    assert check(TerminologyChecker(), text, context(session)) == []
+    findings = check(TerminologyChecker(), "Paywise is at paywise.example.", context(session))
+    assert [f.text for f in findings] == ["Paywise"]
+
+
 def test_wrong_multiword_name_is_one_finding(session: Session) -> None:
     findings = check(TerminologyChecker(), "Try Paywise Business today.", context(session))
     assert [(f.text, f.suggestion.text if f.suggestion else None) for f in findings] == [

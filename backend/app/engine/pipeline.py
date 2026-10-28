@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from app.ai.claims import llm_extractor
 from app.ai.session import AiSession
 from app.ai.suggest import add_suggestions
+from app.engine.checkers.accessibility import AccessibilityChecker
 from app.engine.checkers.base import Checker
 from app.engine.checkers.channel import ChannelChecker
 from app.engine.checkers.disclaimer import DisclaimerChecker
@@ -88,6 +89,7 @@ def deterministic_checkers() -> list[Checker]:
         ChannelChecker(),
         ReadabilityChecker(),
         StyleChecker(),
+        AccessibilityChecker(),
     ]
 
 
@@ -98,7 +100,10 @@ async def run_review(
     embedder: Embedder | None = None,
     emit: EventSink = _ignore,
     ai: AiSession | None = None,
+    extra: Sequence[Finding] = (),
 ) -> ReviewResult:
+    """`extra`: findings produced before the text checkers, e.g. by the visual review."""
+
     async def run_one(checker: Checker) -> tuple[CheckerRun, list[Finding]]:
         await emit("checker_started", {"checker": checker.name, "label": checker.label})
         started = time.perf_counter()
@@ -133,7 +138,9 @@ async def run_review(
             checker.emit = emit
     results = await asyncio.gather(*(run_one(c) for c in checkers))
     runs = [r for r, _ in results]
-    findings = merge_findings([f for _, found in results for f in found])
+    findings = merge_findings(
+        [f for _, found in results for f in found] + valid_findings(list(extra), doc, ctx)
+    )
     await emit("checker_started", {"checker": "suggestions", "label": "Suggestions"})
     started = time.perf_counter()
     await add_suggestions(doc, findings, ctx, ai)

@@ -12,13 +12,73 @@
     }
   },
   "settings": {
-    "masking_enabled": true
+    "masking_enabled": true,
+    "brand_palette": [
+      {
+        "name": "PayWise Navy",
+        "hex": "#13294B"
+      },
+      {
+        "name": "PayWise Teal",
+        "hex": "#12A594"
+      },
+      {
+        "name": "Sky",
+        "hex": "#4FB3E8"
+      },
+      {
+        "name": "Sunrise",
+        "hex": "#F5A623"
+      },
+      {
+        "name": "Charcoal",
+        "hex": "#2E3440"
+      },
+      {
+        "name": "Cloud",
+        "hex": "#F4F7FA"
+      },
+      {
+        "name": "White",
+        "hex": "#FFFFFF"
+      }
+    ]
   },
   "users": [
-    { "id": "usr_abhi1", "name": "abhi1", "email": "abhi1@paywise.example", "role": "creator", "title": "Content Marketer" },
-    { "id": "usr_abhi2", "name": "abhi2", "email": "abhi2@paywise.example", "role": "reviewer", "title": "Compliance Reviewer" },
-    { "id": "usr_abhi3", "name": "abhi3", "email": "abhi3@paywise.example", "role": "brand_manager", "title": "Brand Manager" },
-    { "id": "usr_abhi4", "name": "abhi4", "email": "abhi4@paywise.example", "role": "approver", "title": "Head of Communications" },
-    { "id": "usr_abhi5", "name": "abhi5", "email": "abhi5@paywise.example", "role": "admin", "title": "Workspace Admin" }
+    {
+      "id": "usr_abhi1",
+      "name": "abhi1",
+      "email": "abhi1@paywise.example",
+      "role": "creator",
+      "title": "Content Marketer"
+    },
+    {
+      "id": "usr_abhi2",
+      "name": "abhi2",
+      "email": "abhi2@paywise.example",
+      "role": "reviewer",
+      "title": "Compliance Reviewer"
+    },
+    {
+      "id": "usr_abhi3",
+      "name": "abhi3",
+      "email": "abhi3@paywise.example",
+      "role": "brand_manager",
+      "title": "Brand Manager"
+    },
+    {
+      "id": "usr_abhi4",
+      "name": "abhi4",
+      "email": "abhi4@paywise.example",
+      "role": "approver",
+      "title": "Head of Communications"
+    },
+    {
+      "id": "usr_abhi5",
+      "name": "abhi5",
+      "email": "abhi5@paywise.example",
+      "role": "admin",
+      "title": "Workspace Admin"
+    }
   ]
 }

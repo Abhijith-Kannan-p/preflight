@@ -108,3 +108,17 @@ def start_run(user: User = Depends(current_user)) -> dict[str, str]:
         raise HTTPException(status.HTTP_409_CONFLICT, "An evaluation is already running.")
     threading.Thread(target=run_evaluation, daemon=True, name="evaluation").start()
     return {"status": "started"}
+
+
+@router.get("/visual")
+def visual_evaluation() -> dict[str, Any]:
+    """The visual review's evaluation on the 100 labelled assets in data/eval/visual.
+
+    Precomputed with `python -m app.eval.visual --export` (the run's machine and date are in
+    the result): a live run reads 100 images with OCR, which would occupy a 0.1-CPU host for
+    about ten minutes."""
+    path = get_settings().data_dir / "eval" / "visual_run.json"
+    if not path.exists():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No visual evaluation run yet.")
+    result: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return {**result, "precomputed": True}

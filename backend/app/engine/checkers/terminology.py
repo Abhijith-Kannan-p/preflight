@@ -11,13 +11,20 @@ from app.engine.text import TextSpan, find_phrase, overlaps
 
 FUZZY_THRESHOLD = 85
 _TOKEN = re.compile(r"[A-Za-z][A-Za-z-]*")
+# Web addresses, emails and domains are spelled as registered ("paywise.example"): not prose.
+_ADDRESS = re.compile(
+    r"https?://\S+|[\w.+-]+@[\w-]+(?:\.[\w-]+)+|[\w-]+(?:\.[\w-]+)*\.[a-z]{2,}(?![\w-])(?:/\S*)?",
+)
 
 
 class _Taken:
-    """Character ranges already explained, so one span never gets two terminology findings."""
+    """Character ranges already explained, so one span never gets two terminology findings.
+    Web addresses start out taken: they are not checked at all."""
 
-    def __init__(self) -> None:
-        self._ranges: list[tuple[int, int]] = []
+    def __init__(self, text: str = "") -> None:
+        self._ranges: list[tuple[int, int]] = [
+            (m.start(), m.end()) for m in _ADDRESS.finditer(text)
+        ]
 
     def claim(self, span: TextSpan) -> bool:
         if self.has(span):
@@ -48,7 +55,7 @@ class TerminologyChecker:
         names = sorted(
             (t for t in ctx.terms if t.kind == "product_name"), key=lambda t: -len(t.term)
         )
-        taken = _Taken()
+        taken = _Taken(text)
         findings: list[Finding] = []
         for term in names:
             for candidate in (term.term, *term.variants):
@@ -74,7 +81,7 @@ class TerminologyChecker:
             (t for t in ctx.terms if t.kind in ("banned", "discouraged")),
             key=lambda t: -len(t.term),
         )
-        taken = _Taken()
+        taken = _Taken(text)
         findings: list[Finding] = []
         for term in terms:
             rule = ctx.rule(term.rule_code)

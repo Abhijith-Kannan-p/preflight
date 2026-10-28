@@ -15,6 +15,8 @@ FindingType = Literal[
     "disclaimer",
     "channel",
     "readability",
+    "visual",
+    "accessibility",
 ]
 SeverityLevel = Literal["critical", "major", "minor"]
 Detector = Literal["rules", "llm", "nli"]
@@ -30,9 +32,38 @@ class Block(BaseModel):
     start_offset: int
 
 
+class LineBox(BaseModel):
+    """Where a stretch of a block's text sits on a page image (fractions of the page size)."""
+
+    block: int
+    start: int
+    end: int
+    page: int
+    x: float
+    y: float
+    w: float
+    h: float
+
+
+class ImageRef(BaseModel):
+    """An image in or of the document, with its alternative text (None: none given)."""
+
+    name: str
+    alt: str | None
+    source: Literal["upload", "html", "docx"]
+
+
+VISUAL_FORMATS = {"image", "scan"}
+
+
 class NormalisedDoc(BaseModel):
     blocks: list[Block]
     source_format: str = "text"
+    # Visual and rich documents: line boxes from OCR, images with their alt text, and CSS
+    # colours found in HTML emails.
+    layout: list[LineBox] = Field(default_factory=list)
+    images: list[ImageRef] = Field(default_factory=list)
+    colours: list[str] = Field(default_factory=list)
 
     @property
     def text(self) -> str:
@@ -61,6 +92,16 @@ class Evidence(BaseModel):
     score: float | None = None
 
 
+class Region(BaseModel):
+    """A box on a page image, as fractions of the page width and height."""
+
+    page: int = 0
+    x: float = Field(ge=0, le=1)
+    y: float = Field(ge=0, le=1)
+    w: float = Field(ge=0, le=1)
+    h: float = Field(ge=0, le=1)
+
+
 class Suggestion(BaseModel):
     text: str
     drift: float | None = None
@@ -81,6 +122,13 @@ class Finding(BaseModel):
     status: FindingStatus = "open"
     needs_review: bool = False
     related: list[str] = Field(default_factory=list)
+    # Where on the image the issue is (visual reviews). Findings about the whole asset, such
+    # as an off-palette colour or missing alt text, have empty `text` and no span to match.
+    region: Region | None = None
+
+    @property
+    def document_level(self) -> bool:
+        return self.text == ""
 
     @property
     def rank(self) -> float:

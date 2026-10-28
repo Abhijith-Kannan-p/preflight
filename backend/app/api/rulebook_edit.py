@@ -13,7 +13,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import Response
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -46,6 +46,7 @@ from app.schemas.rulebook import (
     TermOut,
 )
 from app.scoped import get_channel, get_fact
+from app.visual.brand import DEFAULT_PALETTE
 
 router = APIRouter(prefix="/api/rulebook", tags=["rulebook (edit)"])
 editor = require(Permission.edit_rulebook)
@@ -688,3 +689,39 @@ def _import_term(session: Session, row: dict[str, str], user: User) -> str:
     for key, value in values.items():
         setattr(term, key, value)
     return "updated"
+
+
+# --- brand palette ---------------------------------------------------------------------
+
+
+class PaletteColour(BaseModel):
+    name: str = Field(min_length=1, max_length=40)
+    hex: str = Field(pattern=r"^#[0-9A-Fa-f]{6}$")
+
+
+class PaletteIn(BaseModel):
+    colours: list[PaletteColour] = Field(min_length=1, max_length=16)
+
+
+@router.get("/palette", response_model=list[PaletteColour])
+def get_palette(
+    ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> list[dict[str, str]]:
+    """The brand colours visuals are checked against (VIS-01)."""
+    workspace = session.get_one(Workspace, ws)
+    return list(workspace.settings.get("brand_palette") or DEFAULT_PALETTE)
+
+
+@router.put("/palette", response_model=list[PaletteColour])
+def set_palette(
+    body: PaletteIn, user: User = Depends(editor), session: Session = Depends(get_session)
+) -> list[dict[str, str]]:
+    workspace = session.get_one(Workspace, user.workspace_id)
+    colours = [{"name": c.name.strip(), "hex": c.hex.upper()} for c in body.colours]
+    workspace.settings = {**workspace.settings, "brand_palette": colours}
+    _bump(session, user.workspace_id, rulebook=True)
+    audit.record(
+        session, "workspace", workspace.id, "palette_updated", user.id, {"colours": colours}
+    )
+    session.commit()
+    return colours

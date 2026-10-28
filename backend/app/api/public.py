@@ -143,4 +143,10 @@ async def preflight_file(
         doc = from_upload(upload.filename or "upload.txt", await upload.read(5 * 1024 * 1024 + 1))
     except IntakeError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    if not isinstance(doc, NormalisedDoc):
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "Images and scanned PDFs are reviewed in the web app (OCR takes several seconds); "
+            "this endpoint takes text, Markdown, DOCX, HTML and PDFs with a text layer.",
+        )
     return await _review(doc, channel, key.workspace_id, session)

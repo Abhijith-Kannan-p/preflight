@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 
 import jwt
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -16,7 +16,7 @@ from app.auth import Permission, can, current_user, permissions_for, require
 from app.config import get_settings
 from app.db import get_session
 from app.engine.normalise import IntakeError, from_text, from_upload
-from app.engine.schema import NormalisedDoc
+from app.engine.schema import VISUAL_FORMATS, ImageRef, NormalisedDoc
 from app.models import (
     AuditEvent,
     Claim,
@@ -24,6 +24,7 @@ from app.models import (
     Decision,
     Finding,
     Revision,
+    RevisionAsset,
     Role,
     Submission,
     SubmissionState,
@@ -56,6 +57,7 @@ from app.services import runner
 from app.services.events import TERMINAL, bus
 from app.services.notify import notify_roles, notify_users
 from app.services.webhooks import dispatch_approval
+from app.visual.intake import VisualUpload, encode_page
 from app.workflow import (
     TransitionError,
     apply_suggestions,
@@ -119,6 +121,7 @@ def _finding_out(f: Finding) -> FindingOut:
         needs_review=f.needs_review,
         related=f.related,
         applied_text=f.applied_text,
+        region=f.region,
     )
 
 
@@ -154,8 +157,14 @@ def _gate(submission: Submission, revision: Revision, findings: list[Finding]) -
     )
 
 
-def _content_hash(doc: NormalisedDoc) -> str:
-    return hashlib.sha256(doc.text.encode()).hexdigest()
+def _content_hash(doc: NormalisedDoc, pages: list[tuple[bytes, float]] | None = None) -> str:
+    """Text, images' alt text and (for visual reviews) the page images themselves."""
+    digest = hashlib.sha256(doc.text.encode())
+    for image in doc.images:
+        digest.update(f"\x00{image.source}:{image.name}:{image.alt}".encode())
+    for data, _ in pages or []:
+        digest.update(data)
+    return digest.hexdigest()
 
 
 def _new_revision(
@@ -165,6 +174,7 @@ def _new_revision(
     user: User,
     number: int,
     content_uri: str | None = None,
+    pages: list[tuple[bytes, float]] | None = None,
 ) -> Revision:
     revision = Revision(
         submission_id=submission.id,
@@ -173,12 +183,31 @@ def _new_revision(
         content_uri=content_uri,
         source_format=doc.source_format,
         normalised_doc=doc.model_dump(),
-        content_hash=_content_hash(doc),
+        content_hash=_content_hash(doc, pages),
         created_by=user.id,
     )
     session.add(revision)
     session.flush()
+    for index, (data, scale) in enumerate(pages or []):
+        session.add(RevisionAsset(revision_id=revision.id, page=index, scale=scale, data=data))
+    session.flush()
     return revision
+
+
+def _visual_doc(
+    upload: VisualUpload, alt_text: str | None
+) -> tuple[NormalisedDoc, list[tuple[bytes, float]]]:
+    """A visual upload waits for OCR: no text blocks yet, just its pages (and its alt text)."""
+    images = (
+        [ImageRef(name=upload.name, alt=(alt_text or "").strip(), source="upload")]
+        if upload.source_format == "image"
+        else []
+    )
+    doc = NormalisedDoc(blocks=[], source_format=upload.source_format, images=images)
+    pages = [
+        (encode_page(page), scale) for page, scale in zip(upload.pages, upload.scales, strict=True)
+    ]
+    return doc, pages
 
 
 def _require_author(user: User, submission: Submission) -> None:
@@ -198,16 +227,19 @@ async def create_review(
     content: str | None = Form(None),
     sample_id: str | None = Form(None),
     file: UploadFile | None = File(None),
+    alt_text: str | None = Form(None, max_length=500),
     user: User = Depends(require(Permission.submit_content)),
     session: Session = Depends(get_session),
 ) -> CreatedReview:
     if get_channel(session, user.workspace_id, channel) is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Unknown channel '{channel}'.")
     content_uri = None
+    pages: list[tuple[bytes, float]] = []
+    loaded: NormalisedDoc | VisualUpload
     try:
         if file is not None and file.filename:
             data = await file.read(5 * 1024 * 1024 + 1)
-            doc = from_upload(file.filename, data)
+            loaded = from_upload(file.filename, data)
             content_uri = file.filename
         elif sample_id:
             sample = get_sample(session, user.workspace_id, sample_id)
@@ -215,27 +247,36 @@ async def create_review(
                 raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown sample.")
             if sample.filename:
                 path = get_settings().seed_dir / "files" / sample.filename
-                doc = from_upload(sample.filename, path.read_bytes())
+                loaded = from_upload(sample.filename, path.read_bytes())
                 content_uri = sample.filename
+                # Image samples keep their suggested alt text in `content`.
+                if alt_text is None and isinstance(loaded, VisualUpload):
+                    alt_text = sample.content
             else:
-                doc = from_text(sample.content)
+                loaded = from_text(sample.content)
             title = title or sample.title
         elif content and content.strip():
-            doc = from_text(content, markdown=content.lstrip().startswith("#"))
+            loaded = from_text(content, markdown=content.lstrip().startswith("#"))
         else:
             raise IntakeError("Paste some text, upload a file or pick a sample draft.")
     except IntakeError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    if isinstance(loaded, VisualUpload):
+        doc, pages = _visual_doc(loaded, alt_text)
+        fallback_title = loaded.name.rsplit(".", 1)[0].replace("_", " ")
+    else:
+        doc = loaded
+        fallback_title = doc.blocks[0].text[:80] if doc.blocks else "Untitled draft"
 
     submission = Submission(
         workspace_id=user.workspace_id,
         author_id=user.id,
         channel=channel,
-        title=(title or doc.blocks[0].text[:80]).strip(),
+        title=(title or fallback_title).strip(),
     )
     session.add(submission)
     session.flush()
-    revision = _new_revision(session, submission, doc, user, 1, content_uri)
+    revision = _new_revision(session, submission, doc, user, 1, content_uri, pages)
     audit.record(
         session,
         "submission",
@@ -630,12 +671,22 @@ def recheck(
     latest = _latest(session, submission)
     if latest.review_status == "pending":
         raise _conflict("Preflight is still checking the current revision.")
-    text = body.content if body.content is not None else _draft(session, latest)[0]
-    try:
-        doc = from_text(text)
-    except IntakeError as exc:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
-    revision = _new_revision(session, submission, doc, user, latest.number + 1)
+    if latest.source_format in VISUAL_FORMATS:
+        # Pixels cannot take text suggestions: run the same pages again (for example after a
+        # rulebook edit). A fixed design comes in through "Upload a new version".
+        previous = NormalisedDoc.model_validate(latest.normalised_doc)
+        doc = NormalisedDoc(blocks=[], source_format=previous.source_format, images=previous.images)
+        pages = [(a.data, a.scale) for a in _assets(session, latest.id)]
+        revision = _new_revision(
+            session, submission, doc, user, latest.number + 1, latest.content_uri, pages
+        )
+    else:
+        text = body.content if body.content is not None else _draft(session, latest)[0]
+        try:
+            doc = from_text(text)
+        except IntakeError as exc:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+        revision = _new_revision(session, submission, doc, user, latest.number + 1)
     audit.record(
         session,
         "submission",
@@ -654,6 +705,74 @@ def recheck(
     session.commit()
     runner.start_review(revision.id)
     return CreatedReview(id=submission.id, revision_id=revision.id)
+
+
+@router.post("/reviews/{review_id}/revisions/upload", response_model=CreatedReview, status_code=201)
+async def upload_version(
+    review_id: str,
+    file: UploadFile = File(...),
+    alt_text: str | None = Form(None, max_length=500),
+    user: User = Depends(current_user),
+    session: Session = Depends(get_session),
+) -> CreatedReview:
+    """A new version of the file (typically a corrected design) as the next revision."""
+    submission = _submission(session, review_id, user.workspace_id)
+    _require_author(user, submission)
+    if submission.state not in EDITABLE_STATES:
+        raise _conflict("New versions can be added to drafts and after changes are requested.")
+    latest = _latest(session, submission)
+    if latest.review_status == "pending":
+        raise _conflict("Preflight is still checking the current revision.")
+    try:
+        loaded = from_upload(file.filename or "upload", await file.read(5 * 1024 * 1024 + 1))
+    except IntakeError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    pages: list[tuple[bytes, float]] = []
+    if isinstance(loaded, VisualUpload):
+        if alt_text is None:
+            previous = NormalisedDoc.model_validate(latest.normalised_doc)
+            alt_text = next((i.alt for i in previous.images if i.source == "upload"), None)
+        doc, pages = _visual_doc(loaded, alt_text)
+    else:
+        doc = loaded
+    revision = _new_revision(
+        session, submission, doc, user, latest.number + 1, file.filename, pages
+    )
+    audit.record(
+        session,
+        "submission",
+        submission.id,
+        "new_version_uploaded",
+        user.id,
+        {"revision": revision.id, "number": revision.number, "file": file.filename},
+    )
+    submission.updated_at = utcnow()
+    session.commit()
+    runner.start_review(revision.id)
+    return CreatedReview(id=submission.id, revision_id=revision.id)
+
+
+def _assets(session: Session, revision_id: str) -> list[RevisionAsset]:
+    return list(
+        session.scalars(
+            select(RevisionAsset)
+            .where(RevisionAsset.revision_id == revision_id)
+            .order_by(RevisionAsset.page)
+        )
+    )
+
+
+@router.get("/assets/{asset_id}")
+def asset(asset_id: str, session: Session = Depends(get_session)) -> Response:
+    """A page image of a visual review. The id is unguessable, like a certificate link."""
+    found = session.get(RevisionAsset, asset_id)
+    if found is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Image not found.")
+    return Response(
+        found.data,
+        media_type=found.mime,
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
 
 
 @router.get("/reviews/{review_id}/diff", response_model=DiffOut)

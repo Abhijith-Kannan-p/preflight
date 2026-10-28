@@ -1,0 +1,1458 @@
+[
+ {
+  "file": "gen_000.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Built for small businesses",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_001.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_002.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "Your money is 100% secure",
+   "Built for small businesses",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_003.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Settle payments in under 10 seconds",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_004.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Simple invoices for growing shops",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_005.png",
+  "ACC-01": true,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Simple invoices for growing shops",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_006.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Track every payment in one place",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_007.jpg",
+  "ACC-01": true,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "100% secure payments, every time",
+   "Settle payments in under 10 seconds",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_008.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": true,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "Your money is 100% secure",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_009.png",
+  "ACC-01": true,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Track every payment in one place",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_010.png",
+  "ACC-01": true,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "Your money is 100% secure",
+   "Settle payments in under 10 seconds",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_011.jpg",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": true,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Bank-grade encryption on every payment",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_012.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [
+   "TRM-02"
+  ],
+  "expected_text": [
+   "Paywise makes payday simple",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_013.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Simple invoices for growing shops",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_014.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Built for small businesses",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_015.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [
+   "TRM-02"
+  ],
+  "expected_text": [
+   "Paywise makes payday simple",
+   "Built for small businesses",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_016.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [
+   "TRM-02"
+  ],
+  "expected_text": [
+   "Paywise makes payday simple",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_017.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Settle payments in under 10 seconds",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_018.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Settle payments in under 10 seconds",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_019.jpg",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Simple invoices for growing shops",
+   "Built for small businesses",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_020.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Built for small businesses",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_021.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_022.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Simple invoices for growing shops",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_023.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Simple invoices for growing shops",
+   "Built for small businesses",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_024.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_025.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_026.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_027.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Settle payments in under 10 seconds",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_028.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Bank-grade encryption on every payment",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_029.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_030.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Settle payments in under 10 seconds",
+   "Built for small businesses",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_031.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_032.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Settle payments in under 10 seconds",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_033.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Bank-grade encryption on every payment",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_034.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-01"
+  ],
+  "expected_text": [
+   "The #1 way to get paid",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_035.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Bank-grade encryption on every payment",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_036.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_037.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "Your money is 100% secure",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_038.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Simple invoices for growing shops",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_039.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [
+   "TRM-02"
+  ],
+  "expected_text": [
+   "Pay smarter with Paywise",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_040.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_041.png",
+  "ACC-01": true,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Bank-grade encryption on every payment",
+   "Get paid faster with PayWise",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_042.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_043.jpg",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Simple invoices for growing shops",
+   "Get paid faster with PayWise",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_044.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-01"
+  ],
+  "expected_text": [
+   "India's #1 payments app",
+   "Built for small businesses",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_045.png",
+  "ACC-01": true,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Settle payments in under 10 seconds",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_046.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Settle payments in under 10 seconds",
+   "Built for small businesses",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_047.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_048.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Simple invoices for growing shops",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_049.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Simple invoices for growing shops",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_050.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Simple invoices for growing shops",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_051.jpg",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_052.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Simple invoices for growing shops",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_053.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_054.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Bank-grade encryption on every payment",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_055.jpg",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Get paid faster with PayWise",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_056.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": true,
+  "VIS-01": true,
+  "text_rules": [
+   "CLM-01"
+  ],
+  "expected_text": [
+   "The #1 way to get paid",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_057.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [
+   "TRM-02"
+  ],
+  "expected_text": [
+   "Pay smarter with Paywise",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_058.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_059.jpg",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Bank-grade encryption on every payment",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_060.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Simple invoices for growing shops",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_061.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Simple invoices for growing shops",
+   "Track every payment in one place",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_062.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-01"
+  ],
+  "expected_text": [
+   "India's #1 payments app",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_063.jpg",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Bank-grade encryption on every payment",
+   "Bank-grade encryption on every payment",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_064.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Get paid faster with PayWise",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_065.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Settle payments in under 10 seconds",
+   "Track every payment in one place",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_066.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "100% secure payments, every time",
+   "Get paid faster with PayWise",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_067.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_068.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-01"
+  ],
+  "expected_text": [
+   "The #1 way to get paid",
+   "Get paid faster with PayWise",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_069.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_070.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [
+   "TRM-02"
+  ],
+  "expected_text": [
+   "Paywise makes payday simple",
+   "Get paid faster with PayWise",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_071.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Simple invoices for growing shops",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_072.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [
+   "TRM-02"
+  ],
+  "expected_text": [
+   "Paywise makes payday simple",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_073.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Simple invoices for growing shops",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_074.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_075.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_076.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-01"
+  ],
+  "expected_text": [
+   "The #1 way to get paid",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_077.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Bank-grade encryption on every payment",
+   "Simple invoices for growing shops",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_078.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_079.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_080.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "100% secure payments, every time",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_081.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "100% secure payments, every time",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_082.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Track every payment in one place",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_083.jpg",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Settle payments in under 10 seconds",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_084.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "100% secure payments, every time",
+   "Simple invoices for growing shops",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_085.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [
+   "TRM-02"
+  ],
+  "expected_text": [
+   "Pay smarter with Paywise",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_086.png",
+  "ACC-01": false,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [
+   "CLM-01"
+  ],
+  "expected_text": [
+   "India's #1 payments app",
+   "Simple invoices for growing shops",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_087.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "Your money is 100% secure",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_088.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_089.png",
+  "ACC-01": true,
+  "logo": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": true,
+  "text_rules": [
+   "CLM-01"
+  ],
+  "expected_text": [
+   "The #1 way to get paid",
+   "Built for small businesses",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_090.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Bank-grade encryption on every payment",
+   "Track every payment in one place",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_091.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Built for small businesses",
+   "Built for small businesses",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_092.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "VIS-01": false,
+  "text_rules": [
+   "TRM-02"
+  ],
+  "expected_text": [
+   "Paywise makes payday simple",
+   "Built for small businesses",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_093.png",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [
+   "CLM-04"
+  ],
+  "expected_text": [
+   "Your money is 100% secure",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_094.png",
+  "ACC-01": true,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": true,
+  "VIS-01": true,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Settle payments in under 10 seconds",
+   "Offer details at paywise.example"
+  ]
+ },
+ {
+  "file": "gen_095.jpg",
+  "ACC-01": false,
+  "logo": true,
+  "VIS-02": true,
+  "VIS-03": true,
+  "VIS-01": false,
+  "text_rules": [],
+  "expected_text": [
+   "Track every payment in one place",
+   "Settle payments in under 10 seconds",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "sample_festive_banner.png",
+  "VIS-01": true,
+  "ACC-01": true,
+  "VIS-02": false,
+  "VIS-03": false,
+  "logo": true,
+  "text_rules": [
+   "CLM-01",
+   "CLM-04"
+  ],
+  "expected_text": [
+   "India's #1 payments app",
+   "100% secure payments this festive season",
+   "Cashback offer valid till 31 December"
+  ]
+ },
+ {
+  "file": "sample_stretched_logo_post.png",
+  "VIS-01": false,
+  "ACC-01": false,
+  "VIS-02": true,
+  "VIS-03": true,
+  "logo": true,
+  "text_rules": [],
+  "expected_text": [
+   "Get paid faster with PayWise",
+   "Simple invoices for growing shops"
+  ]
+ },
+ {
+  "file": "sample_clean_visual.png",
+  "VIS-01": false,
+  "ACC-01": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "logo": true,
+  "text_rules": [],
+  "expected_text": [
+   "Settle payments in under 10 seconds",
+   "Bank-grade encryption on every payment",
+   "Learn more at paywise.example"
+  ]
+ },
+ {
+  "file": "sample_scanned_flyer.png",
+  "VIS-01": false,
+  "ACC-01": false,
+  "VIS-02": false,
+  "VIS-03": false,
+  "logo": true,
+  "text_rules": [],
+  "expected_text": [
+   "PayWise now settles merchant payments in under 5 seconds."
+  ]
+ }
+]

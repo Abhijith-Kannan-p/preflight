@@ -33,6 +33,7 @@ class FindingOut(ORM):
     needs_review: bool
     related: list[str]
     applied_text: str | None
+    region: dict[str, Any] | None = None
 
 
 class ClaimOut(ORM):

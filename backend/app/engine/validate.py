@@ -22,6 +22,8 @@ def check_finding(finding: Finding, doc: NormalisedDoc, ctx: ReviewContext) -> N
     for evidence in finding.evidence:
         if evidence.fact_id not in ctx.facts:
             raise FindingRejected(f"unknown fact {evidence.fact_id}")
+    if finding.document_level:
+        return  # about the whole asset (a colour, a logo, alt text): no text span to match
     if finding.span.block >= len(doc.blocks):
         raise FindingRejected(f"block {finding.span.block} out of range")
     block_text = doc.blocks[finding.span.block].text

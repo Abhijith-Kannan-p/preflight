@@ -16,3 +16,9 @@ CHN-01,channel,LinkedIn limits,"LinkedIn posts: at most 3,000 characters and 5 h
 CHN-02,channel,X limits,Posts on X: at most 280 characters and 2 hashtags.,minor,"{""channel"": ""x""}",channel_playbook.pdf,3,1,active,usr_abhi3,usr_abhi4
 CHN-03,channel,Email subject length,Email subject lines: at most 60 characters.,minor,"{""channel"": ""email""}",channel_playbook.pdf,4,1,active,usr_abhi3,usr_abhi4
 RDB-01,readability,Readable consumer copy,Consumer-channel copy must have a Flesch Reading Ease score of 50 or higher.,minor,"{""min_flesch"": 50, ""max_sentence_words"": 30}",brand_book.pdf,6,1,active,usr_abhi3,usr_abhi4
+VIS-01,visual,Use the brand palette,Colours covering more than 8% of a visual must be within ΔE00 10 of a PayWise brand colour.,major,"{""coverage"": 0.08, ""delta_e"": 10}",brand_book.pdf,17,1,active,usr_abhi3,usr_abhi4
+VIS-02,visual,Never stretch or squash the logo,Scale the logo proportionally. A width-to-height change of more than 5% is a misuse.,major,"{""max_distortion"": 0.05}",brand_book.pdf,18,1,active,usr_abhi3,usr_abhi4
+VIS-03,visual,Keep clear space around the logo,Keep empty space of at least a quarter of the logo's height on every side of it.,minor,"{""ratio"": 0.25}",brand_book.pdf,18,1,active,usr_abhi3,usr_abhi4
+ACC-01,accessibility,Text must meet WCAG 2.2 contrast,"Text in visuals needs a contrast ratio of at least 4.5:1, or 3:1 for large text (WCAG 2.2 AA).",major,"{""normal"": 4.5, ""large"": 3.0}",brand_book.pdf,19,1,active,usr_abhi3,usr_abhi4
+ACC-02,accessibility,Every image needs alt text,"Images in emails and documents need alt text, so screen-reader users get the same message.",major,{},brand_book.pdf,19,1,active,usr_abhi3,usr_abhi4
+ACC-03,accessibility,Write useful alt text,"Alt text describes what the image shows and says. No file names, no ""image of"", no single words.",minor,{},brand_book.pdf,19,1,active,usr_abhi3,usr_abhi4

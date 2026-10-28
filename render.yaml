@@ -6,7 +6,7 @@ services:
     runtime: python
     plan: free
     region: singapore
-    buildCommand: pip install -r backend/requirements.txt && python backend/scripts/fetch_models.py
+    buildCommand: pip install -r backend/requirements.txt && pip install --no-deps -r backend/requirements-ocr.txt && python backend/scripts/fetch_models.py
     startCommand: cd backend && sh start.sh
     healthCheckPath: /health
     envVars:
@@ -26,6 +26,14 @@ services:
       # One review at a time keeps peak memory in budget; 0.1 CPU gains nothing from more.
       - key: REVIEW_WORKERS
         value: "1"
+      # OCR and the NLI model never share memory: NLI is released while an image is read.
+      - key: OCR_EXCLUSIVE
+        value: "true"
+      - key: OCR_THREADS
+        value: "1"
+      # Fewer glibc heaps per thread: much less fragmentation in a threaded server.
+      - key: MALLOC_ARENA_MAX
+        value: "2"
       # Models are downloaded during the build into the project folder, then used offline.
       - key: HF_HOME
         value: /opt/render/project/src/.models/hf

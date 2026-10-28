@@ -24,12 +24,25 @@ from app.config import get_settings
 from app.db import SessionLocal
 from app.engine.context import ReviewContext, load_context
 from app.engine.pipeline import EventSink, ReviewPlan, ReviewResult, default_checkers, run_review
-from app.engine.schema import NormalisedDoc
+from app.engine.schema import VISUAL_FORMATS, NormalisedDoc
 from app.ml import warmup
 from app.ml.embeddings import get_embedder
-from app.ml.nli import get_nli
-from app.models import AiCall, Claim, Finding, Revision, Severity, Submission, utcnow
+from app.ml.memory import trim
+from app.ml.nli import get_nli, release_nli
+from app.models import (
+    AiCall,
+    Claim,
+    Finding,
+    Revision,
+    RevisionAsset,
+    Severity,
+    Submission,
+    utcnow,
+)
 from app.services.events import TERMINAL, bus
+from app.visual import ocr
+from app.visual.analyse import VisualResult, analyse, attach_regions
+from app.visual.intake import decode_page
 
 log = logging.getLogger(__name__)
 
@@ -105,6 +118,13 @@ def _work() -> None:
 
 
 def _run_with_deadline(revision_id: str) -> None:
+    try:
+        _run_and_wait(revision_id)
+    finally:
+        trim()  # let resident memory fall back between reviews
+
+
+def _run_and_wait(revision_id: str) -> None:
     seconds = get_settings().review_timeout_seconds
     job = threading.Thread(
         target=run_revision, args=(revision_id,), daemon=True, name=f"review-{revision_id}"
@@ -173,16 +193,32 @@ def run_revision(revision_id: str, use_llm: bool = True) -> None:
                 return
             bus.publish(revision_id, "review_started", {"revision": revision.number})
             _wait_for_models()
+            doc = NormalisedDoc.model_validate(revision.normalised_doc)
+            # Visual reviews read the image first (OCR), before the NLI model is needed.
+            visual = _read_visual(session, revision, doc, ctx)
+            if visual is not None:
+                doc = visual.doc
             embedder, nli = get_embedder(), get_nli()
             masking = bool(ctx.settings.get("masking_enabled", get_settings().masking_enabled))
             gateway = get_gateway() if use_llm else Gateway(None, timeout=1)
             ai = AiSession(gateway, Masker(ctx.confidential, enabled=masking))
             plan = default_checkers(nli, embedder, ai)
-            doc = NormalisedDoc.model_validate(revision.normalised_doc)
             result = asyncio.run(
-                run_review(doc, ctx, plan.checkers, embedder, _emit(revision_id), ai)
+                run_review(
+                    doc,
+                    ctx,
+                    plan.checkers,
+                    embedder,
+                    _emit(revision_id),
+                    ai,
+                    extra=visual.findings if visual else (),
+                )
             )
-            _persist(session, revision, submission, ctx, result, plan, ai, nli, embedder)
+            if visual is not None:
+                attach_regions(result.findings, doc)
+                revision.normalised_doc = doc.model_dump()
+                revision.content = doc.text
+            _persist(session, revision, submission, ctx, result, plan, ai, nli, embedder, visual)
             if revision_id in _abandoned:
                 return
         except Exception:
@@ -207,6 +243,45 @@ def run_revision(revision_id: str, use_llm: bool = True) -> None:
             TERMINAL,
             {"ok": True, "score": revision.brand_score, "degraded": revision.degraded},
         )
+
+
+def _read_visual(
+    session: Session, revision: Revision, doc: NormalisedDoc, ctx: ReviewContext
+) -> VisualResult | None:
+    """OCR and the visual checks for an image or scan. On a small host the NLI model is
+    released first, so the two never share memory, and OCR is released afterwards."""
+    if doc.source_format not in VISUAL_FORMATS:
+        return None
+    assets = list(
+        session.scalars(
+            select(RevisionAsset)
+            .where(RevisionAsset.revision_id == revision.id)
+            .order_by(RevisionAsset.page)
+        )
+    )
+    if not assets:
+        return None
+    exclusive = get_settings().ocr_exclusive
+    if exclusive:
+        release_nli()
+    try:
+        pages = [decode_page(a.data) for a in assets]
+        result = asyncio.run(
+            analyse(
+                pages,
+                ctx,
+                doc.source_format,
+                doc.images,
+                _emit(revision.id),
+                [a.scale for a in assets],
+            )
+        )
+    finally:
+        if exclusive:
+            ocr.release()
+    for page, page_asset in zip(result.report["pages"], assets, strict=True):
+        page["asset_id"] = page_asset.id
+    return result
 
 
 def _ai_summary(ai: AiSession, nli_name: str | None, embed_name: str | None) -> dict[str, Any]:
@@ -236,6 +311,7 @@ def _persist(
     ai: AiSession,
     nli: Any,
     embedder: Any,
+    visual: VisualResult | None = None,
 ) -> None:
     previous = _previous_statuses(session, revision)
     for position, f in enumerate(result.findings):
@@ -259,6 +335,7 @@ def _persist(
                 needs_review=f.needs_review,
                 related=f.related,
                 position=position,
+                region=f.region.model_dump() if f.region else None,
             )
         )
     for record in plan.ledger.records:
@@ -299,6 +376,12 @@ def _persist(
         "tone": plan.tone.profile.model_dump() if plan.tone.profile else None,
         "ai": _ai_summary(ai, getattr(nli, "name", None), getattr(embedder, "name", None)),
     }
+    if visual is not None:
+        revision.report = {
+            **revision.report,
+            "checkers": visual.runs + revision.report["checkers"],
+            "visual": visual.report,
+        }
     revision.brand_score = result.score.score
     revision.degraded = result.degraded
     revision.context_hash = ctx.fingerprint
@@ -387,6 +470,20 @@ def _reuse_cached(
             )
         )
     revision.report = {**cached.report, "cached_from": cached.id}
+    if "visual" in cached.report:
+        own = list(
+            session.scalars(
+                select(RevisionAsset.id)
+                .where(RevisionAsset.revision_id == revision.id)
+                .order_by(RevisionAsset.page)
+            )
+        )
+        pages = [
+            {**page, "asset_id": asset_id}
+            for page, asset_id in zip(cached.report["visual"]["pages"], own, strict=False)
+        ]
+        revision.report["visual"] = {**cached.report["visual"], "pages": pages}
+        revision.normalised_doc, revision.content = cached.normalised_doc, cached.content
     revision.brand_score, revision.degraded = cached.brand_score, cached.degraded
     revision.context_hash = cached.context_hash
     revision.rulebook_version, revision.factbook_version = (

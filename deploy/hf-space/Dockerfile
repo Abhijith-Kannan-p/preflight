@@ -13,8 +13,8 @@ ENV HOME=/home/user \
     PORT=7860
 
 WORKDIR /app
-COPY backend/requirements.txt ./
-RUN pip install -r requirements.txt
+COPY backend/requirements.txt backend/requirements-ocr.txt ./
+RUN pip install -r requirements.txt && pip install --no-deps -r requirements-ocr.txt
 
 COPY --chown=user backend/ /app/
 COPY --chown=user data/ /app/data/

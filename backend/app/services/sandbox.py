@@ -38,6 +38,7 @@ from app.models import (
     IdempotencyKey,
     Notification,
     Revision,
+    RevisionAsset,
     Rule,
     SampleDraft,
     Submission,
@@ -240,6 +241,7 @@ def clear_workspace(session: Session, workspace_id: str) -> None:
     session.execute(delete(IdempotencyKey).where(IdempotencyKey.scope.in_(users)))
     session.execute(delete(Comment).where(Comment.submission_id.in_(subs)))
     session.execute(delete(Decision).where(Decision.submission_id.in_(subs)))
+    session.execute(delete(RevisionAsset).where(RevisionAsset.revision_id.in_(revs)))
     session.execute(delete(AiCall).where(AiCall.revision_id.in_(revs)))
     session.execute(delete(Claim).where(Claim.revision_id.in_(revs)))
     session.execute(delete(Finding).where(Finding.revision_id.in_(revs)))

@@ -9,8 +9,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY backend/requirements.txt .
-RUN pip install -r requirements.txt
+COPY backend/requirements.txt backend/requirements-ocr.txt ./
+RUN pip install -r requirements.txt && pip install --no-deps -r requirements-ocr.txt
 
 COPY backend/ .
 COPY data/ /app/data/

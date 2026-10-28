@@ -150,6 +150,16 @@ def get_nli() -> NliModel | None:
     return _nli
 
 
+def release_nli() -> None:
+    """Drop the loaded model so its memory can go to OCR; the next `get_nli()` reloads it."""
+    global _nli
+    from app.ml.memory import trim
+
+    with _lock, _inference_lock:
+        _nli = None
+    trim()
+
+
 def set_nli(model: NliModel | None) -> None:
     """Override the shared NLI model (used by tests)."""
     global _nli

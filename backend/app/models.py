@@ -15,6 +15,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -301,6 +302,8 @@ class Finding(Base):
     status: Mapped[str] = mapped_column(String(16), default="open")
     needs_review: Mapped[bool] = mapped_column(Boolean, default=False)
     related: Mapped[list[Any]] = mapped_column(default=list)
+    # Box on the page image for visual findings: {page, x, y, w, h} as fractions.
+    region: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     # Text that replaces the span in the next draft (accepted suggestion or author's edit).
     applied_text: Mapped[str | None] = mapped_column(Text)
     position: Mapped[int] = mapped_column(Integer, default=0)
@@ -467,4 +470,22 @@ class IdempotencyKey(Base):
     path: Mapped[str] = mapped_column(String(300))
     status_code: Mapped[int | None] = mapped_column(Integer)
     body: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RevisionAsset(Base):
+    """A page image of a visual revision (reduced, WebP). Served by an unguessable id, like a
+    shared certificate link, so <img> tags can load it without a token."""
+
+    __tablename__ = "revision_assets"
+
+    id: Mapped[str] = mapped_column(
+        String(40), primary_key=True, default=lambda: f"ast_{secrets.token_hex(12)}"
+    )
+    revision_id: Mapped[str] = mapped_column(ForeignKey("revisions.id"), index=True)
+    page: Mapped[int] = mapped_column(Integer, default=0)
+    mime: Mapped[str] = mapped_column(String(32), default="image/webp")
+    # How much the page was reduced from the original (for WCAG "large text").
+    scale: Mapped[float] = mapped_column(Float, default=1.0)
+    data: Mapped[bytes] = mapped_column(LargeBinary)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

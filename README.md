@@ -107,7 +107,8 @@ The database migrates and seeds itself on first boot. Every variable is document
 [.env.example](.env.example).
 
 Without Docker: `docker compose up -d db`, then in `backend/` create a virtualenv,
-`pip install -r requirements-dev.txt`, `python scripts/fetch_models.py`, `alembic upgrade head`,
+`pip install -r requirements-dev.txt`, `pip install --no-deps -r requirements-ocr.txt`
+(on Python 3.13 add `--ignore-requires-python`), `python scripts/fetch_models.py`, `alembic upgrade head`,
 `python -m app.seed`, `uvicorn app.main:app`; in `frontend/` run `npm ci && npm run dev`.
 
 ## API example

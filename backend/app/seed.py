@@ -217,6 +217,50 @@ def seed_all(session: Session, data_dir: Path, embedder: Embedder | None) -> dic
     return counts
 
 
+def upgrade_template(session: Session, data_dir: Path) -> dict[str, int]:
+    """Bring an existing template up to date with new seed data (new rules, samples, palette)
+    without touching rows that are already there. Runs on every boot; a no-op when current."""
+    ws = session.get_one(Workspace, WORKSPACE_ID)
+    have = set(session.scalars(select(Rule.code).where(Rule.workspace_id == WORKSPACE_ID)))
+    added_rules = 0
+    for row in _read_csv(data_dir / "rules.csv"):
+        if row["id"] in have:
+            continue
+        session.add(
+            Rule(
+                workspace_id=WORKSPACE_ID,
+                code=row["id"],
+                version=int(row["version"]),
+                category=row["category"],
+                title=row["title"],
+                description=row["description"],
+                severity=Severity(row["severity"]),
+                config=json.loads(row["config"]),
+                source_doc=row["source_doc"],
+                source_page=int(row["source_page"]) if row["source_page"] else None,
+                status=RuleStatus(row["status"]),
+                created_by=row["created_by"] or None,
+                approved_by=row["approved_by"] or None,
+            )
+        )
+        added_rules += 1
+    samples = set(
+        session.scalars(select(SampleDraft.id).where(SampleDraft.workspace_id == WORKSPACE_ID))
+    )
+    wanted = {row["id"] for row in _read_json(data_dir / "drafts.json")}
+    added_samples = len(wanted - samples)
+    if added_samples:
+        seed_samples(session, data_dir, WORKSPACE_ID)
+    defaults = _read_json(data_dir / "workspace.json")["settings"]
+    missing = {k: v for k, v in defaults.items() if k not in ws.settings}
+    if missing:
+        ws.settings = {**ws.settings, **missing}
+    if added_rules:
+        ws.rulebook_version += 1
+    session.commit()
+    return {"rules": added_rules, "samples": added_samples, "settings": len(missing)}
+
+
 def is_empty(session: Session) -> bool:
     return session.get(Workspace, WORKSPACE_ID) is None
 
@@ -233,8 +277,11 @@ def main() -> None:
     with SessionLocal() as session:
         if args.if_empty and not is_empty(session):
             # Still align fact vectors with the configured embedding model after an upgrade.
+            upgraded = upgrade_template(session, data_dir)
             reembedded = ensure_fact_embeddings(session, WORKSPACE_ID, get_embedder())
-            log.info("database already seeded; re-embedded %d facts", reembedded)
+            log.info(
+                "database already seeded; added %s; re-embedded %d facts", upgraded, reembedded
+            )
             return
         counts = seed_all(session, data_dir, get_embedder())
     log.info("seeded PayWise: %s", counts)

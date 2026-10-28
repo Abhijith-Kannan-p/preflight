@@ -38,5 +38,55 @@
     "filename": null,
     "description": "On-brand copy where every claim matches an approved fact. Shows that Preflight does not over-flag.",
     "content": "Running a small business means every minute counts. With PayWise Business, you can start taking payments in under 10 minutes with digital KYC. PayWise settles merchant payments in under 10 seconds, and UPI payments on PayWise have zero merchant discount rate. Every payment is protected with bank-grade AES-256 encryption. See how PayWise can help your business grow. #SmallBusiness #Payments"
+  },
+  {
+    "id": "sample_festive_banner",
+    "label": "Festive banner (image)",
+    "title": "Festive season banner",
+    "channel": "linkedin",
+    "format": "png",
+    "filename": "paywise_festive_banner.png",
+    "description": "Text in the image says \"India's #1\" and \"100% secure\"; an off-palette pink block; a low-contrast offer line; weak alt text.",
+    "content": "image of banner.png"
+  },
+  {
+    "id": "sample_scanned_flyer",
+    "label": "Scanned flyer (PDF)",
+    "title": "Merchant update flyer (scan)",
+    "channel": "press_release",
+    "format": "pdf",
+    "filename": "paywise_scanned_flyer.pdf",
+    "description": "An image-only PDF: OCR reads the text, and the Claim Ledger finds a settlement time that was superseded on 2 Sep.",
+    "content": ""
+  },
+  {
+    "id": "sample_email_images",
+    "label": "Email with images (HTML)",
+    "title": "October merchant round-up email",
+    "channel": "email",
+    "format": "html",
+    "filename": "paywise_email_with_images.html",
+    "description": "An HTML email: one image has no alt text, one has a file name as alt text, an off-palette pink and a cashback offer without its disclaimer.",
+    "content": ""
+  },
+  {
+    "id": "sample_stretched_logo",
+    "label": "Stretched-logo post (image)",
+    "title": "Social post with logo",
+    "channel": "linkedin",
+    "format": "png",
+    "filename": "paywise_stretched_logo_post.png",
+    "description": "The PayWise logo stretched 40% wide, with a bar crowding its clear space.",
+    "content": "PayWise logo above the headline: Get paid faster with PayWise."
+  },
+  {
+    "id": "sample_clean_visual",
+    "label": "Clean visual (passes)",
+    "title": "Settlement speed banner",
+    "channel": "linkedin",
+    "format": "png",
+    "filename": "paywise_clean_visual.png",
+    "description": "On-palette, readable, correctly sized logo, and a claim that matches approved fact F-087.",
+    "content": "PayWise banner: settle payments in under 10 seconds, with bank-grade encryption on every payment."
   }
 ]

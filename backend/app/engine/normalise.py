@@ -1,23 +1,45 @@
-"""Turn pasted text, Markdown, DOCX or PDF into a NormalisedDoc of text blocks with offsets."""
+"""Turn pasted text, Markdown, DOCX, PDF or an HTML email into a NormalisedDoc of text blocks
+with offsets. Images and scanned PDFs become a VisualUpload, read later by OCR."""
 
 import io
 import re
+from html.parser import HTMLParser
+from pathlib import PurePosixPath
+from typing import ClassVar
 
-from app.engine.schema import Block, NormalisedDoc
+from app.engine.schema import Block, ImageRef, NormalisedDoc
+from app.visual.intake import (
+    IMAGE_EXTENSIONS,
+    VisualIntakeError,
+    VisualUpload,
+    is_scanned,
+    load_image,
+    rasterise_pdf,
+)
 
 MAX_FILE_BYTES = 5 * 1024 * 1024
 MAX_CHARS = 20_000
 
-SUPPORTED_EXTENSIONS = {".txt": "text", ".md": "markdown", ".docx": "docx", ".pdf": "pdf"}
+SUPPORTED_EXTENSIONS = {
+    ".txt": "text",
+    ".md": "markdown",
+    ".docx": "docx",
+    ".pdf": "pdf",
+    ".html": "html",
+    ".htm": "html",
+    **{ext: "image" for ext in IMAGE_EXTENSIONS},
+}
 
 
 class IntakeError(ValueError):
     """Raised with a user-facing message when content cannot be read."""
 
 
-def _blocks_from_paragraphs(paragraphs: list[str], source_format: str) -> NormalisedDoc:
+def _blocks_from_paragraphs(
+    paragraphs: list[str], source_format: str, allow_empty: bool = False
+) -> NormalisedDoc:
     cleaned = [p.strip() for p in paragraphs if p and p.strip()]
-    if not cleaned:
+    if not cleaned and not allow_empty:
         raise IntakeError("No readable text was found. Paste text or upload a text-based file.")
     total = sum(len(p) for p in cleaned) + 2 * (len(cleaned) - 1)
     if total > MAX_CHARS:
@@ -69,10 +91,24 @@ def from_docx(data: bytes) -> NormalisedDoc:
     for table in document.tables:
         for row in table.rows:
             paragraphs.append(" | ".join(cell.text.strip() for cell in row.cells))
-    return _blocks_from_paragraphs(paragraphs, "docx")
+    images = _docx_images(document)
+    doc = _blocks_from_paragraphs(paragraphs, "docx", allow_empty=bool(images))
+    doc.images = images
+    return doc
 
 
-def from_pdf(data: bytes) -> NormalisedDoc:
+def _docx_images(document: object) -> list[ImageRef]:
+    """Inline pictures with their alt text (Word stores it as the drawing's `descr`)."""
+    refs: list[ImageRef] = []
+    for shape in getattr(document, "inline_shapes", []):
+        doc_pr = shape._inline.docPr
+        alt = doc_pr.get("descr") or doc_pr.get("title")
+        refs.append(ImageRef(name=doc_pr.get("name") or "picture", alt=alt, source="docx"))
+    return refs
+
+
+def from_pdf(data: bytes, name: str = "document.pdf") -> NormalisedDoc | VisualUpload:
+    """A PDF with a text layer becomes text blocks; a scan becomes page images for OCR."""
     import fitz
 
     try:
@@ -83,29 +119,111 @@ def from_pdf(data: bytes) -> NormalisedDoc:
     with document:
         if document.needs_pass:
             raise IntakeError("This PDF is password-protected.")
+        if is_scanned(document):
+            try:
+                return rasterise_pdf(document, name)
+            except VisualIntakeError as exc:
+                raise IntakeError(str(exc)) from exc
         for page in document:
             for block in page.get_text("blocks", sort=True):
                 if block[6] == 0:  # text block, not image
                     paragraphs.append(" ".join(block[4].split()))
-    if not any(p.strip() for p in paragraphs):
-        raise IntakeError(
-            "This PDF has no text layer (it may be scanned). Image and OCR review is planned "
-            "for Round 3."
-        )
     return _blocks_from_paragraphs(paragraphs, "pdf")
 
 
-def from_upload(filename: str, data: bytes) -> NormalisedDoc:
+class _EmailParser(HTMLParser):
+    """Text by block element, <img> tags with their alt attribute, and CSS colours."""
+
+    BLOCK: ClassVar[set[str]] = {
+        "p",
+        "div",
+        "td",
+        "th",
+        "li",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "tr",
+        "br",
+    }
+    SKIP: ClassVar[set[str]] = {"script", "style", "head", "title"}
+    COLOUR = re.compile(
+        r"(?:^|[;\s])(?:background-color|background|color)\s*:\s*(#[0-9a-f]{3,6})\b", re.I
+    )
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.paragraphs: list[str] = [""]
+        self.images: list[ImageRef] = []
+        self.colours: list[str] = []
+        self._skipping = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        values = dict(attrs)
+        if tag in self.SKIP:
+            self._skipping += 1
+        if tag in self.BLOCK:
+            self.paragraphs.append("")
+        style = values.get("style") or ""
+        self.colours += [m.group(1) for m in self.COLOUR.finditer(style)]
+        for key in ("bgcolor", "color"):
+            value = values.get(key)
+            if value and re.fullmatch(r"#[0-9a-fA-F]{3,6}", value):
+                self.colours.append(value)
+        if tag == "img":
+            src = values.get("src") or "image"
+            name = PurePosixPath(src.split("?")[0]).name or "image"
+            self.images.append(ImageRef(name=name, alt=values.get("alt"), source="html"))
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self.SKIP and self._skipping:
+            self._skipping -= 1
+        if tag in self.BLOCK:
+            self.paragraphs.append("")
+
+    def handle_data(self, data: str) -> None:
+        if not self._skipping:
+            self.paragraphs[-1] += " " + " ".join(data.split())
+
+
+def from_html(data: bytes) -> NormalisedDoc:
+    """An HTML email: its text, its images' alt text and the colours its CSS uses. Remote
+    images are not downloaded (upload an image itself for a visual review)."""
+    try:
+        markup = data.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        markup = data.decode("latin-1")
+    parser = _EmailParser()
+    parser.feed(markup)
+    paragraphs = [" ".join(p.split()) for p in parser.paragraphs]
+    doc = _blocks_from_paragraphs(paragraphs, "html", allow_empty=bool(parser.images))
+    doc.images, doc.colours = parser.images, parser.colours
+    return doc
+
+
+def from_upload(filename: str, data: bytes) -> NormalisedDoc | VisualUpload:
     if len(data) > MAX_FILE_BYTES:
         raise IntakeError("Files must be 5 MB or smaller.")
     extension = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     kind = SUPPORTED_EXTENSIONS.get(extension)
     if kind is None:
-        raise IntakeError("Unsupported file type. Upload DOCX, PDF, TXT or MD.")
+        raise IntakeError(
+            "Unsupported file type. Upload DOCX, PDF, TXT, MD, HTML or a PNG, JPG or WebP image."
+        )
     if kind == "docx":
         return from_docx(data)
     if kind == "pdf":
-        return from_pdf(data)
+        return from_pdf(data, filename)
+    if kind == "html":
+        return from_html(data)
+    if kind == "image":
+        try:
+            return load_image(filename, data)
+        except VisualIntakeError as exc:
+            raise IntakeError(str(exc)) from exc
     try:
         text = data.decode("utf-8-sig")
     except UnicodeDecodeError as exc:

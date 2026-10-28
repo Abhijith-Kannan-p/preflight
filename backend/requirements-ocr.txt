@@ -1,0 +1,6 @@
+# RapidOCR (PP-OCRv4 models on ONNX Runtime, bundled in the wheel). Install with --no-deps:
+#   pip install --no-deps -r requirements-ocr.txt
+# Its metadata asks for the full opencv-python, which needs system GUI libraries; we use
+# opencv-python-headless from requirements.txt instead. Its other imports (numpy, onnxruntime,
+# pillow, pyclipper, shapely, pyyaml) are all pinned there.
+rapidocr-onnxruntime==1.4.4

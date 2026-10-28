@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     # Reviews run as queued jobs on this many worker threads, each with a hard time budget.
     review_workers: int = 2
     review_timeout_seconds: float = 120.0
+    # OCR: ONNX threads (-1 = all cores) and, on small hosts, never keep the OCR and NLI
+    # models in memory at the same time.
+    ocr_threads: int = -1
+    ocr_exclusive: bool = False
 
     data_dir: Path = REPO_ROOT / "data"
 
