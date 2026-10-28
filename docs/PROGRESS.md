@@ -23,11 +23,17 @@ Updated after every commit checkpoint. Build order follows section 13 of the Rou
   - Tests: backend 143 (new: sandboxes 8, queue 2, idempotency 6, bad input 14), e2e 6 including
     a two-browser isolation test; five concurrent reviews all completed locally.
 
+- 4. Improvement 1: Visual and accessibility review (2026-10-28): intake for images, scans
+  and HTML; RapidOCR with layout; VIS-01/02/03 and ACC-01/02/03; Visual Review desk; palette
+  editor; five samples and a PayWise logo; 100-asset labelled set and evaluation tab
+  (precision 1.00, recall 0.99, OCR words 98.3%). Measured at 512 MB / 0.1 CPU: server peak
+  437 MiB, OCR 6.8 s per banner (target 6 s missed on 0.1 CPU; 1.3 s on a normal CPU).
+  Tests: backend 185, e2e 7.
+
 ## In progress
-- 4. Improvement 1: Visual and accessibility review
+- 5. Improvement 2: Governance intelligence
 
 ## Next
-- 5. Improvement 2: Governance intelligence
 - 6. Improvement 3: Brand Autopilot
 - 7. Round 2 loose ends
 - 8. Hardening and testing

@@ -35,6 +35,53 @@ export interface Finding {
   needs_review: boolean;
   related: string[];
   applied_text: string | null;
+  /** Where on the page image the issue is (visual reviews), as fractions of the page. */
+  region?: Region | null;
+}
+
+export interface Region {
+  page: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface PaletteEntry {
+  hex: string;
+  coverage: number;
+  nearest: { name: string; hex: string };
+  delta_e: number;
+  off_palette: boolean;
+}
+
+export interface ContrastEntry {
+  text: string;
+  ratio: number;
+  needed: number;
+  large: boolean;
+  passed: boolean;
+  foreground: string;
+  background: string;
+  region: Region;
+}
+
+export interface VisualPage {
+  index: number;
+  width: number;
+  height: number;
+  asset_id: string;
+  palette: PaletteEntry[];
+  contrast: ContrastEntry[];
+  logo: { region: Region; aspect: number; distortion: number; score: number; clear_space: { region: Region; occupied: number } | null } | null;
+  lines: number;
+}
+
+export interface VisualReport {
+  pages: VisualPage[];
+  brand_palette: { name: string; hex: string }[];
+  timings_ms: Record<string, number>;
+  thresholds: Record<string, number>;
 }
 
 export interface Claim {
@@ -94,6 +141,7 @@ export interface Report {
   cached_from?: string;
   /** Why the review failed, e.g. it ran past its time budget. */
   error?: string;
+  visual?: VisualReport;
 }
 
 export interface RevisionSummary {

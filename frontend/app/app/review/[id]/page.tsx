@@ -16,6 +16,7 @@ import { ClearanceStamp } from "@/components/review/ClearanceStamp";
 import { Comments } from "@/components/review/Comments";
 import { PreflightChecklist } from "@/components/review/PreflightChecklist";
 import { ProofDesk } from "@/components/review/ProofDesk";
+import { VisualDesk } from "@/components/review/VisualDesk";
 import { Revisions } from "@/components/review/Revisions";
 import { SourceProvider } from "@/components/review/SourcePanel";
 import { type StreamState, useReviewStream } from "@/components/review/useReviewStream";
@@ -56,6 +57,8 @@ function nextStep(
     case "draft":
     case "changes_requested":
       if (!isAuthor) return { tone: "ink", text: `Waiting for ${submission.author.name} to work through the margin notes.` };
+      if (["image", "scan"].includes(revision.source_format) && !gate.can_submit)
+        return { tone: "signal", text: "Fix the design, then upload the corrected file as a new version. Or dispute a note with a reason." };
       if (edits > 0) return { tone: "ink", text: `Re-check to apply your ${edits} change${edits > 1 ? "s" : ""} as revision ${revision.number + 1}.` };
       if (!gate.can_submit) return { tone: "signal", text: `Fix or dispute the ${gate.blocking.length} critical note${gate.blocking.length === 1 ? "" : "s"} marked in red, then re-check.` };
       return { tone: "ink", text: "No critical notes are open. Submit for approval." };
@@ -118,6 +121,7 @@ function Workspace() {
   const openCount = findings.filter((f) => ["open", "escalated", "disputed"].includes(f.status) && !f.needs_review).length;
   const latest = data.revisions.at(-1)?.number ?? revision.number;
   const step = nextStep(data, isAuthor, can("approve"), pending, stream);
+  const visual = revision.source_format === "image" || revision.source_format === "scan";
   const queued = stream.queue?.position ?? data.queue_position;
 
   return (
@@ -151,7 +155,7 @@ function Workspace() {
                   : `Checking · ${stream.findingsSoFar} found so far${stream.reconnecting ? " · reconnecting" : ""}`
                 : `${openCount} open · ${claims.length} claims checked`}
             </p>
-            <PreflightChecklist stream={stream} report={revision.report.checkers} pending={pending} claims={claims} />
+            <PreflightChecklist stream={stream} report={revision.report.checkers} pending={pending} claims={claims} visual={visual} />
           </div>
           <div className="space-y-3 md:col-span-2 xl:col-span-1">
             <NextStep tone={step.tone}>{step.text}</NextStep>
@@ -184,24 +188,43 @@ function Workspace() {
         </div>
 
         <div role="tabpanel">
-          {tab === "Proof" && (
-            <ProofDesk
-              blocks={revision.blocks}
-              findings={findings}
-              pending={pending}
-              focused={focused}
-              onFocus={setFocused}
-              canDecide={isAuthor && editable && revision.number === latest}
-              canEscalate={can("escalate")}
-              onChanged={reload}
-              header={
-                <p className="mb-6 flex flex-wrap justify-between gap-2 border-b border-rule pb-3 font-mono text-[11px] uppercase tracking-wide text-graphite">
-                  <span>{revision.source_format} · {revision.content.length.toLocaleString()} characters</span>
-                  <span>Proof {String(revision.number).padStart(2, "0")}</span>
-                </p>
-              }
-            />
-          )}
+          {tab === "Proof" &&
+            (visual ? (
+              <VisualDesk
+                blocks={revision.blocks}
+                findings={findings}
+                report={revision.report}
+                pending={pending}
+                focused={focused}
+                onFocus={setFocused}
+                canDecide={isAuthor && editable && revision.number === latest}
+                canEscalate={can("escalate")}
+                onChanged={reload}
+                header={
+                  <p className="mb-4 flex flex-wrap justify-between gap-2 border-b border-rule pb-3 font-mono text-[11px] uppercase tracking-wide text-graphite">
+                    <span>{revision.source_format === "scan" ? "Scanned PDF" : "Image"} · visual and accessibility review</span>
+                    <span>Proof {String(revision.number).padStart(2, "0")}</span>
+                  </p>
+                }
+              />
+            ) : (
+              <ProofDesk
+                blocks={revision.blocks}
+                findings={findings}
+                pending={pending}
+                focused={focused}
+                onFocus={setFocused}
+                canDecide={isAuthor && editable && revision.number === latest}
+                canEscalate={can("escalate")}
+                onChanged={reload}
+                header={
+                  <p className="mb-6 flex flex-wrap justify-between gap-2 border-b border-rule pb-3 font-mono text-[11px] uppercase tracking-wide text-graphite">
+                    <span>{revision.source_format} · {revision.content.length.toLocaleString()} characters</span>
+                    <span>Proof {String(revision.number).padStart(2, "0")}</span>
+                  </p>
+                }
+              />
+            ))}
           {tab !== "Proof" && pending && tab !== "Comments" ? (
             <div className="space-y-3">
               <Skeleton className="h-28" />

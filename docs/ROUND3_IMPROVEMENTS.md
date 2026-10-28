@@ -3,33 +3,69 @@
 Each builds directly on the Round 2 engine: the typed Finding contract, the Brand Knowledge
 Base, the Claim Ledger, the AI gateway with masking, and the workflow with its audit log.
 
-## 1. Visual and accessibility review
+## 1. Visual and accessibility review (delivered)
 
-**What it is.** Images, PDF pages and HTML emails are checked like text: colours against the
-brand palette, logo misuse, fonts, WCAG 2.2 contrast, missing alt text, and the words inside
-images.
+**What it is.** Images (PNG, JPG, WebP), scanned PDFs and HTML emails are reviewed like any
+draft: the text inside the image is read with OCR and goes through every text checker, and
+four visual checks run on the pixels.
 
-**Why it matters.** A large share of off-brand content is visual: a banner in the wrong teal,
-a stretched logo, a social card whose "100% secure" headline is part of the image and so
-escapes every text check today. Inaccessible contrast is also a legal and reputational risk.
+**Try it.** New review → "Festive banner (image)", "Scanned flyer (PDF)", "Email with images
+(HTML)", "Stretched-logo post (image)" or "Clean visual (passes)". Then "Upload a new version"
+with `data/seed/files/paywise_clean_visual.png` to see the fixes clear.
 
-**Technical approach.**
-- Palette compliance: k-means colour extraction (k ≈ 6) per asset, then CIEDE2000 distance to
-  the nearest brand colour; ΔE00 above a per-colour tolerance becomes a finding.
-- Logo misuse: template matching (OpenCV, multi-scale) to find the logo, then aspect-ratio
-  distortion, rotation and clear-space checks against the brand book's minimums.
-- Contrast: WCAG 2.2 contrast ratio for text regions found by OCR bounding boxes.
-- Alt text and HTML emails: parse `<img>` alt attributes and inline styles.
-- OCR (Tesseract or PaddleOCR, local) turns text in images and scanned PDFs into normalised
-  blocks, so it flows through the existing Claim Ledger and checkers unchanged.
+**What was built.**
+- **Intake.** Images up to 5 MB (decompression-bomb guard at 40 MP); PDFs with less than 40
+  text-layer characters per page are treated as scans and rasterised with PyMuPDF at 150 dpi
+  (at most 5 pages). Pages are reduced to 1,400 px and stored with the revision (WebP).
+  HTML emails: text by block element, every `<img>` with its `alt`, and CSS colours. DOCX:
+  alt text of inline pictures.
+- **OCR.** RapidOCR (PP-OCRv4 detection and recognition, ONNX Runtime; no Tesseract, no
+  PyTorch). Lines are grouped into paragraph blocks with a per-line layout, so CLM, TRM, DSC
+  and tone findings on image text are drawn on the image. Detection runs on a copy reduced
+  to 736 px (960 px for scans): RapidOCR otherwise detects at full size, which cost +230 MiB.
+  A small clean-up restores spaces OCR drops at letter-digit and punctuation boundaries and
+  reads "1oo%" as "100%". The logo's own letters are removed from the copy.
+- **VIS-01 palette.** Deterministic k-means (k = 6) on a 120 px thumbnail; each colour over
+  8% of the image is compared with the brand palette by CIEDE2000 (our numpy implementation,
+  tested against all of Sharma et al.'s reference pairs); ΔE00 over 10 from every brand colour
+  is a finding with the colour's region. The palette is editable in Rulebook → Palette.
+- **ACC-01 contrast.** For every OCR line: background = most common colour on the box edge,
+  text = the pixels furthest from it; WCAG 2.2 ratio; 4.5:1, or 3:1 for large text (a line box
+  at least 29 px tall at full size, i.e. 24 px type shown at 1x).
+- **VIS-02 logo distortion.** OpenCV template matching over sizes and aspect ratios,
+  coarse-to-fine, confirmed by brand-teal colour; the teal tile's own bounding box gives the
+  aspect ratio to the pixel. Over 5% from 1:1 is a finding.
+- **VIS-03 clear space.** The lockup (mark + "PayWise" wordmark found by OCR) needs a quarter
+  of the logo height clear on every side; a median-filtered ring around it is checked for
+  other content and other text. Implemented, not declared as a limitation.
+- **ACC-02 / ACC-03 alt text.** Missing alt in HTML or DOCX (ACC-02); empty, file-name,
+  "image of…" or one-word alt text, including the alt text the author types for an uploaded
+  image (ACC-03).
+- **UI.** The Visual Review desk: the page with a box per finding (and, on request, every OCR
+  line and the logo with its clear-space ring), margin notes, the palette strip with ΔE to
+  the nearest brand colour, a contrast table, and the OCR text as a proof sheet. The
+  preflight checklist shows OCR, palette, contrast and logo as their own steps.
 
-**Reuses.** Normaliser (new block type with a bounding box), Finding contract (span gains an
-optional box), Rulebook (new `visual` rule category with palette and logo configs), Review
-workspace (highlight boxes over an image preview), Brand Score and receipts as-is.
+**Measured results vs targets.**
 
-**Success measures.** Palette and contrast precision ≥ 0.9 on a labelled set of 100 brand and
-off-brand assets; OCR word error rate < 5 % on social cards; median review time for an image
-< 6 s; the Round 2 golden path extended to a PDF flyer.
+| Measure | Target | Result |
+|---|---|---|
+| Precision on 100 labelled assets | ≥ 0.90 | **1.00** (recall 0.99) |
+| OCR words read correctly | (WER < 5%) | **98.3%** |
+| Time per image, normal CPU | < 6 s | **1.3 s** median, 1.6 s p95 (whole visual review) |
+| OCR per image on Render-like 0.1 CPU | < 6 s | **6.8 s** banner, 6.8–8.4 s other images; **11.3 s** for a scanned A4 page. Target missed on 0.1 CPU. |
+| Peak memory on 512 MB / 0.1 CPU | < 450 MiB | **437 MiB** server high-water mark (OCR and NLI never loaded together) |
+
+The labelled set is generated from our own templates with known injected issues (34 off-palette,
+24 distorted logos, 27 crowded clear spaces, 26 low-contrast lines, 30 risky claims in the
+image) plus four composed samples, so it measures the checks against ground truth but is easier
+than real marketing images: photographs, unusual fonts and busy backgrounds will score lower.
+The one miss is OCR gluing "securepayments", which hides "100% secure" from CLM-04.
+
+**Limitations.** On Render's 0.1 CPU a whole visual review takes 25–30 s (the NLI model is
+released during OCR and reloaded after). Remote images in HTML emails are not downloaded (their
+alt text is checked; upload the image itself for a visual review). OCR sometimes glues two words
+("onevery"). The public API accepts text documents only; images are reviewed in the web app.
 
 ## 2. Governance intelligence
 

@@ -28,3 +28,17 @@ Each change from the Round 1 plan, with the reason. Kept short and honest.
 | Backend hosting | Hugging Face Spaces or Render | **Render free plan** (512 MB RAM, 0.1 CPU, no card) via `render.yaml`; the Hugging Face Space package stays in `deploy/hf-space/` as an alternative | The new Hugging Face account hit "You've reached your CPU Basic quota limit". Render needs no card |
 | Memory on the small host | Not specified | `MODEL_LOADING=lazy` (models load on the first review), `NLI_BATCH_SIZE=2` (DeBERTa's relative attention needs ~20 MiB per pair in flight: +308 MiB at batch 16), one inference at a time | Verified under `--memory=512m --cpus=0.1`: boot, history generation and a full LinkedIn review peak at **362 MiB** with no OOM; the unoptimised first attempt was OOM-killed at 503 MiB |
 | Evaluation at boot | Precomputed at deploy | `EVAL_AT_BOOT=precomputed` loads `data/eval/precomputed_run.json`, produced by `python -m app.eval.run --export` with the same int8 models; the Run button still re-runs it live | 150 claims would take minutes on 0.1 CPU; the page must be ready the moment a judge opens it |
+
+## Round 3 changes
+
+| Area | Plan / spec | Delivered | Why |
+|---|---|---|---|
+| Demo data | One shared demo workspace | **A private copy per visitor** (httpOnly cookie, 24 h idle expiry). The five personas are copied with suffixed ids, so `user.workspace_id` scopes everything; audit chains are per workspace | Judges testing at the same time must not see or reset each other's work |
+| Background jobs | One thread per review | A **job queue** with a small worker pool (`REVIEW_WORKERS`, 1 on Render), queue positions, re-queue after restart and a 120 s budget | Five simultaneous reviews must all finish, visibly, on a 0.1-CPU host |
+| OCR engine | "Tesseract or PaddleOCR" (Round 2 plan) | **RapidOCR** (PaddleOCR PP-OCRv4 models on ONNX Runtime) | Render cannot install system packages (no Tesseract binary); no PyTorch |
+| OCR detection size | RapidOCR's own `det_limit_side_len` | Overridden: detection on a 736 px copy (960 px for scans) | RapidOCR raises any "max" limit under 1500 px, so detection ran at full size: +230 MiB and 12 s on a scan at 0.1 CPU; 736 px costs +63 MiB and about 4 s and reads text as well |
+| Memory with OCR | Not specified | `OCR_EXCLUSIVE=true` on Render: the NLI model is released while an image is read, `malloc_trim` after each review, `MALLOC_ARENA_MAX=2` | OCR beside NLI peaked at 504 MiB in a 512 MB container; with the swap the server's peak is 437 MiB |
+| Brand book page references | Brand book of 8 to 12 pages (spec) | Rule citations run to page 19 (visual rules cite pp. 17–19) | Round 2 rules already cite pages up to 16; the brand book built in Improvement 3 will match the citations |
+| HTML emails | Images and their colours | Text, `<img>` alt text and CSS colours are checked; **remote images are not downloaded** | No outbound fetches from the server; upload an image itself for its visual review |
+| Public API | Not specified for images | `/api/v1/preflight/file` takes text documents only and explains that images are reviewed in the web app | OCR takes seconds per image on the free host; the web app shows progress |
+| Logo clear space | "Declare as a limitation if unreliable" | Implemented (VIS-03), precision 1.00 / recall 1.00 on the labelled set | A median-filtered ring around the detected lockup proved reliable on our assets |

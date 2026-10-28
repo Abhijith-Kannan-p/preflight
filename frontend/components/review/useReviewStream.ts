@@ -19,8 +19,17 @@ export const CHECKERS: { name: string; label: string }[] = [
   { name: "readability", label: "Readability" },
   { name: "style", label: "Punctuation and capitals" },
   { name: "tone", label: "Tone of voice" },
+  { name: "accessibility", label: "Alt text and email colours" },
   { name: "claims", label: "Claim Ledger" },
   { name: "suggestions", label: "Suggestions" },
+];
+
+/** Extra steps that run first on images and scans. */
+export const VISUAL_CHECKERS: { name: string; label: string }[] = [
+  { name: "ocr", label: "Text in the image (OCR)" },
+  { name: "palette", label: "Brand colours" },
+  { name: "contrast", label: "Text contrast (WCAG 2.2)" },
+  { name: "logo", label: "Logo use" },
 ];
 
 export const STALL_MS = 60_000;

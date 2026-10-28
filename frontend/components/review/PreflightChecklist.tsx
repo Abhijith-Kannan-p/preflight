@@ -9,7 +9,7 @@ import { AlertTriangle, Check, Circle, Loader2 } from "lucide-react";
 import { VERDICT_STYLE } from "@/lib/format";
 import type { CheckerRun, Claim } from "@/lib/types";
 
-import { CHECKERS, type StreamState } from "./useReviewStream";
+import { CHECKERS, type StreamState, VISUAL_CHECKERS } from "./useReviewStream";
 
 type RowState = "queued" | "checking" | "done" | "failed";
 
@@ -27,16 +27,20 @@ export function PreflightChecklist({
   report,
   pending,
   claims,
+  visual = false,
 }: {
   stream: StreamState;
   report?: CheckerRun[];
   pending: boolean;
   claims: Claim[];
+  /** An image or scan: the OCR and visual steps run first. */
+  visual?: boolean;
 }) {
-  const stored = Object.fromEntries((report ?? []).map((r) => [r.name, r]));
+  const stored: Record<string, CheckerRun> = Object.fromEntries((report ?? []).map((r) => [r.name, r]));
+  const rows = visual ? [...VISUAL_CHECKERS, ...CHECKERS] : CHECKERS;
   return (
     <ol className="w-full divide-y divide-rule border-y border-rule text-sm" aria-label="Preflight checklist" data-tour="progress">
-      {CHECKERS.map((c, index) => {
+      {rows.map((c, index) => {
         const live = stream.checkers[c.name];
         const run = stored[c.name];
         const state: RowState = pending

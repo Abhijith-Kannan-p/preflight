@@ -59,7 +59,7 @@ interface Confidential {
   note: string;
 }
 
-const TABS = ["Rules", "Approved facts", "Terminology", "Channels", "Confidential terms"] as const;
+const TABS = ["Rules", "Approved facts", "Terminology", "Channels", "Palette", "Confidential terms"] as const;
 type Tab = (typeof TABS)[number];
 
 async function send(path: string, method: string, body?: unknown) {
@@ -519,6 +519,85 @@ function ChannelsTab({ canEdit }: { canEdit: boolean }) {
   );
 }
 
+interface PaletteColour {
+  name: string;
+  hex: string;
+}
+
+/** The brand colours that visuals are checked against (VIS-01, CIEDE2000 distance). */
+function PaletteTab({ canEdit }: { canEdit: boolean }) {
+  const { data, error, mutate } = useSWR<PaletteColour[]>("/api/rulebook/palette");
+  const [draft, setDraft] = useState<PaletteColour[] | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  if (error) return <ErrorState message={error.message} onRetry={() => mutate()} />;
+  if (!data) return <Skeleton className="h-48" />;
+  const colours = draft ?? data;
+  const valid = colours.length > 0 && colours.every((c) => c.name.trim() && /^#[0-9a-fA-F]{6}$/.test(c.hex));
+  const update = (i: number, change: Partial<PaletteColour>) => setDraft(colours.map((c, j) => (i === j ? { ...c, ...change } : c)));
+  return (
+    <div className="space-y-4">
+      <p className="max-w-[70ch] text-sm text-graphite">
+        Visual reviews compare every colour that covers more than 8% of an image with these brand colours, using the CIEDE2000 colour difference. Anything further than ΔE00 10 from
+        all of them is reported as off-palette (VIS-01, brand_book.pdf p17). HTML emails are checked against them too.
+      </p>
+      <ul className="divide-y divide-rule border-y border-rule">
+        {colours.map((c, i) => (
+          <li key={i} className="flex flex-wrap items-center gap-3 py-2">
+            <span className="h-8 w-8 shrink-0 border border-ink/15" style={{ background: /^#[0-9a-fA-F]{6}$/.test(c.hex) ? c.hex : "transparent" }} aria-hidden="true" />
+            {canEdit ? (
+              <>
+                <label className="sr-only" htmlFor={`colour-name-${i}`}>Colour name</label>
+                <input id={`colour-name-${i}`} className="input w-44" value={c.name} onChange={(e) => update(i, { name: e.target.value })} maxLength={40} />
+                <label className="sr-only" htmlFor={`colour-hex-${i}`}>Hex value</label>
+                <input id={`colour-hex-${i}`} className="input w-28 font-mono" value={c.hex} onChange={(e) => update(i, { hex: e.target.value })} maxLength={7} />
+                <input type="color" aria-label={`Pick ${c.name}`} value={/^#[0-9a-fA-F]{6}$/.test(c.hex) ? c.hex : "#000000"} onChange={(e) => update(i, { hex: e.target.value.toUpperCase() })} className="h-8 w-10 cursor-pointer border border-rule bg-transparent" />
+                <button type="button" aria-label={`Remove ${c.name}`} className="btn-ghost p-1.5" onClick={() => setDraft(colours.filter((_, j) => j !== i))} disabled={colours.length <= 1}>
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </>
+            ) : (
+              <span>
+                <span className="font-medium">{c.name}</span> <span className="font-mono text-xs text-graphite">{c.hex}</span>
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      {canEdit && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" className="btn-ghost text-xs" onClick={() => setDraft([...colours, { name: "New colour", hex: "#000000" }])} disabled={colours.length >= 16}>
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" /> Add a colour
+          </button>
+          <button
+            type="button"
+            className="btn-teal text-xs"
+            disabled={!draft || !valid || saving}
+            onClick={async () => {
+              setSaving(true);
+              setProblem(null);
+              try {
+                await send("/api/rulebook/palette", "PUT", { colours });
+                setDraft(null);
+                await mutate();
+              } catch (e) {
+                setProblem(e instanceof ApiError ? e.message : "Could not save the palette.");
+              } finally {
+                setSaving(false);
+              }
+            }}
+          >
+            Save palette
+          </button>
+          {draft && <button type="button" className="btn-ghost text-xs" onClick={() => setDraft(null)}>Discard changes</button>}
+          {!valid && <span className="text-xs text-signal-700">Each colour needs a name and a #RRGGBB value.</span>}
+        </div>
+      )}
+      {problem && <ErrorState message={problem} />}
+    </div>
+  );
+}
+
 function ConfidentialTab({ canEdit }: { canEdit: boolean }) {
   const { data, error, mutate } = useSWR<Confidential[]>("/api/rulebook/confidential");
   const [term, setTerm] = useState("");
@@ -582,6 +661,7 @@ export default function RulebookPage() {
         {tab === "Approved facts" && <FactsTab canEdit={canEdit} />}
         {tab === "Terminology" && <TermsTab canEdit={canEdit} />}
         {tab === "Channels" && <ChannelsTab canEdit={canEdit} />}
+        {tab === "Palette" && <PaletteTab canEdit={canEdit} />}
         {tab === "Confidential terms" && <ConfidentialTab canEdit={canEdit} />}
       </div>
     </div>

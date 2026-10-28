@@ -1,10 +1,10 @@
 "use client";
 
-import { CheckCircle2, FileCheck2, Loader2, RefreshCw, Send, Undo2, Upload } from "lucide-react";
+import { CheckCircle2, FileCheck2, ImageUp, Loader2, RefreshCw, Send, Undo2, Upload } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
-import { post } from "@/lib/api";
+import { api, post } from "@/lib/api";
 import { useSession } from "@/lib/session";
 import type { Review } from "@/lib/types";
 
@@ -50,6 +50,30 @@ export function ActionBar({ review, onChanged, onRechecked }: { review: Review; 
       <div className="flex flex-wrap items-center gap-2">
         {isAuthor && editable && (
           <>
+            <Tip text="Upload a corrected file (for example the fixed design) as the next revision.">
+              <label className={`btn-ghost cursor-pointer ${reviewing || busy !== null ? "pointer-events-none opacity-60" : ""}`}>
+                {busy === "upload" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageUp className="h-4 w-4" aria-hidden="true" />}
+                Upload a new version
+                <input
+                  type="file"
+                  className="sr-only"
+                  accept=".png,.jpg,.jpeg,.webp,.pdf,.docx,.txt,.md,.html,.htm"
+                  disabled={reviewing || busy !== null}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file) return;
+                    const form = new FormData();
+                    form.set("file", file);
+                    void act(
+                      "upload",
+                      () => api(`/api/reviews/${submission.id}/revisions/upload`, { method: "POST", body: form, idempotencyKey: `${submission.id}:upload:r${revision.number}:${file.name}:${file.size}` }),
+                      onRechecked,
+                    );
+                  }}
+                />
+              </label>
+            </Tip>
             <Tip text={pendingEdits ? `Creates revision ${revision.number + 1} with your ${pendingEdits} accepted or edited change(s) and checks it again.` : "Checks the current text again. Accept or edit suggestions first to apply them."}>
               <button type="button" className="btn-ghost" disabled={reviewing || busy !== null} onClick={() => act("recheck", () => post(`/api/reviews/${submission.id}/revisions`, { use_draft: true }, `${submission.id}:recheck:r${revision.number}:e${pendingEdits}`), onRechecked)}>
                 {busy === "recheck" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" aria-hidden="true" />}

@@ -17,6 +17,7 @@ submitted product or in building it.
 | `cross-encoder/nli-deberta-v3-xsmall`, official int8 ONNX export (`onnx/model_quint8_avx2.onnx`) | Locally on the backend CPU (ONNX Runtime + SentencePiece) | Natural-language inference (fact ⇒ claim) in the Claim Ledger | Apache-2.0 |
 | Google Gemini `gemini-3.5-flash-lite` (Gemini API) | Google, via HTTPS, **after masking** | Claim extraction (proposals only), tone scoring, suggestion wording where the rulebook has none | Google API terms |
 | Groq-hosted model (optional, `LLM_PROVIDER=groq`) | Groq, via HTTPS, after masking | Same as Gemini; alternative provider | Groq API terms |
+| PaddleOCR PP-OCRv4 detection + recognition (ONNX, bundled in `rapidocr-onnxruntime`) | Locally on the backend CPU (ONNX Runtime) | Reading text in images and scanned PDFs (visual review) | Apache-2.0 |
 
 The hosted LLM never decides whether a claim is true. Verdicts come from retrieval, the local
 NLI model and exact numeric comparison. Every LLM call is logged (provider, model, latency,
@@ -27,6 +28,11 @@ With `LLM_PROVIDER=none` the product runs fully offline in deterministic mode.
 
 All brand data (PayWise rules, facts, terms, channels, confidential terms, sample
 drafts) is fictional and was written for this project. It lives in `data/seed/`.
+
+The PayWise logo is our own simple design, and every visual sample and the 100 labelled
+visual assets (`data/eval/visual/`) are drawn by `backend/scripts/make_visual_data.py` with
+Pillow's bundled font. CIEDE2000 and the WCAG contrast formula are implemented in numpy
+(`app/visual/colour.py`) and tested against Sharma, Wu and Dalal's published test data.
 
 ## Backend libraries
 
@@ -46,6 +52,10 @@ drafts) is fictional and was written for this project. It lives in `data/seed/`.
 | rapidfuzz | Fuzzy product-name matching | MIT |
 | textstat | Flesch Reading Ease | MIT |
 | reportlab | Sample PDF and Clearance Certificate PDF (including its built-in QR widget) | BSD |
+| rapidocr-onnxruntime 1.4.4 | OCR pipeline around the PP-OCRv4 ONNX models (installed `--no-deps`) | Apache-2.0 |
+| opencv-python-headless | Logo template matching, median filter, connected components | Apache-2.0 |
+| Pillow | Image intake, resizing, WebP storage; drawing the fictional visual samples | MIT-CMU (HPND) |
+| shapely, pyclipper, PyYAML | Required by RapidOCR (box geometry, config) | BSD-3, MIT, MIT |
 | rank-bm25 | Lexical (BM25) fact retrieval | Apache-2.0 |
 | ONNX Runtime | Runs both quantised models | MIT |
 | tokenizers (Hugging Face) | bge-small tokenisation | Apache-2.0 |
