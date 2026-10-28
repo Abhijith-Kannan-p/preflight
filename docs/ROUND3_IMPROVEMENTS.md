@@ -109,31 +109,59 @@ order; the rulebook's wording proved specific enough). The repeat-mistake rate r
 as an author's history grows (more earlier rules to repeat), so it should be compared over equal
 spans. Version metrics on the seeded history are small samples.
 
-## 3. Brand Autopilot
+## 3. Brand Autopilot (delivered)
 
 **What it is.** Onboarding without hand-writing rules:
-- **Rulebook Compiler:** upload a brand-book PDF; Preflight drafts typed rules (category,
-  severity, patterns, page references) and approved facts for a brand manager to approve.
-- **Voice Fingerprint:** learn the tone targets from a set of approved past content instead
-  of hand-set numbers.
-- **Local privacy mode:** run claim extraction, tone and suggestions on a local model
-  (Ollama) so confidential brands make no external AI calls at all.
+- **Rulebook Compiler:** upload a brand book (PDF or DOCX) or use the 20-page fictional
+  PayWise Brand Book (`data/samples/paywise_brand_book.pdf`). Preflight drafts typed rules with
+  the page and sentence each came from; a brand manager accepts, edits or rejects each one.
+- **Voice Fingerprint:** the voice PayWise actually publishes, learned from approved content,
+  compared with the hand-set targets and adoptable as the new targets.
 
-**Why it matters.** Today a brand team must type its rules in. Most already have a brand-book
-PDF and years of approved posts. Some cannot send drafts to any hosted model.
+Local privacy mode (Ollama) was dropped from Round 3 by agreement.
 
-**Technical approach.** Compiler: PyMuPDF layout extraction, section chunking, LLM extraction
-constrained to the existing `RuleIn` / `FactIn` Pydantic schemas with page numbers kept;
-every draft rule lands as `status=draft` and needs human approval (no rule goes live
-unreviewed). Voice Fingerprint: score 50–200 approved items with the tone checker, take
-robust per-trait means and spreads as targets and thresholds, and show the brand manager the
-before/after profile. Local mode: an `OllamaProvider` behind the existing gateway interface
-(`complete_json`), selected by `LLM_PROVIDER=ollama`, with the same validation and fallbacks.
+**How it works.**
+- *Compiler pipeline* (`app/compiler/`), each stage streamed over SSE with its timing:
+  1. Read the document with page numbers (PyMuPDF; tables with `find_tables`; DOCX by heading).
+  2. Structured extraction: tables (product names, words to avoid, colours, channels, voice
+     traits), numeric limits in sentences, quoted phrases under claim headings, "must include"
+     disclaimers with their trigger words.
+  3. LLM extraction of prose rules (one masked Gemini call, 40 s budget) into the same typed
+     schema.
+  4. Schema check (Pydantic payload model per kind; anything else is dropped and counted) and
+     merge by key (structured values win; trigger lists are united).
+  5. Comparison with the workspace's rulebook: same term / pattern / hex (ΔE00 < 3) / limits,
+     or for prose guidance an embedding similarity ≥ 0.82 → "already in the rulebook", "update"
+     or "new".
+- *Typed rule kinds* map to what the engine already executes: product name (TRM-02), word to
+  avoid (TRM-05), claim pattern (a new version of CLM-01/04/06/08), disclaimer (new or updated
+  DSC rule), palette colour, channel limits, numeric limit (new TON-03 / RDB-01 version), voice
+  targets, and guidance (a cited rule reviewers apply).
+- *Review queue:* the source excerpt beside the typed rule; Accept, Edit (validated) or Reject.
+  Accepting creates a new rule version cited to the brand book and page, bumps the rulebook
+  version (so cached reviews are re-run), and is audit-logged. Deciding twice is a no-op.
+- *LLM down:* structured extraction still runs and a banner says which kinds of rules are
+  missing.
+- *Voice Fingerprint* (`app/governance/voice.py`): for every approved item, the five tone
+  scores its review stored, plus sentence length and exclamation, "you" and superlative rates
+  per 100 words. Learned traits are means with standard errors; confidence is high from 15
+  items with every s.e. ≤ 0.05, medium from 8. "Adopt as targets" writes a new voice-profile
+  version (old ones kept, audit-logged) and TON-01 uses it from the next review.
 
-**Reuses.** AI gateway, masking, schemas and validation, versioned rules and facts, tone
-checker, settings page, audit log for every approval.
+**Measured.**
 
-**Success measures.** On three public brand books, ≥ 80 % of compiled rules accepted without
-edits and ≥ 90 % carry a correct page reference; a learned voice profile reduces tone
-disputes by ≥ 30 % against hand-set targets; local mode passes the full test suite and the
-evaluation set within 3 points of hosted-mode accuracy.
+| Measure | Target | Result |
+|---|---|---|
+| Compiled rules accepted without edits | ≥ 80% | **100%** of matched candidates equal the hand label (Gemini, mean of 3 runs; 98% with structured extraction only). Live brand-manager decisions are counted on the Evaluation page. |
+| Recall of labelled rules | (reported) | **94%** with Gemini (94% in each of 3 runs; an earlier set of runs averaged 95%), **82%** structured only; precision 100% in both |
+| Correct page reference | ≥ 90% | **100%** of matched candidates cite the labelled page (measured, both runs) |
+| Tone disputes with a learned profile | 30% fewer | **Measured per version; "after" needs new reviews.** v1 (hand-set): 6 of 24 tone findings disputed (25%). Projection, replaying stored scores: flagged drafts 24 → 9 of 36, and 6 of 6 disputed drafts would no longer be flagged. |
+
+Labels: `data/eval/brand_book_expected.json` (51 rules). Two were added after the first LLM run
+found rules the labelling had missed (pp. 4 and 8); this is stated on the Evaluation page.
+Run: `python -m app.eval.compiler --export ../data/eval/compiler_run.json`.
+
+**Limitations.** One brand book, written by us, with clean tables; real books will score lower.
+The fingerprint on the demo is learned from heuristic tone scores (labelled). Means were chosen
+over medians after comparing both: technical scores are bimodal, and medians left 18 of 36
+drafts flagged against 9 with means.

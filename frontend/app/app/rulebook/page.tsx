@@ -5,7 +5,9 @@ import { ArrowRight, Download, History, Lock, Pencil, Plus, Trash2, Upload } fro
 import { useRef, useState } from "react";
 import useSWR from "swr";
 
-import { Chip, ComingInRound3, ErrorState, Modal, PageHeader, Skeleton } from "@/components/ui";
+import { CompilerTab } from "@/components/rulebook/CompilerTab";
+import { VoiceTab } from "@/components/rulebook/VoiceTab";
+import { Chip, ErrorState, Modal, PageHeader, Skeleton } from "@/components/ui";
 import { API_URL, ApiError, api } from "@/lib/api";
 import { SEVERITY_STYLE } from "@/lib/format";
 import { useSession } from "@/lib/session";
@@ -59,7 +61,7 @@ interface Confidential {
   note: string;
 }
 
-const TABS = ["Rules", "Approved facts", "Terminology", "Channels", "Palette", "Confidential terms"] as const;
+const TABS = ["Rules", "Approved facts", "Terminology", "Channels", "Palette", "Confidential terms", "Compiler", "Voice"] as const;
 type Tab = (typeof TABS)[number];
 
 async function send(path: string, method: string, body?: unknown) {
@@ -646,9 +648,6 @@ export default function RulebookPage() {
       {!canEdit && (
         <p className="mb-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">Read-only for your role. Switch to abhi3 (Brand Manager) in the top right to edit rules and facts.</p>
       )}
-      <div className="mb-5">
-        <ComingInRound3 title="Upload your brand book PDF and Preflight drafts the rules" text="The Rulebook Compiler will extract typed rules with page references for a brand manager to approve, and learn a Voice Fingerprint from approved content." />
-      </div>
       <div role="tablist" aria-label="Rulebook sections" className="mb-4 flex gap-1 overflow-x-auto rounded-xl bg-paper-100 p-1">
         {TABS.map((t) => (
           <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium", tab === t ? "bg-paper-50 text-navy shadow-card" : "text-navy-500 hover:text-navy")}>
@@ -663,6 +662,8 @@ export default function RulebookPage() {
         {tab === "Channels" && <ChannelsTab canEdit={canEdit} />}
         {tab === "Palette" && <PaletteTab canEdit={canEdit} />}
         {tab === "Confidential terms" && <ConfidentialTab canEdit={canEdit} />}
+        {tab === "Compiler" && <CompilerTab canEdit={canEdit} />}
+        {tab === "Voice" && <VoiceTab canEdit={canEdit} />}
       </div>
     </div>
   );

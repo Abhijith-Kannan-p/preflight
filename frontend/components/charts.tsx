@@ -4,7 +4,7 @@
 // surface (#FFFDF7): purple #6B4FA0 + teal #12A594 pass lightness, chroma, CVD (ΔE 18.9)
 // and normal-vision (ΔE 25.5) checks. Text always uses ink colours, never series colours.
 
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 export const SERIES = { first: "#6B4FA0", final: "#12A594" } as const;
 const INK = "#1B2A4A";
@@ -51,5 +51,24 @@ export function ScoreTrend({ data }: { data: { date: string; first: number; fina
         </LineChart>
       </ResponsiveContainer>
     </div>
+  );
+}
+
+/** Two voice profiles on the five traits (0 to 1): the hand-set targets and the learned
+ * fingerprint. A legend names both; the table beside it carries the exact numbers, so the
+ * radius has rings but no tick labels. */
+export function VoiceRadar({ data }: { data: { trait: string; target: number; learned: number }[] }) {
+  return (
+    <ResponsiveContainer width="100%" height={340}>
+      <RadarChart data={data} outerRadius="75%" margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
+        <PolarGrid stroke={GRID} />
+        <PolarAngleAxis dataKey="trait" tick={{ fill: INK, fontSize: 12 }} />
+        <PolarRadiusAxis domain={[0, 1]} tickCount={3} tick={false} axisLine={false} />
+        <Radar isAnimationActive={false} name="Hand-set target" dataKey="target" stroke={SERIES.first} strokeWidth={2} fill={SERIES.first} fillOpacity={0.08} dot={{ r: 4, fill: "#FFFDF7", strokeWidth: 2 }} />
+        <Radar isAnimationActive={false} name="Learned from approved content" dataKey="learned" stroke={SERIES.final} strokeWidth={2} fill={SERIES.final} fillOpacity={0.12} dot={{ r: 4, fill: "#FFFDF7", strokeWidth: 2 }} />
+        <Tooltip {...tooltipStyle} formatter={(v: number) => v.toFixed(2)} />
+        <Legend iconType="plainline" wrapperStyle={{ fontSize: 12, color: INK }} />
+      </RadarChart>
+    </ResponsiveContainer>
   );
 }

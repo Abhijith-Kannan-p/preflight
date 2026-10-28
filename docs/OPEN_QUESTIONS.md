@@ -13,4 +13,8 @@ Non-blocking. Work continues with the default shown; change it any time.
    OCR'd once on the server at boot and cached (labelled "cached" in the UI).
 3. **Gemini free-tier limits.** The Rulebook Compiler and Guideline Health rewording add LLM
    calls. Default: deterministic fallbacks everywhere, with a visible banner when the LLM is
-   unavailable.
+   unavailable. (Compiler: one call per brand book, about 5 s; when it fails, structured
+   extraction still produces rules and a banner says so.)
+4. **Compiler evaluation on a brand book we wrote.** The spec's "three public brand books" are
+   copyrighted and do not map to PayWise's rules. Default: one fictional 20-page PayWise Brand
+   Book with hand labels, stated on the Evaluation page. Say if you want a second book.

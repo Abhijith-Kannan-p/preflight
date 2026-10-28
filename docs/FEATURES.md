@@ -49,14 +49,8 @@ abhi5 Admin).
 | **Clear errors**: empty, oversized, corrupt, password-protected, renamed-binary and unsupported uploads each get a specific message; styled 404 and error pages; wrong-role actions explain which role can do it | Try a 0-byte .pdf; open a review link from another browser |
 | **Keep-warm**: a scheduled GitHub Action pings `/health` every 10 minutes so visitors do not meet a sleeping backend | `.github/workflows/keep-warm.yml` |
 | **Improvement 2: Governance intelligence**: Guideline Health (ambiguity score, grouped dispute reasons, LLM rewording published as a new rule version, before/after per version), Stale-Content Radar (fact-dependency index, notifications on every fact change, "Simulate fact update on F-087", Re-check now), Creator Coach (repeat-mistake rate, trend, tips on New review) | Governance (top menu) as abhi3; New review shows your coach |
+| **Improvement 3: Brand Autopilot**: Rulebook Compiler (PDF or DOCX brand book → typed rule candidates with page and excerpt, compared with the rulebook as new / update / already there; accept, edit or reject; accepted rules become cited rule versions, audit-logged) and Voice Fingerprint (tone learned from approved items, radar and table against hand-set targets, adopt as a new voice-profile version, tone-dispute rate per version) | Rulebook → Compiler and Voice as abhi3; Evaluation → Rulebook Compiler |
 | **Improvement 1: Visual and accessibility review**: images, scanned PDFs and HTML emails; OCR text checked like any draft; brand palette (CIEDE2000), WCAG 2.2 contrast, logo distortion and clear space, alt text; overlay boxes, palette strip, contrast table; upload a corrected version | New review → the five visual samples; Rulebook → Palette; Evaluation → Visual review (precision 1.00 on 100 labelled assets) |
-
-## Not in Round 2 (planned for Round 3)
-
-Shown in the app as clearly labelled "Coming in Round 3" cards, never faked:
-
-Creator Coach; Rulebook Compiler (brand-book PDF to rules) and Voice Fingerprint. See
-[ROUND3_IMPROVEMENTS.md](ROUND3_IMPROVEMENTS.md).
 
 ## Known limitations
 
@@ -68,6 +62,12 @@ Creator Coach; Rulebook Compiler (brand-book PDF to rules) and Voice Fingerprint
 - Visual review on Render's 0.1 CPU: OCR takes about 7 s per image (11 s per scanned page) and a
   whole visual review 25–30 s; under 2 s on a normal CPU. The visual evaluation set is
   synthetic, so real photographs and unusual fonts will score lower than its 1.00 precision.
+- The Rulebook Compiler is evaluated on one brand book that we wrote and labelled ourselves;
+  real brand books with complex layouts (multi-column pages, images of tables) will do worse.
+  Without the LLM it extracts tables, lists, limits and quoted phrases only.
+- The demo history's tone scores come from the offline heuristic, so the Voice Fingerprint
+  shown on first open is an estimate (labelled in the app). Tone-dispute rate after adoption
+  fills in only as new drafts are reviewed.
 - Demo authentication is a role switcher with signed tokens, not real accounts.
 - On Render's free plan the backend sleeps after 15 idle minutes. The keep-warm workflow pings
   it every 10 minutes; GitHub can delay scheduled runs, so a cold start is still possible. Then

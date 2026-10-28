@@ -37,11 +37,21 @@ Updated after every commit checkpoint. Build order follows section 13 of the Rou
   tone heuristic flagged two-thirds of drafts (now waits in Needs a human look); a role
   switch during the first session load was dropped. Tests: backend 190, e2e 8.
 
+- 6. Improvement 3: Brand Autopilot (2026-10-29): Rulebook Compiler (20-page fictional PayWise
+  Brand Book, structured extraction + Gemini for prose, schema check, comparison with the
+  rulebook, review queue with the source excerpt, SSE stages, structured-only fallback with a
+  banner) and Voice Fingerprint (learned from approved content, radar against hand-set targets,
+  "Adopt as targets" as a new voice-profile version, dispute rate per version and a labelled
+  replay). Compiler on 51 hand labels: recall 94%, precision 100%, 100% acceptable without
+  edits (mean of 3 Gemini runs); 82% / 100% / 98% with structured extraction only. Fingerprint
+  replay: tone flags 24 → 9 of 36 drafts, 6 of 6 disputed drafts no longer flagged. Found and
+  fixed: a wrapped table cell kept its line break; one malformed LLM item sank a whole answer;
+  an SSE effect reopened the stream on every render. Tests: backend 200, e2e 9.
+
 ## In progress
-- 6. Improvement 3: Brand Autopilot
+- 7. Round 2 loose ends
 
 ## Next
-- 7. Round 2 loose ends
 - 8. Hardening and testing
 - 9. Documentation and handover
 

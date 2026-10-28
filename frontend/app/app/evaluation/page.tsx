@@ -294,7 +294,100 @@ function VisualEvaluation() {
   );
 }
 
-const EVAL_TABS = ["Claim Ledger", "Visual review"] as const;
+interface CompilerScore {
+  labelled: number;
+  candidates: number;
+  found: number;
+  recall: number;
+  precision: number;
+  exact: number;
+  accepted_without_edits: number;
+  page_correct: number;
+  missed: string[];
+  needs_edit: string[];
+  unlabelled: string[];
+}
+
+interface CompilerRun {
+  source: string;
+  generated_at: string;
+  runs: {
+    structured_only: CompilerScore;
+    structured_and_llm?: CompilerScore & { model: string; llm_seconds: number; trials: { recall: number; precision: number; accepted_without_edits: number; found: number; exact: number }[] };
+  };
+  decisions: { accepted: number; edited: number; rejected: number; accepted_without_edits: number | null };
+}
+
+function CompilerEvaluation() {
+  const { data, error, mutate } = useSWR<CompilerRun>("/api/eval/compiler");
+  if (error) return <ErrorState message={error.message} onRetry={() => mutate()} />;
+  if (!data) return <Skeleton className="h-96" />;
+  const llm = data.runs.structured_and_llm;
+  const base = data.runs.structured_only;
+  const rows: [string, CompilerScore][] = [["Structured extraction only (LLM down)", base], ...(llm ? [[`Structured + ${llm.model}, mean of ${llm.trials.length} runs`, llm] as [string, CompilerScore]] : [])];
+  const d = data.decisions;
+  return (
+    <div className="space-y-6">
+      <p className="max-w-[75ch] text-sm leading-relaxed text-graphite">
+        The sample PayWise Brand Book was labelled by hand: {base.labelled} rules, each with its page and exact values. Recall is the share of labelled rules that come out as a candidate;
+        precision, the share of candidates that match a labelled rule. A candidate counts as acceptable without edits when its values equal the label. Guidance rules are free text, so
+        they match on page, category and a keyword.
+      </p>
+      <p className="border-l-2 border-amber bg-sheet px-3 py-2 text-xs text-ink">
+        Precomputed on {new Date(data.generated_at).toLocaleDateString("en-GB", { dateStyle: "medium" })} with <span className="font-mono">python -m app.eval.compiler</span>. LLM output
+        varies between calls, so the LLM run is repeated and averaged. Two labels were added after the first LLM run found rules the labelling had missed (pages 4 and 8).
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Tile label="Recall" value={pct((llm ?? base).recall)} hint="Labelled rules that came out as a candidate." />
+        <Tile label="Precision" value={pct((llm ?? base).precision)} hint="Candidates that match a labelled rule." />
+        <Tile label="Acceptable without edits" value={pct((llm ?? base).accepted_without_edits)} hint="Matched candidates whose values equal the label." target={{ met: (llm ?? base).accepted_without_edits >= 0.8, text: "target ≥ 80%" }} />
+        <Tile
+          label="Your decisions"
+          value={d.accepted_without_edits == null ? "–" : pct(d.accepted_without_edits)}
+          hint={`Accepted without edits in this workspace: ${d.accepted} accepted as extracted, ${d.edited} edited, ${d.rejected} rejected. Live, from the Compiler review queue.`}
+        />
+      </div>
+      <section className="sheet overflow-x-auto p-5" aria-labelledby="compiler-runs">
+        <h2 id="compiler-runs" className="label">Runs</h2>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-rule text-left">
+              <th scope="col" className="label py-2 font-normal">Run</th>
+              <th scope="col" className="label py-2 text-right font-normal">Recall</th>
+              <th scope="col" className="label py-2 text-right font-normal">Precision</th>
+              <th scope="col" className="label py-2 text-right font-normal">Without edits</th>
+              <th scope="col" className="label py-2 text-right font-normal">Right page</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-rule">
+            {rows.map(([name, r]) => (
+              <tr key={name}>
+                <td className="py-2">{name}</td>
+                <td className="py-2 text-right font-mono">{pct(r.recall)}</td>
+                <td className="py-2 text-right font-mono">{pct(r.precision)}</td>
+                <td className="py-2 text-right font-mono">{pct(r.accepted_without_edits)}</td>
+                <td className="py-2 text-right font-mono">{pct(r.page_correct)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+      <section className="sheet p-5" aria-labelledby="compiler-misses">
+        <h2 id="compiler-misses" className="label">What each run missed or got wrong</h2>
+        {rows.map(([name, r]) => (
+          <div key={name} className="mb-3 text-sm">
+            <p className="font-medium">{name}</p>
+            <p className="text-graphite">Missed: {r.missed.length ? r.missed.join("; ") : "none"}</p>
+            <p className="text-graphite">Needed an edit: {r.needs_edit.length ? r.needs_edit.join("; ") : "none"}</p>
+            {r.unlabelled.length > 0 && <p className="text-graphite">Not in the labels: {r.unlabelled.join("; ")}</p>}
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+const EVAL_TABS = ["Claim Ledger", "Visual review", "Rulebook Compiler"] as const;
 
 export default function EvaluationPage() {
   const [tab, setTab] = useState<(typeof EVAL_TABS)[number]>("Claim Ledger");
@@ -308,7 +401,7 @@ export default function EvaluationPage() {
           </button>
         ))}
       </div>
-      {tab === "Claim Ledger" ? <ClaimsEvaluation /> : <VisualEvaluation />}
+      {tab === "Claim Ledger" ? <ClaimsEvaluation /> : tab === "Visual review" ? <VisualEvaluation /> : <CompilerEvaluation />}
     </div>
   );
 }

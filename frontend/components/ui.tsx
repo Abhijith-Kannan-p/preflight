@@ -143,13 +143,3 @@ export function NextStep({ children, tone = "ink" }: { children: React.ReactNode
     </p>
   );
 }
-
-export function ComingInRound3({ title, text }: { title: string; text: string }) {
-  return (
-    <div className="border border-dashed border-rule bg-sheet p-4">
-      <p className="label">Planned</p>
-      <p className="mt-1 font-medium">{title}</p>
-      <p className="mt-0.5 text-sm text-graphite">{text}</p>
-    </div>
-  );
-}
