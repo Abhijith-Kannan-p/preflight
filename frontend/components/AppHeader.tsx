@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
-import { fetcher, post } from "@/lib/api";
+import { API_URL, fetcher, getToken, post } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import { ROLE_LABEL, useSession } from "@/lib/session";
 import type { Health, Notification, UserRef } from "@/lib/types";
@@ -50,11 +50,54 @@ function AiMode() {
   );
 }
 
+/** New notifications arrive over a live stream; while it is down the list is polled every 15 s
+ * instead. Returns whether the stream is connected. */
+function useLiveNotifications(userId: string | undefined, onNotification: () => void): boolean {
+  const [live, setLive] = useState(false);
+  const callback = useRef(onNotification);
+  callback.current = onNotification;
+  useEffect(() => {
+    if (!userId) return;
+    let source: EventSource | null = null;
+    let retry = 0;
+    let attempt = 0;
+    let closed = false;
+    const connect = () => {
+      const token = getToken();
+      if (!token || closed) return;
+      source = new EventSource(`${API_URL}/api/notifications/stream?token=${encodeURIComponent(token)}`);
+      source.addEventListener("ready", () => {
+        attempt = 0;
+        setLive(true);
+        callback.current(); // catch up on anything missed while disconnected
+      });
+      source.addEventListener("notification", () => callback.current());
+      source.onerror = () => {
+        setLive(false);
+        if (source?.readyState === EventSource.CLOSED && !closed) {
+          retry = window.setTimeout(connect, Math.min(1000 * 2 ** attempt++, 60_000));
+        }
+      };
+    };
+    connect();
+    return () => {
+      closed = true;
+      source?.close();
+      window.clearTimeout(retry);
+      setLive(false);
+    };
+  }, [userId]);
+  return live;
+}
+
 function Notifications() {
   const [open, setOpen] = useState(false);
   const ref = useOutside(() => setOpen(false));
   const { user } = useSession();
-  const { data, mutate } = useSWR<Notification[]>(user ? ["/api/notifications", user.id] : null, ([path]: [string]) => fetcher<Notification[]>(path), { refreshInterval: 15_000 });
+  const refresh = useRef<() => void>(() => {});
+  const live = useLiveNotifications(user?.id, () => refresh.current());
+  const { data, mutate } = useSWR<Notification[]>(user ? ["/api/notifications", user.id] : null, ([path]: [string]) => fetcher<Notification[]>(path), { refreshInterval: live ? 0 : 15_000 });
+  refresh.current = () => void mutate();
   const unread = data?.filter((n) => !n.read).length ?? 0;
   return (
     <div ref={ref} className="relative">

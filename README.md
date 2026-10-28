@@ -134,9 +134,12 @@ finding is open. Create a key in **Settings → API keys** (as abhi5).
   insights, evaluation and settings tests. `cd e2e && E2E_BASE_URL=... npx playwright test`
 - **CI:** ruff, mypy --strict, pytest, eslint, tsc and a production build on every push.
 - **Claim Ledger evaluation** (`python -m app.eval.run`, 150 labelled claims, live on the
-  Evaluation page): accuracy **0.92**, macro recall **0.90** (target ≥ 0.85), problem-claim
-  recall **1.00**, `unsupported` precision **0.85** (target 0.90, not yet met; failure cases
-  are listed openly). Models run as int8 ONNX; the whole backend peaks at 362 MiB under a
+  Evaluation page): accuracy **0.96**, macro recall **0.96** (target ≥ 0.85), problem-claim
+  recall **1.00**, `unsupported` precision **0.94** (target 0.90) on the set the rules were
+  tuned on, and **0.67** on 27 held-out claims written afterwards; failure cases are listed
+  openly.
+- **Full-draft evaluation** (`python -m app.eval.drafts`, 20 labelled drafts): precision
+  **0.92**, recall **0.89**, 15 of 20 drafts exactly right, 7 of 7 clean drafts pass. Models run as int8 ONNX; the whole backend peaks at 362 MiB under a
   512 MiB cap.
 
 ## AI and library disclosure

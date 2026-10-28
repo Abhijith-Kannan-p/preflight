@@ -105,6 +105,7 @@ function ClaimsEvaluation() {
             <Tile label="Unsupported precision" value={pct(m.per_label.unsupported.precision)} hint="When Preflight says a claim has no approved fact, how often that is right." target={{ met: m.per_label.unsupported.precision >= TARGETS.unsupportedPrecision, text: "plan target ≥ 90%" }} />
             <Tile label="Problem claims caught" value={pct(m.problem_recall)} hint="Share of claims that must not be published unchanged (anything not supported) that Preflight flags." />
           </div>
+          <HoldoutNote />
 
           <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
             <section className="card p-5" aria-labelledby="per-verdict">
@@ -294,6 +295,165 @@ function VisualEvaluation() {
   );
 }
 
+interface HoldoutRun {
+  n_items: number;
+  metrics: { accuracy: number; problem_recall: number; per_label: Record<string, { precision: number; recall: number; support: number }> };
+  failures: { id: string; claim: string; expected: string; predicted: string }[];
+}
+
+/** The same Claim Ledger on claims written after its Round 3 rules were tuned. */
+function HoldoutNote() {
+  const { data } = useSWR<HoldoutRun>("/api/eval/holdout");
+  if (!data) return null;
+  const m = data.metrics;
+  return (
+    <section className="border-l-2 border-amber bg-sheet px-4 py-3 text-sm" aria-labelledby="holdout">
+      <h2 id="holdout" className="label">Held-out check (precomputed)</h2>
+      <p className="max-w-[80ch] text-ink">
+        The Round 3 rules (hedged wording goes to a person; facts about another payment method or app store are set aside) were tuned on the set above, so its numbers flatter them. On{" "}
+        {data.n_items} claims written afterwards: unsupported precision <strong className="font-mono">{pct(m.per_label.unsupported.precision)}</strong>, accuracy{" "}
+        <strong className="font-mono">{pct(m.accuracy)}</strong>, problem claims caught <strong className="font-mono">{pct(m.problem_recall)}</strong>.
+      </p>
+      <details className="mt-2 text-xs text-graphite">
+        <summary className="cursor-pointer">{data.failures.length} misses</summary>
+        <ul className="mt-1 space-y-0.5">
+          {data.failures.map((f) => (
+            <li key={f.id}>
+              “{f.claim}” expected <span className="font-mono">{f.expected}</span>, got <span className="font-mono">{f.predicted}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
+    </section>
+  );
+}
+
+interface DraftRow {
+  id: string;
+  title: string;
+  channel: string;
+  expected: string[];
+  raised: string[];
+  needs_human_look: string[];
+  missed: string[];
+  extra: string[];
+  note: string;
+}
+
+interface DraftsRun {
+  n_drafts: number;
+  labelled_issues: number;
+  precision: number;
+  recall: number;
+  exact_drafts: number;
+  clean_drafts: number;
+  clean_drafts_passed: number;
+  per_rule: Record<string, { tp: number; fp: number; fn: number; precision: number | null; recall: number | null }>;
+  drafts: DraftRow[];
+  latency_s: { p50: number; max: number };
+  config: { mode: string; eval_date: string; created_at: string; processor: string };
+}
+
+function Codes({ codes, tone }: { codes: string[]; tone?: "miss" | "extra" }) {
+  if (!codes.length) return <span className="text-graphite">–</span>;
+  return (
+    <span className="flex flex-wrap gap-1">
+      {codes.map((c) => (
+        <span key={c} className={`tag ${tone === "miss" ? "border-signal text-signal-700" : tone === "extra" ? "border-amber text-ink" : ""}`}>
+          {c}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function DraftsEvaluation() {
+  const { data, error, mutate } = useSWR<DraftsRun>("/api/eval/drafts");
+  if (error) return <ErrorState message={error.message} onRetry={() => mutate()} />;
+  if (!data) return <Skeleton className="h-96" />;
+  return (
+    <div className="space-y-6">
+      <p className="max-w-[75ch] text-sm leading-relaxed text-graphite">
+        Twenty complete drafts (LinkedIn, X and email) labelled by hand with the rules a careful reviewer would raise, seven of them clean. Each goes through the whole review, every checker
+        and the Claim Ledger, as in the app. A rule counts when the review raises a confident finding for it; “needs a human look” findings cost no points and are listed separately.
+        Scores are over (draft, rule) pairs.
+      </p>
+      <p className="border-l-2 border-amber bg-sheet px-3 py-2 text-xs text-ink">
+        Precomputed on {new Date(data.config.created_at).toLocaleDateString("en-GB", { dateStyle: "medium" })} in {data.config.mode} ({data.config.processor}), facts valid on{" "}
+        {data.config.eval_date}. Run it with <span className="font-mono">python -m app.eval.drafts</span>. Labels were written before the first run; that run exposed two engine bugs (a
+        low-confidence tone finding hid a punctuation finding; claims written as “we” were not read as PayWise), which were fixed before these numbers.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Tile label="Precision" value={pct(data.precision)} hint="Of the rules raised, the share that were labelled." />
+        <Tile label="Recall" value={pct(data.recall)} hint={`Of the ${data.labelled_issues} labelled issues, the share raised.`} />
+        <Tile label="Drafts exactly right" value={`${data.exact_drafts} / ${data.n_drafts}`} hint="Nothing missed and nothing extra." />
+        <Tile label="Clean drafts passed" value={`${data.clean_drafts_passed} / ${data.clean_drafts}`} hint="Drafts with no issues that came back with no confident findings." />
+      </div>
+      <section className="sheet overflow-x-auto p-5" aria-labelledby="per-draft">
+        <h2 id="per-draft" className="label">Per draft</h2>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-rule text-left">
+              <th scope="col" className="label py-2 font-normal">Draft</th>
+              <th scope="col" className="label py-2 font-normal">Labelled</th>
+              <th scope="col" className="label py-2 font-normal">Raised</th>
+              <th scope="col" className="label hidden py-2 font-normal md:table-cell">Missed / extra</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-rule">
+            {data.drafts.map((d) => (
+              <tr key={d.id} className="align-top">
+                <td className="py-2 pr-3">
+                  <span className="font-mono text-xs text-graphite">{d.id}</span> {d.title}
+                  <span className="block text-xs text-graphite">{d.channel} · {d.note}</span>
+                </td>
+                <td className="py-2 pr-3"><Codes codes={d.expected} /></td>
+                <td className="py-2 pr-3">
+                  <Codes codes={d.raised} />
+                  {d.needs_human_look.length > 0 && <span className="mt-1 block text-xs text-graphite">human look: {d.needs_human_look.join(", ")}</span>}
+                </td>
+                <td className="hidden py-2 md:table-cell">
+                  {!d.missed.length && !d.extra.length ? (
+                    <span className="text-xs text-cleared-700">exact</span>
+                  ) : (
+                    <span className="flex flex-wrap gap-1">
+                      <Codes codes={d.missed} tone="miss" />
+                      <Codes codes={d.extra} tone="extra" />
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+      <section className="sheet overflow-x-auto p-5" aria-labelledby="per-rule">
+        <h2 id="per-rule" className="label">Per rule</h2>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-rule text-left">
+              <th scope="col" className="label py-2 font-normal">Rule</th>
+              <th scope="col" className="label py-2 text-right font-normal">Precision</th>
+              <th scope="col" className="label py-2 text-right font-normal">Recall</th>
+              <th scope="col" className="label py-2 text-right font-normal">TP / FP / FN</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-rule">
+            {Object.entries(data.per_rule).map(([code, r]) => (
+              <tr key={code}>
+                <td className="py-1.5"><span className="tag">{code}</span></td>
+                <td className="py-1.5 text-right font-mono">{fmt(r.precision)}</td>
+                <td className="py-1.5 text-right font-mono">{fmt(r.recall)}</td>
+                <td className="py-1.5 text-right font-mono text-xs text-graphite">{r.tp} / {r.fp} / {r.fn}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  );
+}
+
 interface CompilerScore {
   labelled: number;
   candidates: number;
@@ -387,7 +547,7 @@ function CompilerEvaluation() {
   );
 }
 
-const EVAL_TABS = ["Claim Ledger", "Visual review", "Rulebook Compiler"] as const;
+const EVAL_TABS = ["Claim Ledger", "Full drafts", "Visual review", "Rulebook Compiler"] as const;
 
 export default function EvaluationPage() {
   const [tab, setTab] = useState<(typeof EVAL_TABS)[number]>("Claim Ledger");
@@ -401,7 +561,7 @@ export default function EvaluationPage() {
           </button>
         ))}
       </div>
-      {tab === "Claim Ledger" ? <ClaimsEvaluation /> : tab === "Visual review" ? <VisualEvaluation /> : <CompilerEvaluation />}
+      {tab === "Claim Ledger" ? <ClaimsEvaluation /> : tab === "Full drafts" ? <DraftsEvaluation /> : tab === "Visual review" ? <VisualEvaluation /> : <CompilerEvaluation />}
     </div>
   );
 }

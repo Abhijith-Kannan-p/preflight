@@ -26,15 +26,39 @@ interface ApiKeyRow {
   revoked_at: string | null;
 }
 
+interface Attempt {
+  at: string;
+  status_code: number | null;
+  error: string | null;
+  latency_ms: number;
+  ok: boolean;
+}
+
 interface Delivery {
   id: number;
   event: string;
+  status: "delivered" | "retrying" | "failed";
   status_code: number | null;
   latency_ms: number;
   ok: boolean;
   error: string | null;
+  attempts: number;
+  attempt_log: Attempt[];
+  resent_from: number | null;
   created_at: string;
 }
+
+const EVENTS: { id: string; label: string }[] = [
+  { id: "submission.approved", label: "Approved" },
+  { id: "review.published", label: "Published" },
+  { id: "finding.critical", label: "Critical finding" },
+];
+
+const DELIVERY_STYLE: Record<Delivery["status"], string> = {
+  delivered: "text-teal-700",
+  retrying: "text-amber-700",
+  failed: "text-danger-700",
+};
 
 interface Hook {
   id: string;
@@ -170,65 +194,152 @@ function KeysSection() {
   );
 }
 
+function attemptText(a: Attempt): string {
+  return a.status_code != null ? `HTTP ${a.status_code}` : (a.error ?? "no response");
+}
+
+function EventChoices({ value, onChange, idPrefix, disabled }: { value: string[]; onChange: (events: string[]) => void; idPrefix: string; disabled?: boolean }) {
+  return (
+    <fieldset className="flex flex-wrap items-center gap-3 text-sm" disabled={disabled}>
+      <legend className="sr-only">Events</legend>
+      {EVENTS.map((e) => (
+        <label key={e.id} htmlFor={`${idPrefix}-${e.id}`} className="flex items-center gap-1.5">
+          <input
+            id={`${idPrefix}-${e.id}`}
+            type="checkbox"
+            checked={value.includes(e.id)}
+            onChange={(ev) => {
+              const next = ev.target.checked ? [...value, e.id] : value.filter((x) => x !== e.id);
+              if (next.length) onChange(next);
+            }}
+          />
+          {e.label} <code className="font-mono text-[11px] text-navy-500">{e.id}</code>
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
 function WebhooksSection() {
-  const { data, error, mutate } = useSWR<Hook[]>("/api/settings/webhooks");
+  const { data, error, mutate } = useSWR<Hook[]>("/api/settings/webhooks", {
+    // Retries run in the background (2 s, then 4 s): refresh until they settle.
+    refreshInterval: (hooks) => (hooks?.some((h) => h.deliveries.some((d) => d.status === "retrying")) ? 2000 : 0),
+  });
   const [url, setUrl] = useState("");
   const [slack, setSlack] = useState(false);
+  const [events, setEvents] = useState(EVENTS.map((e) => e.id));
   const [busy, setBusy] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  async function act(key: string, call: () => Promise<unknown>) {
+    setBusy(key);
+    setFormError(null);
+    try {
+      await call();
+      await mutate();
+    } catch (e) {
+      setFormError(e instanceof ApiError ? e.message : "That did not work. Try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
-    <Section title="Outgoing webhooks" description="On every approval Preflight POSTs a signed JSON event (header X-Preflight-Signature: sha256=HMAC of the body). Turn on Slack format to post straight into a Slack incoming webhook.">
+    <Section
+      title="Outgoing webhooks"
+      description="Preflight POSTs a signed JSON event (header X-Preflight-Signature: sha256=HMAC of the body) when a submission is approved, when it is marked as published, and when a review finds a critical issue. Failed deliveries are retried twice, after 2 s and 4 s. Turn on Slack format to post straight into a Slack incoming webhook."
+    >
       {error && <ErrorState message={error.message} onRetry={() => mutate()} />}
-      <div className="flex flex-wrap items-center gap-2">
-        <input className="input max-w-md" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://hooks.slack.com/services/… or https://webhook.site/…" aria-label="Webhook URL" />
-        <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" checked={slack} onChange={(e) => setSlack(e.target.checked)} /> Slack format</label>
-        <button
-          type="button"
-          className="btn-teal"
-          disabled={!url}
-          onClick={async () => {
-            setFormError(null);
-            try {
-              await post("/api/settings/webhooks", { url, slack_format: slack });
-              setUrl("");
-              await mutate();
-            } catch (e) {
-              setFormError(e instanceof ApiError ? e.message : "Enter a full https:// URL.");
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <input className="input max-w-md" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://hooks.slack.com/services/… or https://webhook.site/…" aria-label="Webhook URL" />
+          <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" checked={slack} onChange={(e) => setSlack(e.target.checked)} /> Slack format</label>
+          <button
+            type="button"
+            className="btn-teal"
+            disabled={!url || busy === "add"}
+            onClick={() =>
+              act("add", async () => {
+                await post("/api/settings/webhooks", { url, slack_format: slack, events });
+                setUrl("");
+              })
             }
-          }}
-        >
-          <WebhookIcon className="h-4 w-4" aria-hidden="true" /> Add webhook
-        </button>
+          >
+            <WebhookIcon className="h-4 w-4" aria-hidden="true" /> Add webhook
+          </button>
+        </div>
+        <EventChoices value={events} onChange={setEvents} idPrefix="new-hook" />
       </div>
       {formError && <div className="mt-3"><ErrorState message={formError} /></div>}
-      {data && !data.length && <div className="mt-4"><EmptyState title="No webhooks yet" text="Paste a URL from webhook.site to watch a signed approval event arrive, or a Slack incoming-webhook URL with Slack format on." /></div>}
+      {data && !data.length && <div className="mt-4"><EmptyState title="No webhooks yet" text="Paste a URL from webhook.site to watch a signed event arrive, or a Slack incoming-webhook URL with Slack format on." /></div>}
       <div className="mt-4 space-y-4">
         {data?.map((h) => (
           <div key={h.id} className="rounded-xl border border-paper-200 p-4 text-sm">
             <div className="flex flex-wrap items-center gap-2">
               <code className="flex-1 break-all font-mono text-xs">{h.url}</code>
               {h.slack_format && <Chip className="bg-purple-50 text-purple-700 ring-purple/30">Slack</Chip>}
-              <button type="button" className="btn-ghost py-1 text-xs" disabled={busy === h.id} onClick={async () => { setBusy(h.id); try { await post(`/api/settings/webhooks/${h.id}/test`); await mutate(); } finally { setBusy(null); } }}>
+              <button type="button" className="btn-ghost py-1 text-xs" disabled={busy === h.id} onClick={() => act(h.id, () => post(`/api/settings/webhooks/${h.id}/test`, undefined, `test-${h.id}-${Date.now()}`))}>
                 {busy === h.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" aria-hidden="true" />} Send test event
               </button>
-              <button type="button" aria-label="Delete webhook" className="rounded-lg p-1.5 text-navy-500 hover:bg-danger-50 hover:text-danger" onClick={async () => { await api(`/api/settings/webhooks/${h.id}`, { method: "DELETE" }); void mutate(); }}>
+              <button type="button" aria-label="Delete webhook" className="rounded-lg p-1.5 text-navy-500 hover:bg-danger-50 hover:text-danger" onClick={() => act(`del-${h.id}`, () => api(`/api/settings/webhooks/${h.id}`, { method: "DELETE" }))}>
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
+            <div className="mt-2">
+              <EventChoices
+                value={h.events}
+                idPrefix={h.id}
+                disabled={busy === `events-${h.id}`}
+                onChange={(next) => act(`events-${h.id}`, () => api(`/api/settings/webhooks/${h.id}`, { method: "PATCH", body: JSON.stringify({ events: next }) }))}
+              />
+            </div>
             <p className="mt-2 text-xs text-navy-500">Signing secret: <code className="font-mono">{h.secret.slice(0, 8)}…</code> <CopyButton text={h.secret} /></p>
-            <table className="mt-3 w-full text-xs">
-              <thead className="text-left text-navy-500"><tr><th className="py-1">Delivery</th><th className="py-1">Status</th><th className="py-1 text-right">Latency</th></tr></thead>
-              <tbody className="divide-y divide-paper-200">
-                {h.deliveries.map((d) => (
-                  <tr key={d.id}>
-                    <td className="py-1">{d.event} · {timeAgo(d.created_at)}</td>
-                    <td className={`py-1 font-mono ${d.ok ? "text-teal-700" : "text-danger-700"}`}>{d.status_code ?? d.error ?? "failed"}</td>
-                    <td className="py-1 text-right font-mono">{d.latency_ms} ms</td>
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full text-xs">
+                <caption className="sr-only">Delivery log for {h.url}</caption>
+                <thead className="text-left text-navy-500">
+                  <tr>
+                    <th scope="col" className="py-1">Delivery</th>
+                    <th scope="col" className="py-1">Status</th>
+                    <th scope="col" className="py-1">Attempts</th>
+                    <th scope="col" className="py-1 text-right"><span className="sr-only">Actions</span></th>
                   </tr>
-                ))}
-                {!h.deliveries.length && <tr><td className="py-1 text-navy-500" colSpan={3}>No deliveries yet. Send a test event.</td></tr>}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-paper-200">
+                  {h.deliveries.map((d) => (
+                    <tr key={d.id}>
+                      <td className="py-1.5 pr-2">
+                        {d.event} · {timeAgo(d.created_at)}
+                        {d.resent_from && <span className="block text-navy-500">resend of #{d.resent_from}</span>}
+                      </td>
+                      <td className={`py-1.5 pr-2 font-mono ${DELIVERY_STYLE[d.status]}`}>
+                        {d.status === "retrying" && <Loader2 className="mr-1 inline h-3 w-3 animate-spin" aria-hidden="true" />}
+                        {d.status}
+                        <span className="block text-navy-500">{d.status_code != null ? `HTTP ${d.status_code}` : d.error ?? ""} · {d.latency_ms} ms</span>
+                      </td>
+                      <td className="py-1.5 pr-2 font-mono" title={d.attempt_log.map((a, i) => `#${i + 1} ${attemptText(a)}`).join(" · ")}>
+                        {d.attempts} / 3
+                        <span className="block text-navy-500">{d.attempt_log.map(attemptText).join(" → ")}</span>
+                      </td>
+                      <td className="py-1.5 text-right">
+                        {d.status !== "retrying" && (
+                          <button
+                            type="button"
+                            className="btn-ghost py-1 text-xs"
+                            disabled={busy === `resend-${d.id}`}
+                            aria-label={`Resend delivery ${d.id}`}
+                            onClick={() => act(`resend-${d.id}`, () => post(`/api/settings/webhooks/${h.id}/deliveries/${d.id}/resend`, undefined, `resend-${d.id}-${Date.now()}`))}
+                          >
+                            {busy === `resend-${d.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />} Resend
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {!h.deliveries.length && <tr><td className="py-1 text-navy-500" colSpan={4}>No deliveries yet. Send a test event.</td></tr>}
+                </tbody>
+              </table>
+            </div>
           </div>
         ))}
       </div>

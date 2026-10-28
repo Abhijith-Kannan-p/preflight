@@ -18,3 +18,6 @@ Non-blocking. Work continues with the default shown; change it any time.
 4. **Compiler evaluation on a brand book we wrote.** The spec's "three public brand books" are
    copyrighted and do not map to PayWise's rules. Default: one fictional 20-page PayWise Brand
    Book with hand labels, stated on the Evaluation page. Say if you want a second book.
+5. **Held-out claim precision (0.67).** The 0.90 target is met on the tuning set (0.94) but
+   not on claims written afterwards. Default: report both and stop tuning, so the held-out set
+   stays honest. Further work would need a fresh held-out set.

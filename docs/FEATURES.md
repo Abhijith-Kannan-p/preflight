@@ -18,7 +18,7 @@ abhi5 Admin).
 | 9 | **Review Receipt**: one-page record, PDF and shareable page | ✅ Done | Approved review → **View Review Receipt** → Download PDF / Copy share link |
 | 10 | **Brand Score** gauge (0–100) | ✅ Done | Review workspace; tooltip explains the formula |
 | 11 | **Governance insights**: findings by type, top violated rules, dispute rate per rule, trend | ✅ Done | **Insights** (abhi2, abhi3, abhi4 or abhi5); also findings per author |
-| 12 | **Integrations**: public REST API with keys, OpenAPI docs, outgoing webhook on approval (Slack option) | ✅ Done | Settings (abhi5) → API keys (curl example), Webhooks (Send test event, delivery log); `/docs`; `examples/cms_hook.py` |
+| 12 | **Integrations**: public REST API with keys, OpenAPI docs, outgoing webhooks on approval, publication and critical findings (Slack option), retried with backoff | ✅ Done | Settings (abhi5) → API keys (curl example), Webhooks (event choice, Send test event, delivery log with attempts, Resend); `/docs`; `examples/cms_hook.py` |
 | 13 | **Privacy and AI transparency**: masking before LLM calls, "AI used in this review" panel | ✅ Done | Review → AI disclosure tab; Rulebook → Confidential terms; Settings → masking switch; receipt footer |
 | 14 | **Evaluation page**: labelled test set, live precision/recall, confusion matrix | ✅ Done | **Evaluation**: 150 labelled claims, per-verdict metrics, confusion matrix, failure cases, Run button |
 | 15 | **Zero-setup demo**: PayWise brand, samples, role switcher, guided tour | ✅ Done | Landing → Try the live demo; four sample drafts; generated demo history; 5-step tour (re-open with "?") |
@@ -49,16 +49,20 @@ abhi5 Admin).
 | **Clear errors**: empty, oversized, corrupt, password-protected, renamed-binary and unsupported uploads each get a specific message; styled 404 and error pages; wrong-role actions explain which role can do it | Try a 0-byte .pdf; open a review link from another browser |
 | **Keep-warm**: a scheduled GitHub Action pings `/health` every 10 minutes so visitors do not meet a sleeping backend | `.github/workflows/keep-warm.yml` |
 | **Improvement 2: Governance intelligence**: Guideline Health (ambiguity score, grouped dispute reasons, LLM rewording published as a new rule version, before/after per version), Stale-Content Radar (fact-dependency index, notifications on every fact change, "Simulate fact update on F-087", Re-check now), Creator Coach (repeat-mistake rate, trend, tips on New review) | Governance (top menu) as abhi3; New review shows your coach |
+| **Round 2 gaps closed**: webhook events `review.published` and `finding.critical`, 3 attempts with exponential backoff, attempt log and Resend; notifications pushed live over SSE; 20 labelled full drafts evaluated end to end; Claim Ledger `unsupported` precision 0.94 with a held-out check | Settings → Webhooks; the bell updates without a reload; Evaluation → Full drafts and the held-out note under Claim Ledger |
 | **Improvement 3: Brand Autopilot**: Rulebook Compiler (PDF or DOCX brand book → typed rule candidates with page and excerpt, compared with the rulebook as new / update / already there; accept, edit or reject; accepted rules become cited rule versions, audit-logged) and Voice Fingerprint (tone learned from approved items, radar and table against hand-set targets, adopt as a new voice-profile version, tone-dispute rate per version) | Rulebook → Compiler and Voice as abhi3; Evaluation → Rulebook Compiler |
 | **Improvement 1: Visual and accessibility review**: images, scanned PDFs and HTML emails; OCR text checked like any draft; brand palette (CIEDE2000), WCAG 2.2 contrast, logo distortion and clear space, alt text; overlay boxes, palette strip, contrast table; upload a corrected version | New review → the five visual samples; Rulebook → Palette; Evaluation → Visual review (precision 1.00 on 100 labelled assets) |
 
 ## Known limitations
 
-- Claim Ledger `unsupported` precision is 0.85 against a 0.90 target. Most misses are vague
-  claims ("trusted by millions") that we labelled `needs_review`; in the app they land in the
-  "Needs a human look" group and cost no points.
-- Two retrieval-similarity thresholds were calibrated on the same labelled set we report on;
-  there is no held-out split yet.
+- Claim Ledger `unsupported` precision is 0.94 on the 150-claim set, but its Round 3 rules
+  were tuned on that set; on 27 claims written afterwards it is 0.67 (accuracy 0.78). Hedged
+  wording outside the word list ("shop owners love", "household name") is still called
+  unsupported, two vague claims are not detected as claims, and one held-out claim ("Pay
+  Later has no late fees") came out as supported. Both numbers are on the Evaluation page.
+- On the 20 full drafts, compound sentences ("Founded in 2017 in Bengaluru, we now serve…")
+  hide a contradicted year, and a fee-free first-month offer goes to a person instead of
+  being called unsupported (recall 0.89).
 - Visual review on Render's 0.1 CPU: OCR takes about 7 s per image (11 s per scanned page) and a
   whole visual review 25–30 s; under 2 s on a normal CPU. The visual evaluation set is
   synthetic, so real photographs and unusual fonts will score lower than its 1.00 precision.

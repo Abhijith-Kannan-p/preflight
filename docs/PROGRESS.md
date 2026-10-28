@@ -48,11 +48,21 @@ Updated after every commit checkpoint. Build order follows section 13 of the Rou
   fixed: a wrapped table cell kept its line break; one malformed LLM item sank a whole answer;
   an SSE effect reopened the stream on every render. Tests: backend 200, e2e 9.
 
+- 7. Round 2 loose ends (2026-10-29): webhooks for `submission.approved`, `review.published`
+  and `finding.critical`, 3 attempts with 2 s / 4 s backoff, per-attempt delivery log, Resend
+  and per-webhook event choice; notifications pushed over SSE (polling only while the stream
+  is down); 20 labelled full drafts (precision 0.92, recall 0.89, 15/20 exactly right, 7/7
+  clean drafts pass); Claim Ledger `unsupported` precision 0.84 → **0.94** (target 0.90) on
+  the 150-claim set, **0.67** on 27 held-out claims written afterwards. Found and fixed: a
+  local template seeded without the embedder had no fact vectors (now back-filled at boot);
+  a low-confidence tone finding hid a confident punctuation finding; claims written as "we"
+  were not read as PayWise; production would have kept showing the old evaluation run.
+  Tests: backend 210, e2e 11.
+
 ## In progress
-- 7. Round 2 loose ends
+- 8. Hardening and testing
 
 ## Next
-- 8. Hardening and testing
 - 9. Documentation and handover
 
 ## Blockers

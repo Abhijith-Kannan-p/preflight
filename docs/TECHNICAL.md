@@ -153,8 +153,12 @@ enforced in the backend (`app/auth.py`); demo sign-in issues a signed JWT per se
 - Input limits: 5 MB files, 20,000 characters, 1 MB CSV imports; friendly errors for
   password-protected, scanned or corrupt files.
 - Public API rate limit: 30 requests per minute per key (HTTP 429 with Retry-After).
-- Webhooks are signed with HMAC-SHA256 (`X-Preflight-Signature: sha256=…`) and every
-  delivery's status and latency is logged.
+- Webhooks (`submission.approved`, `review.published`, `finding.critical`, chosen per
+  webhook) are signed with HMAC-SHA256 (`X-Preflight-Signature: sha256=…`). Each delivery
+  gets up to 3 attempts (waits of 2 s and 4 s; network errors, 5xx, 408 and 429 are retried),
+  every attempt is logged, and any delivery can be resent.
+- Notifications are pushed over SSE (`/api/notifications/stream`) when the transaction that
+  created them commits; the header polls every 15 s only while the stream is down.
 
 ## Evaluation
 
@@ -167,18 +171,26 @@ precomputes one at boot and shows it on the Evaluation page.
 |---|---|---|---|---|
 | supported | 1.00 | 0.93 | 0.97 | 45 |
 | outdated | 1.00 | 1.00 | 1.00 | 20 |
-| contradicted | 0.94 | 0.94 | 0.94 | 35 |
-| unsupported | 0.85 | 0.94 | 0.89 | 35 |
-| needs_review | 0.71 | 0.67 | 0.69 | 15 |
+| contradicted | 0.97 | 0.97 | 0.97 | 35 |
+| unsupported | 0.94 | 0.97 | 0.96 | 35 |
+| needs_review | 0.82 | 0.93 | 0.88 | 15 |
 
-Accuracy 0.92, macro recall 0.90 (plan target ≥ 0.85, met), problem-claim recall 1.00
-(every claim that must not be published unchanged is flagged), `unsupported` precision 0.85
-(plan target 0.90, not met). Failure analysis: five misses are vague claims labelled
-needs_review that the ledger calls unsupported (shown in "Needs a human look" in the app);
-two are claims about a different product or store whose numbers clash ("10% cashback on
-UPI", "4.8 on the Apple App Store"); three are true paraphrases the small NLI model would not
-entail. Caveat: the topical-similarity thresholds were calibrated on this same set; a
-held-out split is planned.
+Accuracy 0.96, macro recall 0.96 (plan target ≥ 0.85, met), problem-claim recall 1.00,
+`unsupported` precision 0.94 (plan target 0.90, met on this set). Round 3 added two rules:
+hedged wording with no number ("trusted by millions", "cheaper than most") goes to a person,
+and facts about a different payment method or app store are set aside before they can
+support or contradict a claim. Claims written as "we" are read as PayWise.
+
+These rules and the similarity thresholds were tuned on this set, so it flatters them.
+`data/eval/claims_holdout.jsonl` holds 27 claims written afterwards: accuracy 0.78,
+`unsupported` precision 0.67, problem-claim recall 0.86. Misses there: hedged wording outside
+the word list, two vague claims not detected as claims, and "PayWise Pay Later has no late
+fees" judged supported.
+
+`data/eval/full_drafts.json` holds 20 complete drafts labelled with the rules a reviewer
+would raise (7 clean). `python -m app.eval.drafts` reviews each with every checker: precision
+0.92, recall 0.89 over (draft, rule) pairs, 15 of 20 drafts exactly right, all 7 clean drafts
+pass.
 
 ## Running in 512 MB
 
