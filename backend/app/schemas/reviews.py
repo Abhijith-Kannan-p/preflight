@@ -114,6 +114,8 @@ class ReviewOut(BaseModel):
     pending_edits: int
     permissions: list[str]
     clearance: Clearance | None = None
+    # 1-based place in the review queue while the latest revision waits for a worker.
+    queue_position: int | None = None
 
 
 class ReviewListItem(BaseModel):

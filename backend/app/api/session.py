@@ -2,18 +2,20 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app import audit
-from app.auth import current_user, issue_token, permissions_for
+from app.auth import current_user, current_workspace_id, issue_token, permissions_for
 from app.config import get_settings
 from app.db import get_session
-from app.models import AuditEvent, Notification, SampleDraft, User
+from app.models import TEMPLATE_WORKSPACE_ID, AuditEvent, Notification, User
 from app.schemas.reviews import NotificationOut, UserRef
+from app.scoped import get_sample
+from app.services import sandbox
 
 router = APIRouter(prefix="/api", tags=["session"])
 
@@ -26,28 +28,37 @@ class SessionOut(BaseModel):
     token: str
     user: UserRef
     permissions: list[str]
+    workspace_id: str
 
 
-@router.post("/auth/demo-login", response_model=SessionOut)
-def demo_login(body: DemoLoginIn, session: Session = Depends(get_session)) -> SessionOut:
-    """Demo mode: no passwords. Each seeded PayWise user can be picked from the header."""
-    user = session.get(User, body.user_id)
-    if user is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown demo user.")
+def session_out(user: User) -> SessionOut:
     return SessionOut(
         token=issue_token(user),
         user=UserRef.model_validate(user),
         permissions=permissions_for(user.role),
+        workspace_id=user.workspace_id,
     )
+
+
+@router.post("/auth/demo-login", response_model=SessionOut)
+def demo_login(
+    body: DemoLoginIn,
+    pf_sandbox: str | None = Cookie(None),
+    session: Session = Depends(get_session),
+) -> SessionOut:
+    """Demo mode: no passwords. Signs in as a demo persona (`usr_abhi1` to `usr_abhi5`) in the
+    caller's sandbox when the sandbox cookie is present, otherwise in the shared template.
+    The web app uses `POST /api/sandbox/session`, which also creates the sandbox."""
+    live = sandbox.live_sandbox(session, pf_sandbox)
+    user = sandbox.find_user(session, live.id if live else TEMPLATE_WORKSPACE_ID, body.user_id)
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown demo user.")
+    return session_out(user)
 
 
 @router.get("/auth/me", response_model=SessionOut)
 def me(user: User = Depends(current_user)) -> SessionOut:
-    return SessionOut(
-        token=issue_token(user),
-        user=UserRef.model_validate(user),
-        permissions=permissions_for(user.role),
-    )
+    return session_out(user)
 
 
 @router.get("/notifications", response_model=list[NotificationOut])
@@ -71,9 +82,11 @@ def mark_read(user: User = Depends(current_user), session: Session = Depends(get
 
 
 @router.get("/audit/verify", response_model=audit.ChainStatus)
-def verify_audit(session: Session = Depends(get_session)) -> audit.ChainStatus:
-    """Recompute every hash in the audit chain. Public, so anyone can check a receipt."""
-    return audit.verify_chain(session)
+def verify_audit(
+    ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> audit.ChainStatus:
+    """Recompute every hash in the caller's audit chain (signed out: the template's)."""
+    return audit.verify_chain(session, ws)
 
 
 @router.get("/audit")
@@ -83,7 +96,12 @@ def audit_trail(
     user: User = Depends(current_user),
     session: Session = Depends(get_session),
 ) -> list[dict[str, Any]]:
-    query = select(AuditEvent).order_by(AuditEvent.id.desc()).limit(min(limit, 500))
+    query = (
+        select(AuditEvent)
+        .where(AuditEvent.workspace_id == user.workspace_id)
+        .order_by(AuditEvent.id.desc())
+        .limit(min(limit, 500))
+    )
     if entity_id:
         query = query.where(
             (AuditEvent.entity_id == entity_id)
@@ -106,8 +124,10 @@ def audit_trail(
 
 
 @router.get("/samples/{sample_id}/file")
-def sample_file(sample_id: str, session: Session = Depends(get_session)) -> FileResponse:
-    sample = session.get(SampleDraft, sample_id)
+def sample_file(
+    sample_id: str, ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> FileResponse:
+    sample = get_sample(session, ws, sample_id)
     if sample is None or not sample.filename:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "This sample has no file.")
     return FileResponse(

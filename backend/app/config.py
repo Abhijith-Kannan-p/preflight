@@ -46,6 +46,12 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
     public_app_url: str = "http://localhost:3000"
+    # The sandbox cookie travels through the frontend's same-origin /api proxy (HTTPS in
+    # production). Browsers accept Secure cookies on http://localhost too.
+    sandbox_cookie_secure: bool = True
+    # Reviews run as queued jobs on this many worker threads, each with a hard time budget.
+    review_workers: int = 2
+    review_timeout_seconds: float = 120.0
 
     data_dir: Path = REPO_ROOT / "data"
 

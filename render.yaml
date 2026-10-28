@@ -23,6 +23,9 @@ services:
       # 0.1 CPU is too slow to run 150 claims at boot; load the shipped run (same models).
       - key: EVAL_AT_BOOT
         value: precomputed
+      # One review at a time keeps peak memory in budget; 0.1 CPU gains nothing from more.
+      - key: REVIEW_WORKERS
+        value: "1"
       # Models are downloaded during the build into the project folder, then used offline.
       - key: HF_HOME
         value: /opt/render/project/src/.models/hf

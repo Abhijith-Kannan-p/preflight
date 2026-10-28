@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.ml.embeddings import Embedder, get_embedder
 from app.models import (
+    TEMPLATE_WORKSPACE_ID,
     ChannelProfile,
     ConfidentialTerm,
     Fact,
@@ -31,10 +32,11 @@ from app.models import (
     User,
     Workspace,
 )
+from app.scoped import get_channel, get_fact, get_sample
 
 log = logging.getLogger(__name__)
 
-WORKSPACE_ID = "ws_paywise"
+WORKSPACE_ID = TEMPLATE_WORKSPACE_ID
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -60,7 +62,7 @@ def seed_workspace(session: Session, data_dir: Path) -> Workspace:
     session.flush()
     for u in raw["users"]:
         user = session.get(User, u["id"]) or User(id=u["id"])
-        user.workspace_id = ws.id
+        user.workspace_id, user.persona = ws.id, u["id"]
         user.name, user.email, user.title = u["name"], u["email"], u["title"]
         user.role = Role(u["role"])
         session.add(user)
@@ -97,7 +99,9 @@ def seed_facts(
     rows = _read_csv(data_dir / "facts.csv")
     to_embed: list[Fact] = []
     for row in rows:
-        fact = session.get(Fact, row["id"]) or Fact(id=row["id"], workspace_id=workspace_id)
+        fact = get_fact(session, workspace_id, row["id"]) or Fact(
+            id=row["id"], workspace_id=workspace_id
+        )
         if fact.statement != row["statement"]:
             fact.embedding = None
         fact.statement = row["statement"]
@@ -139,7 +143,7 @@ def seed_terms(session: Session, data_dir: Path, workspace_id: str) -> int:
 def seed_channels(session: Session, data_dir: Path, workspace_id: str) -> int:
     rows = _read_json(data_dir / "channels.json")
     for row in rows:
-        channel = session.get(ChannelProfile, row["id"]) or ChannelProfile(id=row["id"])
+        channel = get_channel(session, workspace_id, row["id"]) or ChannelProfile(id=row["id"])
         channel.workspace_id = workspace_id
         for key in ("name", "max_chars", "max_hashtags", "subject_max_chars", "consumer"):
             setattr(channel, key, row[key])
@@ -165,7 +169,7 @@ def seed_confidential(session: Session, data_dir: Path, workspace_id: str) -> in
 def seed_samples(session: Session, data_dir: Path, workspace_id: str) -> int:
     rows = _read_json(data_dir / "drafts.json")
     for position, row in enumerate(rows):
-        draft = session.get(SampleDraft, row["id"]) or SampleDraft(id=row["id"])
+        draft = get_sample(session, workspace_id, row["id"]) or SampleDraft(id=row["id"])
         draft.workspace_id = workspace_id
         for key in ("label", "title", "channel", "format", "filename", "content", "description"):
             setattr(draft, key, row[key])

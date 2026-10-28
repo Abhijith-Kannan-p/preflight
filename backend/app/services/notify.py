@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Notification, Role, User
+from app.models import Notification, Role, Submission, User
 
 
 def notify_users(
@@ -25,5 +25,8 @@ def notify_roles(
     submission_id: str,
     exclude: str | None = None,
 ) -> None:
-    users = session.scalars(select(User.id).where(User.role.in_(list(roles))))
+    workspace = select(Submission.workspace_id).where(Submission.id == submission_id)
+    users = session.scalars(
+        select(User.id).where(User.role.in_(list(roles)), User.workspace_id.in_(workspace))
+    )
     notify_users(session, (u for u in users if u != exclude), kind, message, submission_id)

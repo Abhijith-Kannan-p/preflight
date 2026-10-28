@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session
 os.environ.setdefault("SKIP_MODEL_LOAD", "true")
 os.environ.setdefault("LLM_PROVIDER", "none")
 os.environ.setdefault("BOOTSTRAP_DEMO", "false")
+# TestClient talks plain http, where it would drop a Secure cookie.
+os.environ.setdefault("SANDBOX_COOKIE_SECURE", "false")
 
 from app.config import get_settings
 from app.db import get_session

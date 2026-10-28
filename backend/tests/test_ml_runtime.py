@@ -12,6 +12,7 @@ from app.engine.normalise import from_text
 from app.ml import nli
 from app.ml.nli import PairTokenizer
 from app.models import Fact, Workspace
+from app.scoped import get_fact
 from app.seed import WORKSPACE_ID, ensure_fact_embeddings
 from tests.engine_helpers import LINKEDIN_SAMPLE, context
 from tests.fakes import HashingEmbedder
@@ -75,7 +76,7 @@ def test_facts_are_reembedded_when_the_embedding_model_changes(session: Session)
     changed = ensure_fact_embeddings(session, WORKSPACE_ID, RenamedEmbedder())
     total = len(session.scalars(select(Fact.id)).all())
     assert changed == total
-    fact = session.get_one(Fact, "F-087")
+    fact = get_fact(session, WORKSPACE_ID, "F-087")
     assert fact.embedding is not None and float(fact.embedding[-1]) == 1.0
     settings = session.get_one(Workspace, WORKSPACE_ID).settings
     assert settings["embedding_identity"] == "another-model/model.onnx"

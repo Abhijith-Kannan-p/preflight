@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth import current_workspace_id
 from app.db import get_session
 from app.models import (
     ChannelProfile,
@@ -28,30 +29,35 @@ from app.schemas.rulebook import (
     UserOut,
     VoiceProfileOut,
 )
-from app.seed import WORKSPACE_ID
 
 router = APIRouter(prefix="/api", tags=["rulebook"])
 
 
 @router.get("/users", response_model=list[UserOut])
-def list_users(session: Session = Depends(get_session)) -> list[User]:
-    return list(session.scalars(select(User).order_by(User.id)))
+def list_users(
+    ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> list[User]:
+    return list(session.scalars(select(User).where(User.workspace_id == ws).order_by(User.id)))
 
 
 @router.get("/rulebook/rules", response_model=list[RuleOut])
 def list_rules(
-    include_retired: bool = False, session: Session = Depends(get_session)
+    include_retired: bool = False,
+    ws: str = Depends(current_workspace_id),
+    session: Session = Depends(get_session),
 ) -> list[Rule]:
-    query = select(Rule).order_by(Rule.code, Rule.version.desc())
+    query = select(Rule).where(Rule.workspace_id == ws).order_by(Rule.code, Rule.version.desc())
     if not include_retired:
         query = query.where(Rule.status != RuleStatus.retired)
     return list(session.scalars(query))
 
 
 @router.get("/rulebook/facts", response_model=list[FactOut])
-def list_facts(session: Session = Depends(get_session)) -> list[FactOut]:
+def list_facts(
+    ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> list[FactOut]:
     today = date.today()
-    facts = session.scalars(select(Fact).order_by(Fact.id))
+    facts = session.scalars(select(Fact).where(Fact.workspace_id == ws).order_by(Fact.id))
     return [
         FactOut.model_validate(
             {**_columns(f), "source_ref": f.source_ref, "is_current": f.is_current(today)}
@@ -61,29 +67,43 @@ def list_facts(session: Session = Depends(get_session)) -> list[FactOut]:
 
 
 @router.get("/rulebook/terms", response_model=list[TermOut])
-def list_terms(session: Session = Depends(get_session)) -> list[Term]:
-    return list(session.scalars(select(Term).order_by(Term.kind, Term.term)))
+def list_terms(
+    ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> list[Term]:
+    query = select(Term).where(Term.workspace_id == ws).order_by(Term.kind, Term.term)
+    return list(session.scalars(query))
 
 
 @router.get("/rulebook/channels", response_model=list[ChannelOut])
-def list_channels(session: Session = Depends(get_session)) -> list[ChannelProfile]:
-    return list(session.scalars(select(ChannelProfile).order_by(ChannelProfile.name)))
+def list_channels(
+    ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> list[ChannelProfile]:
+    query = select(ChannelProfile).where(ChannelProfile.workspace_id == ws)
+    return list(session.scalars(query.order_by(ChannelProfile.name)))
 
 
 @router.get("/rulebook/confidential", response_model=list[ConfidentialTermOut])
-def list_confidential(session: Session = Depends(get_session)) -> list[ConfidentialTerm]:
-    return list(session.scalars(select(ConfidentialTerm).order_by(ConfidentialTerm.term)))
+def list_confidential(
+    ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> list[ConfidentialTerm]:
+    query = select(ConfidentialTerm).where(ConfidentialTerm.workspace_id == ws)
+    return list(session.scalars(query.order_by(ConfidentialTerm.term)))
 
 
 @router.get("/rulebook/voice", response_model=VoiceProfileOut)
-def voice_profile(session: Session = Depends(get_session)) -> VoiceProfileOut:
-    workspace = session.get_one(Workspace, WORKSPACE_ID)
+def voice_profile(
+    ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> VoiceProfileOut:
+    workspace = session.get_one(Workspace, ws)
     return VoiceProfileOut.model_validate(workspace.voice_profile)
 
 
 @router.get("/samples", response_model=list[SampleDraftOut])
-def list_samples(session: Session = Depends(get_session)) -> list[SampleDraft]:
-    return list(session.scalars(select(SampleDraft).order_by(SampleDraft.position)))
+def list_samples(
+    ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> list[SampleDraft]:
+    query = select(SampleDraft).where(SampleDraft.workspace_id == ws)
+    return list(session.scalars(query.order_by(SampleDraft.position)))
 
 
 def _columns(fact: Fact) -> dict[str, object]:

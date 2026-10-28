@@ -74,11 +74,20 @@ class TermKind(str, enum.Enum):
     discouraged = "discouraged"
 
 
+TEMPLATE_WORKSPACE_ID = "ws_paywise"
+TEMPLATE_KIND = "template"
+SANDBOX_KIND = "sandbox"
+
+
 class Workspace(Base):
+    """A brand workspace. The seeded template is cloned into one sandbox per demo visitor."""
+
     __tablename__ = "workspaces"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
     name: Mapped[str] = mapped_column(String(120))
+    kind: Mapped[str] = mapped_column(String(16), default=TEMPLATE_KIND)
+    last_active_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     voice_profile: Mapped[dict[str, Any]] = mapped_column(default=dict)
     settings: Mapped[dict[str, Any]] = mapped_column(default=dict)
     rulebook_version: Mapped[int] = mapped_column(Integer, default=1)
@@ -87,12 +96,17 @@ class Workspace(Base):
 
 
 class User(Base):
+    """A workspace member. Sandbox users are copies of the template's demo personas; `persona`
+    keeps the template user's id so the role switcher can map between them."""
+
     __tablename__ = "users"
+    __table_args__ = (UniqueConstraint("workspace_id", "email"),)
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
-    workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id"))
+    workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id"), index=True)
+    persona: Mapped[str | None] = mapped_column(String(32))
     name: Mapped[str] = mapped_column(String(120))
-    email: Mapped[str] = mapped_column(String(200), unique=True)
+    email: Mapped[str] = mapped_column(String(200))
     role: Mapped[Role] = mapped_column(_enum(Role))
     title: Mapped[str] = mapped_column(String(120), default="")
 
@@ -129,8 +143,10 @@ class Fact(Base):
     claims."""
 
     __tablename__ = "facts"
+    __table_args__ = (UniqueConstraint("workspace_id", "id"),)
 
-    id: Mapped[str] = mapped_column(String(16), primary_key=True)
+    pk: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[str] = mapped_column(String(16), index=True)
     workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id"))
     statement: Mapped[str] = mapped_column(Text)
     source_doc: Mapped[str] = mapped_column(String(200))
@@ -175,8 +191,10 @@ class Term(Base):
 
 class ChannelProfile(Base):
     __tablename__ = "channel_profiles"
+    __table_args__ = (UniqueConstraint("workspace_id", "id"),)
 
-    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    pk: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[str] = mapped_column(String(32))
     workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id"))
     name: Mapped[str] = mapped_column(String(80))
     max_chars: Mapped[int | None] = mapped_column(Integer)
@@ -198,8 +216,10 @@ class ConfidentialTerm(Base):
 
 class SampleDraft(Base):
     __tablename__ = "sample_drafts"
+    __table_args__ = (UniqueConstraint("workspace_id", "id"),)
 
-    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    pk: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[str] = mapped_column(String(32))
     workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id"))
     label: Mapped[str] = mapped_column(String(80))
     title: Mapped[str] = mapped_column(String(200))
@@ -253,6 +273,8 @@ class Revision(Base):
     report: Mapped[dict[str, Any]] = mapped_column(default=dict)
     rulebook_version: Mapped[int | None] = mapped_column(Integer)
     factbook_version: Mapped[int | None] = mapped_column(Integer)
+    # Fingerprint of the rulebook, facts and channel a review ran against (the cache key).
+    context_hash: Mapped[str | None] = mapped_column(String(64), index=True)
     created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -346,6 +368,8 @@ class AuditEvent(Base):
     __tablename__ = "audit_events"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    # Each workspace has its own chain, so resetting a sandbox never breaks another one.
+    workspace_id: Mapped[str] = mapped_column(String(32), index=True)
     entity: Mapped[str] = mapped_column(String(32))
     entity_id: Mapped[str] = mapped_column(String(64), index=True)
     action: Mapped[str] = mapped_column(String(48))
@@ -428,3 +452,19 @@ class EvalRun(Base):
     latency_ms_p50: Mapped[float] = mapped_column(Float)
     latency_ms_p95: Mapped[float] = mapped_column(Float)
     config: Mapped[dict[str, Any]] = mapped_column(default=dict)
+
+
+class IdempotencyKey(Base):
+    """A stored response for an `Idempotency-Key`, so a repeated request is not applied twice."""
+
+    __tablename__ = "idempotency_keys"
+    __table_args__ = (UniqueConstraint("scope", "key"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    scope: Mapped[str] = mapped_column(String(64))
+    key: Mapped[str] = mapped_column(String(100))
+    method: Mapped[str] = mapped_column(String(8))
+    path: Mapped[str] = mapped_column(String(300))
+    status_code: Mapped[int | None] = mapped_column(Integer)
+    body: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

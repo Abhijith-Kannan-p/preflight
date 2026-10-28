@@ -40,12 +40,22 @@ def insights(
     user: User = Depends(require(Permission.view_insights)),
     session: Session = Depends(get_session),
 ) -> Insights:
+    ws = user.workspace_id
     titles = {
         r.code: r.title
-        for r in session.scalars(select(Rule).where(Rule.status == RuleStatus.active))
+        for r in session.scalars(
+            select(Rule).where(Rule.workspace_id == ws, Rule.status == RuleStatus.active)
+        )
     }
-    submissions = list(session.scalars(select(Submission)))
-    revisions = list(session.scalars(select(Revision).where(Revision.review_status == "complete")))
+    submissions = list(session.scalars(select(Submission).where(Submission.workspace_id == ws)))
+    sub_ids = select(Submission.id).where(Submission.workspace_id == ws)
+    revisions = list(
+        session.scalars(
+            select(Revision).where(
+                Revision.submission_id.in_(sub_ids), Revision.review_status == "complete"
+            )
+        )
+    )
     by_submission: dict[str, list[Revision]] = defaultdict(list)
     for rev in revisions:
         by_submission[rev.submission_id].append(rev)
@@ -53,7 +63,8 @@ def insights(
     lasts = {sid: max(revs, key=lambda r: r.number) for sid, revs in by_submission.items()}
 
     first_ids = {r.id for r in firsts.values()}
-    all_findings = list(session.scalars(select(Finding)))
+    rev_ids = select(Revision.id).where(Revision.submission_id.in_(sub_ids))
+    all_findings = list(session.scalars(select(Finding).where(Finding.revision_id.in_(rev_ids))))
     first_findings = [f for f in all_findings if f.revision_id in first_ids and not f.needs_review]
 
     by_type = Counter(f.type for f in first_findings)
@@ -62,7 +73,9 @@ def insights(
 
     disputes = Counter(
         str(d.payload.get("rule"))
-        for d in session.scalars(select(Decision).where(Decision.kind == "dispute"))
+        for d in session.scalars(
+            select(Decision).where(Decision.submission_id.in_(sub_ids), Decision.kind == "dispute")
+        )
     )
     raised = Counter(f.rule_code for f in all_findings if not f.needs_review)
 
@@ -75,7 +88,7 @@ def insights(
         )
 
     authors: dict[str, dict[str, Any]] = {}
-    names = {u.id: u.name for u in session.scalars(select(User))}
+    names = {u.id: u.name for u in session.scalars(select(User).where(User.workspace_id == ws))}
     for submission in submissions:
         first_rev = firsts.get(submission.id)
         entry = authors.setdefault(

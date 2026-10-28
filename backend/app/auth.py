@@ -14,9 +14,11 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_session
-from app.models import Role, User
+from app.models import SANDBOX_KIND, TEMPLATE_WORKSPACE_ID, Role, User, Workspace, utcnow
 
 TOKEN_TTL = timedelta(days=7)
+# A sandbox's activity clock is written at most this often, not on every request.
+TOUCH_EVERY = timedelta(minutes=5)
 _bearer = HTTPBearer(auto_error=False)
 
 
@@ -58,12 +60,17 @@ def issue_token(user: User) -> str:
     return jwt.encode(payload, get_settings().jwt_secret, algorithm="HS256")
 
 
-def current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
-    session: Session = Depends(get_session),
-) -> User:
-    if credentials is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sign in with a demo user first.")
+def _touch(session: Session, workspace_id: str) -> None:
+    workspace = session.get(Workspace, workspace_id)
+    if workspace is None or workspace.kind != SANDBOX_KIND:
+        return
+    now = utcnow()
+    if workspace.last_active_at is None or now - workspace.last_active_at > TOUCH_EVERY:
+        workspace.last_active_at = now
+        session.commit()
+
+
+def _user_from(credentials: HTTPAuthorizationCredentials, session: Session) -> User:
     try:
         payload = jwt.decode(
             credentials.credentials, get_settings().jwt_secret, algorithms=["HS256"]
@@ -74,8 +81,31 @@ def current_user(
         ) from exc
     user = session.get(User, payload.get("sub"))
     if user is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown user.")
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            "Your demo workspace has expired. Reload the page to start a fresh one.",
+        )
+    _touch(session, user.workspace_id)
     return user
+
+
+def current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    session: Session = Depends(get_session),
+) -> User:
+    if credentials is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sign in with a demo user first.")
+    return _user_from(credentials, session)
+
+
+def current_workspace_id(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+    session: Session = Depends(get_session),
+) -> str:
+    """The caller's workspace for read endpoints that also work signed out (the template)."""
+    if credentials is None:
+        return TEMPLATE_WORKSPACE_ID
+    return _user_from(credentials, session).workspace_id
 
 
 def require(permission: Permission):  # type: ignore[no-untyped-def]

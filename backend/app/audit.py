@@ -1,8 +1,9 @@
 """Append-only, hash-chained audit log.
 
-hash = sha256(prev_hash + canonical_json(event)). Appends are serialised with a Postgres
-advisory lock so two concurrent requests can never fork the chain. `verify_chain` recomputes
-every hash and reports the first broken link.
+hash = sha256(prev_hash + canonical_json(event)). Each workspace has its own chain, so a demo
+sandbox can be reset or expire without touching anyone else's. Appends are serialised per
+workspace with a Postgres advisory lock so two concurrent requests can never fork a chain.
+`verify_chain` recomputes every hash and reports the first broken link.
 """
 
 import hashlib
@@ -14,10 +15,15 @@ from pydantic import BaseModel
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
-from app.models import AuditEvent, utcnow
+from app.models import AuditEvent, User, utcnow
 
 GENESIS = "0" * 64
-_LOCK_KEY = 4_242_001
+_LOCK_NAMESPACE = 4242
+
+
+def _lock_key(workspace_id: str) -> int:
+    """A stable 31-bit advisory-lock key per workspace."""
+    return int.from_bytes(hashlib.sha256(workspace_id.encode()).digest()[:4], "big") >> 1
 
 
 def canonical_json(event: dict[str, Any]) -> str:
@@ -47,11 +53,28 @@ def record(
     action: str,
     actor_id: str | None,
     payload: dict[str, Any] | None = None,
+    workspace_id: str | None = None,
 ) -> AuditEvent:
-    """Append an event in the caller's transaction (committed with the change it describes)."""
-    session.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": _LOCK_KEY})
-    last = session.scalars(select(AuditEvent).order_by(AuditEvent.id.desc()).limit(1)).first()
+    """Append an event in the caller's transaction (committed with the change it describes).
+
+    The workspace defaults to the actor's; system events must pass it explicitly."""
+    if workspace_id is None:
+        actor = session.get(User, actor_id) if actor_id else None
+        if actor is None:
+            raise ValueError("audit.record needs a workspace_id for events without an actor")
+        workspace_id = actor.workspace_id
+    session.execute(
+        text("SELECT pg_advisory_xact_lock(:ns, :k)"),
+        {"ns": _LOCK_NAMESPACE, "k": _lock_key(workspace_id)},
+    )
+    last = session.scalars(
+        select(AuditEvent)
+        .where(AuditEvent.workspace_id == workspace_id)
+        .order_by(AuditEvent.id.desc())
+        .limit(1)
+    ).first()
     event = AuditEvent(
+        workspace_id=workspace_id,
         entity=entity,
         entity_id=entity_id,
         action=action,
@@ -73,10 +96,11 @@ class ChainStatus(BaseModel):
     message: str
 
 
-def verify_chain(session: Session) -> ChainStatus:
+def verify_chain(session: Session, workspace_id: str) -> ChainStatus:
     prev = GENESIS
     count = 0
-    for event in session.scalars(select(AuditEvent).order_by(AuditEvent.id)):
+    events = select(AuditEvent).where(AuditEvent.workspace_id == workspace_id)
+    for event in session.scalars(events.order_by(AuditEvent.id)):
         count += 1
         if event.prev_hash != prev or compute_hash(prev, event) != event.hash:
             return ChainStatus(

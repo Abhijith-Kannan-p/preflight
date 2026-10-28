@@ -3,7 +3,9 @@
 Checkers depend on this snapshot, not on the database, so they are pure and easy to test.
 """
 
-from dataclasses import dataclass, field
+import hashlib
+import json
+from dataclasses import asdict, dataclass, field
 from datetime import date
 from typing import Any
 
@@ -80,6 +82,26 @@ class ReviewContext:
     def rule(self, code: str) -> RuleInfo | None:
         return self.rules.get(code)
 
+    @property
+    def fingerprint(self) -> str:
+        """Hash of everything a review depends on (rules, terms, channel, facts and their
+        validity today, voice, confidential terms, masking). Two workspaces with the same
+        fingerprint produce the same review, so results can be safely reused across demo
+        sandboxes. Fact embeddings are derived from the statements and left out."""
+        facts = {k: {**asdict(v), "embedding": None} for k, v in sorted(self.facts.items())}
+        material = {
+            "rules": {k: asdict(v) for k, v in sorted(self.rules.items())},
+            "terms": [asdict(t) for t in self.terms],
+            "channel": asdict(self.channel) if self.channel else None,
+            "facts": facts,
+            "voice": self.voice,
+            "confidential": sorted(self.confidential),
+            "today": self.today.isoformat(),
+            "masking": self.settings.get("masking_enabled"),
+        }
+        blob = json.dumps(material, sort_keys=True, default=str).encode()
+        return hashlib.sha256(blob).hexdigest()
+
 
 def load_context(
     session: Session, workspace_id: str, channel_id: str, today: date | None = None
@@ -101,7 +123,11 @@ def load_context(
         )
         for t in session.scalars(select(Term).where(Term.workspace_id == workspace_id))
     )
-    channel_row = session.get(ChannelProfile, channel_id)
+    channel_row = session.scalar(
+        select(ChannelProfile).where(
+            ChannelProfile.workspace_id == workspace_id, ChannelProfile.id == channel_id
+        )
+    )
     channel = (
         ChannelInfo(
             channel_row.id,

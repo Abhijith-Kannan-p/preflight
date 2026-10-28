@@ -18,11 +18,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import audit
-from app.auth import Permission, require
+from app.auth import Permission, current_workspace_id, require
 from app.db import get_session
 from app.ml.embeddings import get_embedder
 from app.models import (
-    ChannelProfile,
     ConfidentialTerm,
     Fact,
     Rule,
@@ -46,7 +45,7 @@ from app.schemas.rulebook import (
     TermIn,
     TermOut,
 )
-from app.seed import WORKSPACE_ID
+from app.scoped import get_channel, get_fact
 
 router = APIRouter(prefix="/api/rulebook", tags=["rulebook (edit)"])
 editor = require(Permission.edit_rulebook)
@@ -54,18 +53,18 @@ editor = require(Permission.edit_rulebook)
 MAX_CSV_BYTES = 1024 * 1024
 
 
-def _bump(session: Session, rulebook: bool = False, factbook: bool = False) -> None:
-    workspace = session.get_one(Workspace, WORKSPACE_ID)
+def _bump(session: Session, ws: str, rulebook: bool = False, factbook: bool = False) -> None:
+    workspace = session.get_one(Workspace, ws)
     if rulebook:
         workspace.rulebook_version += 1
     if factbook:
         workspace.factbook_version += 1
 
 
-def _active_rule(session: Session, code: str) -> Rule:
+def _active_rule(session: Session, ws: str, code: str) -> Rule:
     rule = session.scalar(
         select(Rule)
-        .where(Rule.code == code, Rule.status == RuleStatus.active)
+        .where(Rule.workspace_id == ws, Rule.code == code, Rule.status == RuleStatus.active)
         .order_by(Rule.version.desc())
     )
     if rule is None:
@@ -85,10 +84,11 @@ def _embed(statement: str) -> list[float] | None:
 def create_rule(
     body: RuleIn, user: User = Depends(editor), session: Session = Depends(get_session)
 ) -> Rule:
-    if session.scalar(select(Rule).where(Rule.code == body.code)):
+    exists = select(Rule).where(Rule.workspace_id == user.workspace_id, Rule.code == body.code)
+    if session.scalar(exists):
         raise HTTPException(status.HTTP_409_CONFLICT, f"Rule {body.code} already exists.")
     rule = Rule(
-        workspace_id=WORKSPACE_ID,
+        workspace_id=user.workspace_id,
         code=body.code,
         category=body.category,
         title=body.title,
@@ -103,7 +103,7 @@ def create_rule(
         approved_by=user.id,
     )
     session.add(rule)
-    _bump(session, rulebook=True)
+    _bump(session, user.workspace_id, rulebook=True)
     session.flush()
     audit.record(session, "rule", body.code, "rule_created", user.id, body.model_dump())
     session.commit()
@@ -118,10 +118,10 @@ def update_rule(
     session: Session = Depends(get_session),
 ) -> Rule:
     """Edits never overwrite: the old version is retired and a new version is created."""
-    current = _active_rule(session, code)
+    current = _active_rule(session, user.workspace_id, code)
     current.status = RuleStatus.retired
     rule = Rule(
-        workspace_id=WORKSPACE_ID,
+        workspace_id=user.workspace_id,
         code=code,
         category=current.category,
         title=body.title,
@@ -136,7 +136,7 @@ def update_rule(
         approved_by=user.id,
     )
     session.add(rule)
-    _bump(session, rulebook=True)
+    _bump(session, user.workspace_id, rulebook=True)
     session.flush()
     audit.record(
         session,
@@ -154,25 +154,26 @@ def update_rule(
 def retire_rule(
     code: str, user: User = Depends(editor), session: Session = Depends(get_session)
 ) -> None:
-    rule = _active_rule(session, code)
+    rule = _active_rule(session, user.workspace_id, code)
     rule.status = RuleStatus.retired
-    _bump(session, rulebook=True)
+    _bump(session, user.workspace_id, rulebook=True)
     audit.record(session, "rule", code, "rule_retired", user.id, {"version": rule.version})
     session.commit()
 
 
 @router.get("/rules/{code}/versions", response_model=list[RuleOut])
-def rule_versions(code: str, session: Session = Depends(get_session)) -> list[Rule]:
-    return list(
-        session.scalars(select(Rule).where(Rule.code == code).order_by(Rule.version.desc()))
-    )
+def rule_versions(
+    code: str, ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> list[Rule]:
+    query = select(Rule).where(Rule.workspace_id == ws, Rule.code == code)
+    return list(session.scalars(query.order_by(Rule.version.desc())))
 
 
 # --- facts -----------------------------------------------------------------------------
 
 
-def _fact(session: Session, fact_id: str) -> Fact:
-    fact = session.get(Fact, fact_id)
+def _fact(session: Session, ws: str, fact_id: str) -> Fact:
+    fact = get_fact(session, ws, fact_id)
     if fact is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"No fact {fact_id}.")
     return fact
@@ -182,11 +183,11 @@ def _fact(session: Session, fact_id: str) -> Fact:
 def create_fact(
     body: FactIn, user: User = Depends(editor), session: Session = Depends(get_session)
 ) -> dict[str, str]:
-    if session.get(Fact, body.id):
+    if get_fact(session, user.workspace_id, body.id):
         raise HTTPException(status.HTTP_409_CONFLICT, f"Fact {body.id} already exists.")
     session.add(
         Fact(
-            workspace_id=WORKSPACE_ID,
+            workspace_id=user.workspace_id,
             **body.model_dump(),
             status=RuleStatus.active,
             embedding=_embed(body.statement),
@@ -194,7 +195,7 @@ def create_fact(
             approved_by=user.id,
         )
     )
-    _bump(session, factbook=True)
+    _bump(session, user.workspace_id, factbook=True)
     session.flush()
     audit.record(session, "fact", body.id, "fact_created", user.id, body.model_dump(mode="json"))
     session.commit()
@@ -208,14 +209,14 @@ def update_fact(
     user: User = Depends(editor),
     session: Session = Depends(get_session),
 ) -> dict[str, Any]:
-    fact = _fact(session, fact_id)
+    fact = _fact(session, user.workspace_id, fact_id)
     if fact.statement != body.statement:
         fact.embedding = _embed(body.statement)
     for key, value in body.model_dump().items():
         setattr(fact, key, value)
     fact.version += 1
     fact.approved_by = user.id
-    _bump(session, factbook=True)
+    _bump(session, user.workspace_id, factbook=True)
     audit.record(
         session,
         "fact",
@@ -237,16 +238,16 @@ def supersede_fact(
 ) -> dict[str, str]:
     """Replace a fact with a new one from a date. Claims matching the old fact become
     'outdated' and point to the new fact."""
-    old = _fact(session, fact_id)
+    old = _fact(session, user.workspace_id, fact_id)
     if old.superseded_by:
         raise HTTPException(
             status.HTTP_409_CONFLICT, f"{fact_id} is already superseded by " f"{old.superseded_by}."
         )
-    if session.get(Fact, body.new_id):
+    if get_fact(session, user.workspace_id, body.new_id):
         raise HTTPException(status.HTTP_409_CONFLICT, f"Fact {body.new_id} already exists.")
     session.add(
         Fact(
-            workspace_id=WORKSPACE_ID,
+            workspace_id=user.workspace_id,
             id=body.new_id,
             statement=body.statement,
             source_doc=body.source_doc,
@@ -260,7 +261,7 @@ def supersede_fact(
     )
     old.superseded_by = body.new_id
     old.valid_until = body.valid_from - timedelta(days=1)
-    _bump(session, factbook=True)
+    _bump(session, user.workspace_id, factbook=True)
     session.flush()
     audit.record(
         session,
@@ -278,9 +279,9 @@ def supersede_fact(
 def retire_fact(
     fact_id: str, user: User = Depends(editor), session: Session = Depends(get_session)
 ) -> None:
-    fact = _fact(session, fact_id)
+    fact = _fact(session, user.workspace_id, fact_id)
     fact.status = RuleStatus.retired
-    _bump(session, factbook=True)
+    _bump(session, user.workspace_id, factbook=True)
     audit.record(session, "fact", fact_id, "fact_retired", user.id, {})
     session.commit()
 
@@ -292,9 +293,11 @@ def retire_fact(
 def create_term(
     body: TermIn, user: User = Depends(editor), session: Session = Depends(get_session)
 ) -> Term:
-    term = Term(workspace_id=WORKSPACE_ID, **{**body.model_dump(), "kind": TermKind(body.kind)})
+    term = Term(
+        workspace_id=user.workspace_id, **{**body.model_dump(), "kind": TermKind(body.kind)}
+    )
     session.add(term)
-    _bump(session, rulebook=True)
+    _bump(session, user.workspace_id, rulebook=True)
     session.flush()
     audit.record(session, "term", str(term.id), "term_created", user.id, body.model_dump())
     session.commit()
@@ -309,11 +312,11 @@ def update_term(
     session: Session = Depends(get_session),
 ) -> Term:
     term = session.get(Term, term_id)
-    if term is None:
+    if term is None or term.workspace_id != user.workspace_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Term not found.")
     for key, value in {**body.model_dump(), "kind": TermKind(body.kind)}.items():
         setattr(term, key, value)
-    _bump(session, rulebook=True)
+    _bump(session, user.workspace_id, rulebook=True)
     audit.record(session, "term", str(term_id), "term_updated", user.id, body.model_dump())
     session.commit()
     return term
@@ -324,11 +327,11 @@ def delete_term(
     term_id: int, user: User = Depends(editor), session: Session = Depends(get_session)
 ) -> None:
     term = session.get(Term, term_id)
-    if term is None:
+    if term is None or term.workspace_id != user.workspace_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Term not found.")
     audit.record(session, "term", str(term_id), "term_deleted", user.id, {"term": term.term})
     session.delete(term)
-    _bump(session, rulebook=True)
+    _bump(session, user.workspace_id, rulebook=True)
     session.commit()
 
 
@@ -339,12 +342,12 @@ def update_channel(
     user: User = Depends(editor),
     session: Session = Depends(get_session),
 ) -> dict[str, str]:
-    channel = session.get(ChannelProfile, channel_id)
+    channel = get_channel(session, user.workspace_id, channel_id)
     if channel is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Channel not found.")
     for key, value in body.model_dump().items():
         setattr(channel, key, value)
-    _bump(session, rulebook=True)
+    _bump(session, user.workspace_id, rulebook=True)
     audit.record(session, "channel", channel_id, "channel_updated", user.id, body.model_dump())
     session.commit()
     return {"id": channel_id}
@@ -354,7 +357,7 @@ def update_channel(
 def add_confidential(
     body: ConfidentialIn, user: User = Depends(editor), session: Session = Depends(get_session)
 ) -> dict[str, int]:
-    term = ConfidentialTerm(workspace_id=WORKSPACE_ID, **body.model_dump())
+    term = ConfidentialTerm(workspace_id=user.workspace_id, **body.model_dump())
     session.add(term)
     session.flush()
     # The term itself is confidential: the audit log records only that one was added.
@@ -370,7 +373,7 @@ def delete_confidential(
     term_id: int, user: User = Depends(editor), session: Session = Depends(get_session)
 ) -> None:
     term = session.get(ConfidentialTerm, term_id)
-    if term is None:
+    if term is None or term.workspace_id != user.workspace_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Term not found.")
     session.delete(term)
     audit.record(session, "confidential", str(term_id), "confidential_removed", user.id, {})
@@ -416,10 +419,14 @@ def _csv_response(name: str, columns: list[str], rows: list[dict[str, Any]]) -> 
 
 
 @router.get("/export/{kind}.csv")
-def export_csv(kind: str, session: Session = Depends(get_session)) -> Response:
+def export_csv(
+    kind: str, ws: str = Depends(current_workspace_id), session: Session = Depends(get_session)
+) -> Response:
     if kind == "rules":
         rules = session.scalars(
-            select(Rule).where(Rule.status == RuleStatus.active).order_by(Rule.code)
+            select(Rule)
+            .where(Rule.workspace_id == ws, Rule.status == RuleStatus.active)
+            .order_by(Rule.code)
         )
         return _csv_response(
             kind,
@@ -442,7 +449,9 @@ def export_csv(kind: str, session: Session = Depends(get_session)) -> Response:
         )
     if kind == "facts":
         facts = session.scalars(
-            select(Fact).where(Fact.status == RuleStatus.active).order_by(Fact.id)
+            select(Fact)
+            .where(Fact.workspace_id == ws, Fact.status == RuleStatus.active)
+            .order_by(Fact.id)
         )
         return _csv_response(
             kind,
@@ -461,7 +470,9 @@ def export_csv(kind: str, session: Session = Depends(get_session)) -> Response:
             ],
         )
     if kind == "terms":
-        terms = session.scalars(select(Term).order_by(Term.kind, Term.term))
+        terms = session.scalars(
+            select(Term).where(Term.workspace_id == ws).order_by(Term.kind, Term.term)
+        )
         return _csv_response(
             kind,
             TERM_COLUMNS,
@@ -510,7 +521,7 @@ async def import_csv(
             elif kind == "facts":
                 outcome = _import_fact(session, row, user)
             elif kind == "terms":
-                outcome = _import_term(session, row)
+                outcome = _import_term(session, row, user)
             else:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, "Import rules, facts or terms.")
         except (
@@ -525,7 +536,7 @@ async def import_csv(
             continue
         setattr(result, outcome, getattr(result, outcome) + 1)
     if result.created or result.updated:
-        _bump(session, rulebook=kind != "facts", factbook=kind == "facts")
+        _bump(session, user.workspace_id, rulebook=kind != "facts", factbook=kind == "facts")
         audit.record(
             session,
             kind,
@@ -550,12 +561,16 @@ def _import_rule(session: Session, row: dict[str, str], user: User) -> str:
         source_page=_opt_int(row.get("source_page", "")),
     )
     current = session.scalar(
-        select(Rule).where(Rule.code == body.code, Rule.status == RuleStatus.active)
+        select(Rule).where(
+            Rule.workspace_id == user.workspace_id,
+            Rule.code == body.code,
+            Rule.status == RuleStatus.active,
+        )
     )
     if current is None:
         session.add(
             Rule(
-                workspace_id=WORKSPACE_ID,
+                workspace_id=user.workspace_id,
                 code=body.code,
                 category=body.category,
                 title=body.title,
@@ -591,7 +606,7 @@ def _import_rule(session: Session, row: dict[str, str], user: User) -> str:
     current.status = RuleStatus.retired
     session.add(
         Rule(
-            workspace_id=WORKSPACE_ID,
+            workspace_id=user.workspace_id,
             code=body.code,
             category=current.category,
             title=body.title,
@@ -619,11 +634,11 @@ def _import_fact(session: Session, row: dict[str, str], user: User) -> str:
         valid_from=row.get("valid_from") or None,
         valid_until=row.get("valid_until") or None,
     )
-    fact = session.get(Fact, body.id)
+    fact = get_fact(session, user.workspace_id, body.id)
     if fact is None:
         session.add(
             Fact(
-                workspace_id=WORKSPACE_ID,
+                workspace_id=user.workspace_id,
                 **body.model_dump(),
                 status=RuleStatus.active,
                 superseded_by=row.get("superseded_by") or None,
@@ -647,7 +662,7 @@ def _import_fact(session: Session, row: dict[str, str], user: User) -> str:
     return "updated"
 
 
-def _import_term(session: Session, row: dict[str, str]) -> str:
+def _import_term(session: Session, row: dict[str, str], user: User) -> str:
     body = TermIn(
         term=row["term"],
         kind=row["kind"],
@@ -658,11 +673,15 @@ def _import_term(session: Session, row: dict[str, str]) -> str:
         note=row.get("note", ""),
     )
     term = session.scalar(
-        select(Term).where(Term.term == body.term, Term.kind == TermKind(body.kind))
+        select(Term).where(
+            Term.workspace_id == user.workspace_id,
+            Term.term == body.term,
+            Term.kind == TermKind(body.kind),
+        )
     )
     values = {**body.model_dump(), "kind": TermKind(body.kind)}
     if term is None:
-        session.add(Term(workspace_id=WORKSPACE_ID, **values))
+        session.add(Term(workspace_id=user.workspace_id, **values))
         return "created"
     if all(getattr(term, k) == v for k, v in values.items()):
         return "unchanged"

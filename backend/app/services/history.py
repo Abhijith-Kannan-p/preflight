@@ -166,7 +166,8 @@ def create_entry(session: Session, entry: dict[str, Any]) -> None:
 
 def ensure_demo_history() -> None:
     with SessionLocal() as session:
-        if session.scalar(select(Submission.id).limit(1)) is not None:
+        template = select(Submission.id).where(Submission.workspace_id == WORKSPACE_ID)
+        if session.scalar(template.limit(1)) is not None:
             return
         entries = json.loads((get_settings().seed_dir / "history.json").read_text(encoding="utf-8"))
         for entry in entries:

@@ -19,14 +19,12 @@ from app.engine.normalise import IntakeError, from_text, from_upload
 from app.engine.schema import NormalisedDoc
 from app.models import (
     AuditEvent,
-    ChannelProfile,
     Claim,
     Comment,
     Decision,
     Finding,
     Revision,
     Role,
-    SampleDraft,
     Submission,
     SubmissionState,
     User,
@@ -53,7 +51,7 @@ from app.schemas.reviews import (
     TransitionIn,
     UserRef,
 )
-from app.seed import WORKSPACE_ID
+from app.scoped import get_channel, get_sample
 from app.services import runner
 from app.services.events import TERMINAL, bus
 from app.services.notify import notify_roles, notify_users
@@ -77,9 +75,9 @@ def _conflict(message: str, **extra: object) -> HTTPException:
     return HTTPException(status.HTTP_409_CONFLICT, {"message": message, **extra})
 
 
-def _submission(session: Session, review_id: str) -> Submission:
+def _submission(session: Session, review_id: str, workspace_id: str) -> Submission:
     submission = session.get(Submission, review_id)
-    if submission is None:
+    if submission is None or submission.workspace_id != workspace_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Review not found.")
     return submission
 
@@ -203,7 +201,7 @@ async def create_review(
     user: User = Depends(require(Permission.submit_content)),
     session: Session = Depends(get_session),
 ) -> CreatedReview:
-    if session.get(ChannelProfile, channel) is None:
+    if get_channel(session, user.workspace_id, channel) is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Unknown channel '{channel}'.")
     content_uri = None
     try:
@@ -212,7 +210,7 @@ async def create_review(
             doc = from_upload(file.filename, data)
             content_uri = file.filename
         elif sample_id:
-            sample = session.get(SampleDraft, sample_id)
+            sample = get_sample(session, user.workspace_id, sample_id)
             if sample is None:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown sample.")
             if sample.filename:
@@ -230,7 +228,7 @@ async def create_review(
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
 
     submission = Submission(
-        workspace_id=WORKSPACE_ID,
+        workspace_id=user.workspace_id,
         author_id=user.id,
         channel=channel,
         title=(title or doc.blocks[0].text[:80]).strip(),
@@ -262,7 +260,11 @@ def list_reviews(
     user: User = Depends(current_user),
     session: Session = Depends(get_session),
 ) -> list[ReviewListItem]:
-    query = select(Submission).order_by(Submission.updated_at.desc())
+    query = (
+        select(Submission)
+        .where(Submission.workspace_id == user.workspace_id)
+        .order_by(Submission.updated_at.desc())
+    )
     if scope == "mine":
         query = query.where(Submission.author_id == user.id)
     elif scope == "queue":
@@ -297,7 +299,7 @@ def get_review(
     user: User = Depends(current_user),
     session: Session = Depends(get_session),
 ) -> ReviewOut:
-    submission = _submission(session, review_id)
+    submission = _submission(session, review_id, user.workspace_id)
     latest = _latest(session, submission)
     current = latest
     if revision is not None and revision != latest.number:
@@ -367,6 +369,7 @@ def get_review(
         ),
         permissions=permissions_for(user.role),
         clearance=_clearance(session, submission),
+        queue_position=runner.queue_position(latest.id),
     )
 
 
@@ -402,10 +405,13 @@ async def review_events(
     session: Session = Depends(get_session),
 ) -> StreamingResponse:
     try:
-        jwt.decode(token, get_settings().jwt_secret, algorithms=["HS256"])
+        claims = jwt.decode(token, get_settings().jwt_secret, algorithms=["HS256"])
     except jwt.PyJWTError as exc:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token.") from exc
-    submission = _submission(session, review_id)
+    viewer = session.get(User, claims.get("sub"))
+    if viewer is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown user.")
+    submission = _submission(session, review_id, viewer.workspace_id)
     target = _latest(session, submission)
     if revision is not None:
         target = (
@@ -427,6 +433,7 @@ async def review_events(
                     "ok": target.review_status == "complete",
                     "score": target.brand_score,
                     "degraded": target.degraded,
+                    "error": (target.report or {}).get("error"),
                 },
             )
             return
@@ -474,6 +481,8 @@ def decide(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Finding not found.")
     revision = session.get_one(Revision, finding.revision_id)
     submission = session.get_one(Submission, revision.submission_id)
+    if submission.workspace_id != user.workspace_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Finding not found.")
     if revision.id != _latest(session, submission).id:
         raise _conflict("This finding belongs to an older revision. Open the latest one.")
     if body.kind == "escalate":
@@ -486,6 +495,11 @@ def decide(
             f"The review is {submission.state.value.replace('_', ' ')}; findings "
             "can only be changed on a draft or after changes are requested."
         )
+
+    repeat = _repeated_decision(session, finding, body)
+    if repeat is not None:
+        # The same decision twice (double click, two tabs): no second decision or audit event.
+        return _decision_out(session, repeat)
 
     if body.kind == "accept":
         if not finding.suggestion:
@@ -545,6 +559,31 @@ def decide(
     )
     submission.updated_at = utcnow()
     session.commit()
+    return _decision_out(session, decision)
+
+
+_RESULTING_STATUS = {"accept": "accepted", "escalate": "escalated", "reopen": "open"}
+
+
+def _repeated_decision(session: Session, finding: Finding, body: DecisionIn) -> Decision | None:
+    """The finding's latest decision if `body` would change nothing (same kind, same text)."""
+    latest = session.scalar(
+        select(Decision)
+        .where(Decision.finding_id == finding.id)
+        .order_by(Decision.created_at.desc())
+        .limit(1)
+    )
+    if latest is None or latest.kind != body.kind:
+        return None
+    if body.kind in _RESULTING_STATUS:
+        return latest if finding.status == _RESULTING_STATUS[body.kind] else None
+    if body.kind == "edit":
+        return latest if finding.status == "edited" and finding.applied_text == body.text else None
+    same_reason = latest.reason == body.reason.strip()
+    return latest if finding.status == "disputed" and same_reason else None
+
+
+def _decision_out(session: Session, decision: Decision) -> DecisionOut:
     return DecisionOut(
         id=decision.id,
         kind=decision.kind,
@@ -552,7 +591,7 @@ def decide(
         payload=decision.payload,
         finding_id=decision.finding_id,
         revision_id=decision.revision_id,
-        actor=UserRef.model_validate(user),
+        actor=UserRef.model_validate(session.get_one(User, decision.actor_id)),
         created_at=decision.created_at,
     )
 
@@ -572,7 +611,7 @@ def _draft(session: Session, revision: Revision) -> tuple[str, int]:
 def draft_preview(
     review_id: str, user: User = Depends(current_user), session: Session = Depends(get_session)
 ) -> DraftOut:
-    revision = _latest(session, _submission(session, review_id))
+    revision = _latest(session, _submission(session, review_id, user.workspace_id))
     content, applied = _draft(session, revision)
     return DraftOut(content=content, applied=applied, changed=content != revision.content)
 
@@ -584,7 +623,7 @@ def recheck(
     user: User = Depends(current_user),
     session: Session = Depends(get_session),
 ) -> CreatedReview:
-    submission = _submission(session, review_id)
+    submission = _submission(session, review_id, user.workspace_id)
     _require_author(user, submission)
     if submission.state not in EDITABLE_STATES:
         raise _conflict("Re-check is available on drafts and after changes are requested.")
@@ -625,7 +664,7 @@ def diff(
     user: User = Depends(current_user),
     session: Session = Depends(get_session),
 ) -> DiffOut:
-    submission = _submission(session, review_id)
+    submission = _submission(session, review_id, user.workspace_id)
     revs = {
         r.number: r
         for r in session.scalars(select(Revision).where(Revision.submission_id == submission.id))
@@ -658,7 +697,7 @@ def transition(
     user: User = Depends(current_user),
     session: Session = Depends(get_session),
 ) -> ReviewOut:
-    submission = _submission(session, review_id)
+    submission = _submission(session, review_id, user.workspace_id)
     try:
         rule = check_transition(submission.state, body.action)
     except TransitionError as exc:
@@ -806,7 +845,7 @@ def _notify_transition(session: Session, submission: Submission, action: str, us
 def list_comments(
     review_id: str, user: User = Depends(current_user), session: Session = Depends(get_session)
 ) -> list[CommentOut]:
-    _submission(session, review_id)
+    _submission(session, review_id, user.workspace_id)
     comments = session.scalars(
         select(Comment).where(Comment.submission_id == review_id).order_by(Comment.created_at)
     )
@@ -829,7 +868,7 @@ def add_comment(
     user: User = Depends(require(Permission.comment)),
     session: Session = Depends(get_session),
 ) -> CommentOut:
-    submission = _submission(session, review_id)
+    submission = _submission(session, review_id, user.workspace_id)
     comment = Comment(
         submission_id=submission.id,
         finding_id=body.finding_id,

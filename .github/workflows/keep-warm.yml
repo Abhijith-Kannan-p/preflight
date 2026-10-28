@@ -1,0 +1,29 @@
+# Keeps the free Render backend awake so visitors never wait for a cold start.
+# Render's free plan gives 750 instance hours a month, enough for one always-on service.
+# No secrets: it only calls the public /health endpoint. Set the repository variable
+# API_URL to override the default address.
+name: keep-warm
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping /health
+        env:
+          API_URL: ${{ vars.API_URL || 'https://preflight-api-nauz.onrender.com' }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$API_URL/health" || true)
+            echo "attempt $attempt: HTTP $code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 20
+          done
+          echo "::warning::$API_URL/health did not answer 200"

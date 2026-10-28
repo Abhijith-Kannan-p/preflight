@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import Fact, Rule, Term, User, Workspace
+from app.scoped import get_fact
 from app.seed import WORKSPACE_ID, seed_all
 from tests.fakes import HashingEmbedder
 
@@ -54,7 +55,9 @@ def test_every_fact_has_an_embedding(session: Session) -> None:
 
 def test_superseded_settlement_fact_is_not_current(session: Session) -> None:
     today = date(2026, 10, 22)
-    old, new = session.get_one(Fact, "F-086"), session.get_one(Fact, "F-087")
+    old = get_fact(session, WORKSPACE_ID, "F-086")
+    new = get_fact(session, WORKSPACE_ID, "F-087")
+    assert old is not None and new is not None
     assert old.superseded_by == "F-087"
     assert not old.is_current(today)
     assert new.is_current(today)

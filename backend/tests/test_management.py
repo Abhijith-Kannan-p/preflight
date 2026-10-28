@@ -243,7 +243,9 @@ def test_reset_restores_a_clean_demo(
         headers=login(api, "usr_abhi1"),
     )
     assert api.post("/api/settings/reset-demo", headers=login(api, "usr_abhi1")).status_code == 403
-    assert api.post("/api/settings/reset-demo", headers=login(api, "usr_abhi5")).status_code == 204
+    reset = api.post("/api/settings/reset-demo", headers=login(api, "usr_abhi5"))
+    assert reset.status_code == 200
+    assert reset.json()["user_id"] == "usr_abhi5"
     session.expire_all()
     assert session.scalar(select(func.count()).select_from(Submission)) == 0
     assert api.get("/api/audit/verify").json()["intact"] is True

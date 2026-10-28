@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app import audit
 from app.models import Finding, SubmissionState
+from app.seed import WORKSPACE_ID
 from app.services import runner
 from app.workflow import TransitionError, apply_suggestions, check_transition
 
@@ -239,14 +240,14 @@ def test_clean_post_scores_high(api: TestClient) -> None:
 
 def test_audit_chain_detects_tampering(api: TestClient, session: Session) -> None:
     create(api, login(api, "usr_abhi1"), "sample_clean", "linkedin")
-    assert audit.verify_chain(session).intact
+    assert audit.verify_chain(session, WORKSPACE_ID).intact
     session.execute(
         text(
             "UPDATE audit_events SET payload_json = '{\"forged\": true}' "
             "WHERE id = (SELECT min(id) FROM audit_events)"
         )
     )
-    status = audit.verify_chain(session)
+    status = audit.verify_chain(session, WORKSPACE_ID)
     assert not status.intact
     assert status.broken_at is not None
 

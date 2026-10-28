@@ -14,34 +14,21 @@ from sqlalchemy.orm import Session
 
 from app import audit
 from app.ai.gateway import get_gateway
-from app.auth import Permission, current_user, require
+from app.auth import Permission, current_user, issue_token, permissions_for, require
 from app.config import get_settings
 from app.db import get_session
 from app.ml.embeddings import get_embedder
 from app.models import (
-    AiCall,
+    SANDBOX_KIND,
     ApiKey,
-    AuditEvent,
-    ChannelProfile,
-    Claim,
-    Comment,
-    ConfidentialTerm,
-    Decision,
-    Fact,
-    Finding,
-    Notification,
-    Revision,
-    Rule,
-    SampleDraft,
-    Submission,
-    Term,
     User,
     Webhook,
     WebhookDelivery,
     Workspace,
     utcnow,
 )
-from app.seed import WORKSPACE_ID, seed_all
+from app.seed import seed_all
+from app.services import sandbox
 from app.services.history import ensure_demo_history
 from app.services.webhooks import deliver
 
@@ -71,7 +58,7 @@ def ai_status(
     user: User = Depends(current_user), session: Session = Depends(get_session)
 ) -> AiStatus:
     gateway = get_gateway()
-    workspace = session.get_one(Workspace, WORKSPACE_ID)
+    workspace = session.get_one(Workspace, user.workspace_id)
     settings = get_settings()
     return AiStatus(
         provider=gateway.provider.name if gateway.provider else "none",
@@ -90,10 +77,10 @@ class MaskingIn(BaseModel):
 def set_masking(
     body: MaskingIn, user: User = Depends(admin), session: Session = Depends(get_session)
 ) -> AiStatus:
-    workspace = session.get_one(Workspace, WORKSPACE_ID)
+    workspace = session.get_one(Workspace, user.workspace_id)
     workspace.settings = {**workspace.settings, "masking_enabled": body.enabled}
     audit.record(
-        session, "workspace", WORKSPACE_ID, "masking_changed", user.id, {"enabled": body.enabled}
+        session, "workspace", workspace.id, "masking_changed", user.id, {"enabled": body.enabled}
     )
     session.commit()
     return ai_status(user, session)
@@ -134,7 +121,8 @@ def _key_out(k: ApiKey) -> dict[str, Any]:
 def list_keys(
     user: User = Depends(admin), session: Session = Depends(get_session)
 ) -> list[dict[str, Any]]:
-    return [_key_out(k) for k in session.scalars(select(ApiKey).order_by(ApiKey.created_at.desc()))]
+    keys = select(ApiKey).where(ApiKey.workspace_id == user.workspace_id)
+    return [_key_out(k) for k in session.scalars(keys.order_by(ApiKey.created_at.desc()))]
 
 
 @router.post("/keys", response_model=ApiKeyCreated, status_code=201)
@@ -143,7 +131,7 @@ def create_key(
 ) -> dict[str, Any]:
     raw = KEY_PREFIX + secrets.token_urlsafe(24)
     key = ApiKey(
-        workspace_id=WORKSPACE_ID,
+        workspace_id=user.workspace_id,
         name=body.name,
         prefix=raw[:12],
         key_hash=hash_key(raw),
@@ -161,7 +149,7 @@ def revoke_key(
     key_id: str, user: User = Depends(admin), session: Session = Depends(get_session)
 ) -> None:
     key = session.get(ApiKey, key_id)
-    if key is None:
+    if key is None or key.workspace_id != user.workspace_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Key not found.")
     key.revoked_at = utcnow()
     audit.record(session, "api_key", key_id, "api_key_revoked", user.id, {})
@@ -220,7 +208,11 @@ def list_webhooks(
 ) -> list[WebhookOut]:
     return [
         _webhook_out(session, w)
-        for w in session.scalars(select(Webhook).order_by(Webhook.created_at))
+        for w in session.scalars(
+            select(Webhook)
+            .where(Webhook.workspace_id == user.workspace_id)
+            .order_by(Webhook.created_at)
+        )
     ]
 
 
@@ -229,7 +221,7 @@ def create_webhook(
     body: WebhookIn, user: User = Depends(admin), session: Session = Depends(get_session)
 ) -> WebhookOut:
     webhook = Webhook(
-        workspace_id=WORKSPACE_ID,
+        workspace_id=user.workspace_id,
         url=str(body.url),
         slack_format=body.slack_format,
         secret=secrets.token_hex(24),
@@ -247,7 +239,7 @@ def delete_webhook(
     webhook_id: str, user: User = Depends(admin), session: Session = Depends(get_session)
 ) -> None:
     webhook = session.get(Webhook, webhook_id)
-    if webhook is None:
+    if webhook is None or webhook.workspace_id != user.workspace_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Webhook not found.")
     session.execute(delete(WebhookDelivery).where(WebhookDelivery.webhook_id == webhook_id))
     session.delete(webhook)
@@ -260,7 +252,7 @@ def test_webhook(
     webhook_id: str, user: User = Depends(admin), session: Session = Depends(get_session)
 ) -> DeliveryOut:
     webhook = session.get(Webhook, webhook_id)
-    if webhook is None:
+    if webhook is None or webhook.workspace_id != user.workspace_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Webhook not found.")
     event = {
         "event": "submission.approved",
@@ -283,23 +275,34 @@ def test_webhook(
 # --- demo reset ------------------------------------------------------------------------
 
 
-@router.post("/reset-demo", status_code=204)
-def reset_demo(user: User = Depends(admin), session: Session = Depends(get_session)) -> None:
-    """Delete every review and its history, restore the PayWise brand, start a fresh audit
-    chain. Keys and webhooks are kept."""
-    for model in (WebhookDelivery, Notification, AiCall, Comment, Decision, Claim, Finding):
-        session.execute(delete(model))
-    session.execute(delete(Revision))
-    session.execute(delete(Submission))
-    session.execute(delete(AuditEvent))
-    for brand_model in (Rule, Fact, Term, ConfidentialTerm, ChannelProfile, SampleDraft):
-        session.execute(delete(brand_model))
-    workspace = session.get_one(Workspace, WORKSPACE_ID)
-    workspace.rulebook_version += 1
-    workspace.factbook_version += 1
-    session.flush()
-    seed_all(session, get_settings().seed_dir, get_embedder())
-    audit.record(session, "workspace", WORKSPACE_ID, "demo_reset", user.id, {})
+class ResetOut(BaseModel):
+    token: str
+    user_id: str
+    permissions: list[str]
+
+
+@router.post("/reset-demo", response_model=ResetOut)
+def reset_demo(user: User = Depends(admin), session: Session = Depends(get_session)) -> ResetOut:
+    """Reset the caller's workspace to the PayWise starting state: brand, personas, review
+    history and a fresh audit chain. In a demo sandbox only that visitor's copy is touched.
+    Keys and webhooks are removed. Returns a new token, because personas get new ids."""
+    workspace = session.get_one(Workspace, user.workspace_id)
+    persona = user.persona or user.id
+    if workspace.kind == SANDBOX_KIND:
+        sandbox.reset_sandbox(session, workspace.id)
+    else:
+        sandbox.clear_workspace(session, workspace.id)
+        workspace.rulebook_version += 1
+        workspace.factbook_version += 1
+        session.flush()
+        seed_all(session, get_settings().seed_dir, get_embedder())
+        if get_settings().bootstrap_demo:
+            threading.Thread(target=ensure_demo_history, daemon=True, name="demo-history").start()
+    member = sandbox.find_user(session, workspace.id, persona)
+    if member is None:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Reset left no demo users.")
+    audit.record(session, "workspace", workspace.id, "demo_reset", member.id, {})
     session.commit()
-    if get_settings().bootstrap_demo:
-        threading.Thread(target=ensure_demo_history, daemon=True, name="demo-history").start()
+    return ResetOut(
+        token=issue_token(member), user_id=member.id, permissions=permissions_for(member.role)
+    )

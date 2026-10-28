@@ -104,7 +104,10 @@ def dispatch_approval(submission_id: str) -> None:
             if submission is None:
                 return
             event = approval_event(session, submission)
-            for webhook in session.scalars(select(Webhook).where(Webhook.active.is_(True))):
+            hooks = select(Webhook).where(
+                Webhook.workspace_id == submission.workspace_id, Webhook.active.is_(True)
+            )
+            for webhook in session.scalars(hooks):
                 if "submission.approved" in webhook.events:
                     try:
                         deliver(session, webhook, event)

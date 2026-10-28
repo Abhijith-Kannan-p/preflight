@@ -114,7 +114,7 @@ def build_receipt(session: Session, review_id: str) -> Receipt:
             .order_by(Decision.created_at)
         )
     ]
-    chain = audit.verify_chain(session)
+    chain = audit.verify_chain(session, submission.workspace_id)
     last_event = session.scalars(
         select(AuditEvent)
         .where(AuditEvent.entity_id == submission.id)
@@ -173,8 +173,7 @@ def receipt(review_id: str, session: Session = Depends(get_session)) -> Receipt:
 def receipt_pdf(review_id: str, session: Session = Depends(get_session)) -> Response:
     from app.services.receipt_pdf import render_receipt_pdf
 
-    origins = get_settings().cors_origin_list
-    url = f"{origins[0]}/receipt/{review_id}" if origins else None
+    url = f"{get_settings().public_app_url.rstrip('/')}/receipt/{review_id}"
     data = render_receipt_pdf(build_receipt(session, review_id), url)
     return Response(
         data,

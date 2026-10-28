@@ -1,7 +1,8 @@
 """In-process event bus for live review progress (streamed to the browser over SSE).
 
 Reviews run in a worker thread; events are handed to the API's event loop thread-safely.
-Each revision keeps a short history so a client that connects late still sees every step.
+Each revision keeps a short history so a client that connects late (or reloads the page)
+still sees every step. Histories of finished reviews are dropped once there are many.
 """
 
 import asyncio
@@ -11,6 +12,7 @@ from typing import Any
 
 Event = tuple[str, dict[str, Any]]
 TERMINAL = "review_complete"
+MAX_HISTORIES = 2000
 
 
 class EventBus:
@@ -28,9 +30,19 @@ class EventBus:
         with self._lock:
             self._history[key].append((event, data))
             queues = list(self._subscribers[key])
+            if len(self._history) > MAX_HISTORIES:
+                self._trim()
         for queue in queues:
             if self._loop is not None and self._loop.is_running():
                 self._loop.call_soon_threadsafe(queue.put_nowait, (event, data))
+
+    def _trim(self) -> None:
+        """Forget the oldest finished reviews nobody is watching (caller holds the lock)."""
+        for old in list(self._history)[: len(self._history) - MAX_HISTORIES]:
+            done = any(e == TERMINAL for e, _ in self._history[old])
+            if done and not self._subscribers.get(old):
+                del self._history[old]
+                self._subscribers.pop(old, None)
 
     def subscribe(self, key: str) -> tuple[list[Event], asyncio.Queue[Event]]:
         queue: asyncio.Queue[Event] = asyncio.Queue()

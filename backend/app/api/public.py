@@ -25,8 +25,8 @@ from app.engine.schema import Finding, NormalisedDoc
 from app.engine.score import BrandScore
 from app.ml.embeddings import get_embedder
 from app.ml.nli import get_nli
-from app.models import ApiKey, ChannelProfile, utcnow
-from app.seed import WORKSPACE_ID
+from app.models import ApiKey, utcnow
+from app.scoped import get_channel
 from app.services.ratelimit import RateLimiter
 
 router = APIRouter(prefix="/api/v1", tags=["public API"])
@@ -76,10 +76,13 @@ def api_key(
     return key
 
 
-async def _review(doc: NormalisedDoc, channel: str, session: Session) -> PreflightResponse:
-    if session.get(ChannelProfile, channel) is None:
+async def _review(
+    doc: NormalisedDoc, channel: str, workspace_id: str, session: Session
+) -> PreflightResponse:
+    """Review against the rulebook of the workspace that owns the API key."""
+    if get_channel(session, workspace_id, channel) is None:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"Unknown channel {channel}.")
-    ctx = load_context(session, WORKSPACE_ID, channel)
+    ctx = load_context(session, workspace_id, channel)
 
     def run() -> PreflightResponse:
         embedder, nli = get_embedder(), get_nli()
@@ -122,7 +125,7 @@ async def preflight(
         doc = from_text(body.content, markdown=body.content.lstrip().startswith("#"))
     except IntakeError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
-    return await _review(doc, body.channel, session)
+    return await _review(doc, body.channel, key.workspace_id, session)
 
 
 @router.post("/preflight/file", response_model=PreflightResponse)
@@ -140,4 +143,4 @@ async def preflight_file(
         doc = from_upload(upload.filename or "upload.txt", await upload.read(5 * 1024 * 1024 + 1))
     except IntakeError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
-    return await _review(doc, channel, session)
+    return await _review(doc, channel, key.workspace_id, session)

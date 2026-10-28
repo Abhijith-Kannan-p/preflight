@@ -1,11 +1,13 @@
 """Run a review for one revision and persist the results.
 
 Runs in a worker thread with its own event loop so CPU-bound NLI never blocks the API.
-Results are cached by (content hash, channel, rulebook version, factbook version).
+Results are cached by (content hash, context fingerprint): the fingerprint covers the rulebook,
+facts, channel and date, so identical drafts in identical demo sandboxes are reviewed once.
 """
 
 import asyncio
 import logging
+import queue
 import threading
 import time
 from collections.abc import Callable
@@ -27,7 +29,6 @@ from app.ml import warmup
 from app.ml.embeddings import get_embedder
 from app.ml.nli import get_nli
 from app.models import AiCall, Claim, Finding, Revision, Severity, Submission, utcnow
-from app.seed import WORKSPACE_ID
 from app.services.events import TERMINAL, bus
 
 log = logging.getLogger(__name__)
@@ -36,11 +37,111 @@ MODEL_WAIT_SECONDS = 120
 CARRY_OVER = {"disputed", "escalated"}
 
 
+# --- job queue -------------------------------------------------------------------------
+# Reviews are server-side jobs: a small pool of workers takes them in order, so five people
+# reviewing at once all finish (on a 0.1-CPU host, more parallelism only adds memory). Each
+# waiting job is told its position. A job that overruns its budget is marked failed with a
+# clear message; anything it produces afterwards is discarded.
+
+_jobs: queue.Queue[str] = queue.Queue()
+_waiting: list[str] = []
+_running: set[str] = set()
+_abandoned: set[str] = set()
+_queue_lock = threading.Lock()
+_workers: list[threading.Thread] = []
+
+TIMEOUT_MESSAGE = (
+    "The review took longer than {seconds} seconds and was stopped. "
+    "Press Re-check to run it again."
+)
+
+
 def start_review(revision_id: str) -> None:
-    """Fire-and-forget: run the review in a background thread."""
-    threading.Thread(
+    """Queue a review. Safe to call twice for the same revision: it is only queued once."""
+    _ensure_workers()
+    with _queue_lock:
+        if revision_id in _waiting or revision_id in _running:
+            return
+        _waiting.append(revision_id)
+    _announce_positions()
+    _jobs.put(revision_id)
+
+
+def queue_position(revision_id: str) -> int | None:
+    """1-based position among reviews waiting for a worker, or None if not waiting."""
+    with _queue_lock:
+        return _waiting.index(revision_id) + 1 if revision_id in _waiting else None
+
+
+def _announce_positions() -> None:
+    with _queue_lock:
+        snapshot = list(_waiting)
+    for index, revision_id in enumerate(snapshot):
+        bus.publish(revision_id, "queued", {"position": index + 1, "ahead": index})
+
+
+def _ensure_workers() -> None:
+    with _queue_lock:
+        missing = get_settings().review_workers - len(_workers)
+        for n in range(missing):
+            worker = threading.Thread(target=_work, daemon=True, name=f"review-worker-{n}")
+            _workers.append(worker)
+            worker.start()
+
+
+def _work() -> None:
+    while True:
+        revision_id = _jobs.get()
+        with _queue_lock:
+            if revision_id in _waiting:
+                _waiting.remove(revision_id)
+            _running.add(revision_id)
+        _announce_positions()
+        try:
+            _run_with_deadline(revision_id)
+        finally:
+            with _queue_lock:
+                _running.discard(revision_id)
+
+
+def _run_with_deadline(revision_id: str) -> None:
+    seconds = get_settings().review_timeout_seconds
+    job = threading.Thread(
         target=run_revision, args=(revision_id,), daemon=True, name=f"review-{revision_id}"
-    ).start()
+    )
+    job.start()
+    job.join(seconds)
+    if job.is_alive():
+        log.warning("review %s exceeded %s s; marking it failed", revision_id, seconds)
+        _abandoned.add(revision_id)
+        _fail(revision_id, TIMEOUT_MESSAGE.format(seconds=int(seconds)))
+
+
+def _fail(revision_id: str, message: str) -> None:
+    with session_factory() as session:
+        revision = session.get(Revision, revision_id)
+        if revision is not None and revision.review_status == "pending":
+            revision.review_status = "failed"
+            revision.report = {**(revision.report or {}), "error": message}
+            session.commit()
+    bus.publish(revision_id, TERMINAL, {"ok": False, "error": message})
+
+
+def resume_pending() -> int:
+    """After a restart, queue every review that was still waiting or running."""
+    with session_factory() as session:
+        pending = list(
+            session.scalars(
+                select(Revision.id)
+                .where(Revision.review_status == "pending")
+                .order_by(Revision.created_at)
+            )
+        )
+    for revision_id in pending:
+        start_review(revision_id)
+    if pending:
+        log.info("resumed %d pending reviews", len(pending))
+    return len(pending)
 
 
 def _emit(revision_id: str) -> EventSink:
@@ -67,7 +168,7 @@ def run_revision(revision_id: str, use_llm: bool = True) -> None:
         revision = session.get_one(Revision, revision_id)
         submission = session.get_one(Submission, revision.submission_id)
         try:
-            ctx = load_context(session, WORKSPACE_ID, submission.channel)
+            ctx = load_context(session, submission.workspace_id, submission.channel)
             if _reuse_cached(session, revision, submission, ctx):
                 return
             bus.publish(revision_id, "review_started", {"revision": revision.number})
@@ -82,9 +183,13 @@ def run_revision(revision_id: str, use_llm: bool = True) -> None:
                 run_review(doc, ctx, plan.checkers, embedder, _emit(revision_id), ai)
             )
             _persist(session, revision, submission, ctx, result, plan, ai, nli, embedder)
+            if revision_id in _abandoned:
+                return
         except Exception:
             log.exception("review of %s failed", revision_id)
             session.rollback()
+            if revision_id in _abandoned:
+                return
             revision = session.get_one(Revision, revision_id)
             revision.review_status = "failed"
             session.commit()
@@ -196,12 +301,16 @@ def _persist(
     }
     revision.brand_score = result.score.score
     revision.degraded = result.degraded
+    revision.context_hash = ctx.fingerprint
     revision.review_status = "complete"
     revision.rulebook_version, revision.factbook_version = (
         ctx.rulebook_version,
         ctx.factbook_version,
     )
     revision.completed_at = utcnow()
+    if revision.id in _abandoned:
+        session.rollback()
+        return
     audit.record(
         session,
         "revision",
@@ -215,6 +324,7 @@ def _persist(
             "findings": len(result.findings),
             "degraded": result.degraded,
         },
+        workspace_id=submission.workspace_id,
     )
     session.commit()
 
@@ -239,15 +349,12 @@ def _reuse_cached(
 ) -> bool:
     cached = session.scalar(
         select(Revision)
-        .join(Submission, Submission.id == Revision.submission_id)
         .where(
             Revision.content_hash == revision.content_hash,
             Revision.id != revision.id,
             Revision.review_status == "complete",
             Revision.degraded.is_(False),
-            Revision.rulebook_version == ctx.rulebook_version,
-            Revision.factbook_version == ctx.factbook_version,
-            Submission.channel == submission.channel,
+            Revision.context_hash == ctx.fingerprint,
         )
         .order_by(Revision.completed_at.desc())
         .limit(1)
@@ -281,6 +388,7 @@ def _reuse_cached(
         )
     revision.report = {**cached.report, "cached_from": cached.id}
     revision.brand_score, revision.degraded = cached.brand_score, cached.degraded
+    revision.context_hash = cached.context_hash
     revision.rulebook_version, revision.factbook_version = (
         ctx.rulebook_version,
         ctx.factbook_version,
@@ -298,6 +406,7 @@ def _reuse_cached(
             "cached": cached.id,
             "brand_score": cached.brand_score,
         },
+        workspace_id=submission.workspace_id,
     )
     session.commit()
     for checker in revision.report.get("checkers", []):

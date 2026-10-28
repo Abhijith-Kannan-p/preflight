@@ -37,6 +37,8 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: mypy app
+      # The migrations must build the same schema as the models.
+      - run: alembic upgrade head && alembic check
       - run: pytest -q
 
   frontend:
