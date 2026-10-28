@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 from app import audit
 from app.auth import Permission, current_workspace_id, require
 from app.db import get_session
+from app.governance import radar
 from app.ml.embeddings import get_embedder
 from app.models import (
     ConfidentialTerm,
@@ -227,7 +228,14 @@ def update_fact(
         {"version": fact.version, **body.model_dump(mode="json")},
     )
     session.commit()
-    return {"id": fact_id, "version": fact.version}
+    return {"id": fact_id, "version": fact.version, "affected": _flag_stale(session, user, fact_id)}
+
+
+def _flag_stale(session: Session, user: User, fact_id: str) -> int:
+    """Stale-Content Radar: notify about cleared items that relied on this fact, now."""
+    affected = radar.notify_affected(session, user.workspace_id, fact_id)
+    session.commit()
+    return affected
 
 
 @router.post("/facts/{fact_id}/supersede", status_code=201)
@@ -236,7 +244,7 @@ def supersede_fact(
     body: SupersedeIn,
     user: User = Depends(editor),
     session: Session = Depends(get_session),
-) -> dict[str, str]:
+) -> dict[str, Any]:
     """Replace a fact with a new one from a date. Claims matching the old fact become
     'outdated' and point to the new fact."""
     old = _fact(session, user.workspace_id, fact_id)
@@ -273,7 +281,8 @@ def supersede_fact(
         {"by": body.new_id, "statement": body.statement, "valid_from": body.valid_from.isoformat()},
     )
     session.commit()
-    return {"id": body.new_id, "supersedes": fact_id}
+    affected = _flag_stale(session, user, fact_id)
+    return {"id": body.new_id, "supersedes": fact_id, "affected": affected}
 
 
 @router.delete("/facts/{fact_id}", status_code=204)
@@ -285,6 +294,7 @@ def retire_fact(
     _bump(session, user.workspace_id, factbook=True)
     audit.record(session, "fact", fact_id, "fact_retired", user.id, {})
     session.commit()
+    _flag_stale(session, user, fact_id)
 
 
 # --- terms, channels, confidential terms ----------------------------------------------

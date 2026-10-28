@@ -183,7 +183,9 @@ def _wait_for_models() -> None:
 session_factory: Callable[[], Session] = SessionLocal
 
 
-def run_revision(revision_id: str, use_llm: bool = True) -> None:
+def run_revision(revision_id: str, use_llm: bool = True, use_nli: bool = True) -> None:
+    """Review one revision. `use_nli=False` (demo history) runs the Claim Ledger in its
+    deterministic mode, which is much faster on a small host."""
     with session_factory() as session:
         revision = session.get_one(Revision, revision_id)
         submission = session.get_one(Submission, revision.submission_id)
@@ -192,13 +194,14 @@ def run_revision(revision_id: str, use_llm: bool = True) -> None:
             if _reuse_cached(session, revision, submission, ctx):
                 return
             bus.publish(revision_id, "review_started", {"revision": revision.number})
-            _wait_for_models()
+            if use_nli:
+                _wait_for_models()
             doc = NormalisedDoc.model_validate(revision.normalised_doc)
             # Visual reviews read the image first (OCR), before the NLI model is needed.
             visual = _read_visual(session, revision, doc, ctx)
             if visual is not None:
                 doc = visual.doc
-            embedder, nli = get_embedder(), get_nli()
+            embedder, nli = get_embedder(), (get_nli() if use_nli else None)
             masking = bool(ctx.settings.get("masking_enabled", get_settings().masking_enabled))
             gateway = get_gateway() if use_llm else Gateway(None, timeout=1)
             ai = AiSession(gateway, Masker(ctx.confidential, enabled=masking))

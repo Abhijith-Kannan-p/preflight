@@ -1,8 +1,10 @@
 """ToneChecker (TON-01): score the five voice traits and flag those off the brand profile.
 
 With an LLM, each trait gets a 0-1 score and a verbatim evidence quote. Without one (or if
-the call fails), a transparent lexicon heuristic produces approximate scores at lower
-confidence. Either way the comparison with the voice profile is deterministic.
+the call fails), a transparent lexicon heuristic produces approximate scores. The heuristic
+cannot really judge warmth or formality (a short, plain post scores "cold"), so its findings
+are reported below the 0.6 confidence line: they wait in "Needs a human look" and cost no
+points. Either way the comparison with the voice profile is deterministic.
 """
 
 import re
@@ -18,7 +20,7 @@ from app.engine.text import sentence_at, sentences, words
 TRAITS = ("formal", "warm", "confident", "playful", "technical")
 MAX_TONE_FINDINGS = 2
 LLM_CONFIDENCE = 0.8
-HEURISTIC_CONFIDENCE = 0.62
+HEURISTIC_CONFIDENCE = 0.55
 
 _HYPE = re.compile(
     r"#1\b|\b(best|leading|amazing|incredible|revolutionary|ultimate|unbeatable|guaranteed|"

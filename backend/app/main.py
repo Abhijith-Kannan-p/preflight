@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from app.api import (
     evaluation,
+    governance,
     health,
     insights,
     public,
@@ -98,6 +99,7 @@ def create_app() -> FastAPI:
     app.include_router(evaluation.router)
     app.include_router(settings_api.router)
     app.include_router(public.router)
+    app.include_router(governance.router)
     return app
 
 

@@ -1,8 +1,14 @@
-"""Generate a small, clearly fictional review history on first boot so Insights has data.
+"""Generate a clearly fictional review history on first boot, so Insights, Guideline Health,
+the Stale-Content Radar and the Creator Coach show real data on first open.
 
-Each draft in data/seed/history.json goes through the real engine (deterministic mode, no
-hosted LLM). Some are fixed by accepting suggestions and re-checked, some are disputed,
-submitted and approved. Timestamps are spread over the past three weeks.
+Each draft in data/seed/history.json goes through the real engine (deterministic mode: no
+hosted LLM, and the Claim Ledger without the NLI model, which keeps this fast on a small
+host). Some drafts are fixed by accepting suggestions and re-checked, some are disputed with
+a written reason, some approved with an override. One entry publishes a reworded rule
+version partway through, as a brand manager would. Timestamps span the past six weeks.
+
+`HISTORY_VERSION` is stored in the template's settings; when the seed history changes, the
+template is rebuilt once on the next boot.
 """
 
 import hashlib
@@ -22,8 +28,12 @@ from app.models import (
     Decision,
     Finding,
     Revision,
+    Rule,
+    RuleStatus,
+    Severity,
     Submission,
     SubmissionState,
+    Workspace,
     utcnow,
 )
 from app.seed import WORKSPACE_ID
@@ -32,6 +42,7 @@ from app.workflow import apply_suggestions
 
 log = logging.getLogger(__name__)
 APPROVER = "usr_abhi4"
+HISTORY_VERSION = 2
 
 
 def _new_revision(
@@ -53,7 +64,7 @@ def _new_revision(
 
 
 def _run(revision_id: str) -> None:
-    runner.run_revision(revision_id, use_llm=False)
+    runner.run_revision(revision_id, use_llm=False, use_nli=False)
 
 
 def _decide(
@@ -75,7 +86,7 @@ def _decide(
             reason=reason,
             actor_id=actor,
             created_at=when,
-            payload={"rule": finding.rule_code} if finding else {},
+            payload={"rule": finding.rule_code, "text": finding.text} if finding else {},
         )
     )
     audit.record(
@@ -88,7 +99,64 @@ def _decide(
     )
 
 
+def publish_rule_version(session: Session, change: dict[str, Any]) -> None:
+    """A brand manager rewords a rule: the old version is retired and a new one created."""
+    when = utcnow() - timedelta(days=change["days_ago"], hours=5)
+    current = session.scalar(
+        select(Rule).where(
+            Rule.workspace_id == WORKSPACE_ID,
+            Rule.code == change["code"],
+            Rule.status == RuleStatus.active,
+        )
+    )
+    if current is None:
+        return
+    current.status = RuleStatus.retired
+    session.add(
+        Rule(
+            workspace_id=WORKSPACE_ID,
+            code=current.code,
+            category=current.category,
+            title=change["title"],
+            description=change["description"],
+            severity=current.severity,
+            config=change["config"],
+            source_doc=current.source_doc,
+            source_page=current.source_page,
+            version=current.version + 1,
+            status=RuleStatus.active,
+            created_by=change["by"],
+            approved_by=change["by"],
+            created_at=when,
+        )
+    )
+    session.get_one(Workspace, WORKSPACE_ID).rulebook_version += 1
+    audit.record(
+        session,
+        "rule",
+        current.code,
+        "rule_updated",
+        change["by"],
+        {"version": current.version + 1, "history": True, "title": change["title"]},
+    )
+    session.commit()
+
+
+def _disputes(entry: dict[str, Any]) -> list[tuple[str, str]]:
+    """`dispute` is a list of rule codes or of {rule, reason} objects."""
+    found = []
+    for item in entry.get("dispute", []):
+        if isinstance(item, str):
+            found.append((item, "Approved by legal in the campaign brief."))
+        else:
+            found.append((item["rule"], item["reason"]))
+    return found
+
+
 def create_entry(session: Session, entry: dict[str, Any]) -> None:
+    if "rule_version" in entry:
+        publish_rule_version(session, entry["rule_version"])
+        return
     created = utcnow() - timedelta(days=entry["days_ago"], hours=3)
     submission = Submission(
         workspace_id=WORKSPACE_ID,
@@ -105,21 +173,14 @@ def create_entry(session: Session, entry: dict[str, Any]) -> None:
     session.expire_all()
     latest = session.get_one(Revision, first.id)
 
-    for rule_code in entry.get("dispute", []):
+    for rule_code, reason in _disputes(entry):
         finding = session.scalar(
             select(Finding).where(Finding.revision_id == latest.id, Finding.rule_code == rule_code)
         )
         if finding:
             finding.status = "disputed"
             _decide(
-                session,
-                submission,
-                latest,
-                "dispute",
-                entry["author"],
-                created,
-                finding,
-                "Approved by legal in the campaign brief.",
+                session, submission, latest, "dispute", entry["author"], created, finding, reason
             )
 
     if entry.get("fix"):
@@ -127,6 +188,7 @@ def create_entry(session: Session, entry: dict[str, Any]) -> None:
         for f in findings:
             if f.suggestion and not f.needs_review and f.status == "open":
                 f.status, f.applied_text = "accepted", str(f.suggestion["text"])
+                _decide(session, submission, latest, "accept", entry["author"], created, f)
         session.commit()
         blocks = [b["text"] for b in latest.normalised_doc["blocks"]]
         fixed, _ = apply_suggestions(blocks, findings)
@@ -146,6 +208,27 @@ def create_entry(session: Session, entry: dict[str, Any]) -> None:
         _decide(session, submission, latest, "submit", entry["author"], later)
         submission.state = SubmissionState.in_review
     if outcome == "approved":
+        if entry.get("override"):
+            blocking = session.scalars(
+                select(Finding).where(
+                    Finding.revision_id == latest.id,
+                    Finding.severity == Severity.critical,
+                    Finding.needs_review.is_(False),
+                    Finding.status.in_(("open", "disputed", "escalated")),
+                )
+            )
+            for finding in blocking:
+                finding.status = "resolved"
+                _decide(
+                    session,
+                    submission,
+                    latest,
+                    "override",
+                    APPROVER,
+                    later + timedelta(minutes=50),
+                    finding,
+                    "Accepted for this post: the linked page carries the full terms.",
+                )
         _decide(session, submission, latest, "approve", APPROVER, later + timedelta(hours=1))
         submission.state = SubmissionState.approved
         submission.approved_by, submission.approved_at = APPROVER, later + timedelta(hours=1)
@@ -166,10 +249,31 @@ def create_entry(session: Session, entry: dict[str, Any]) -> None:
 
 def ensure_demo_history() -> None:
     with SessionLocal() as session:
-        template = select(Submission.id).where(Submission.workspace_id == WORKSPACE_ID)
-        if session.scalar(template.limit(1)) is not None:
+        workspace = session.get(Workspace, WORKSPACE_ID)
+        if workspace is None:
             return
+        current = workspace.settings.get("history_version") == HISTORY_VERSION
+        template = select(Submission.id).where(Submission.workspace_id == WORKSPACE_ID)
+        has_history = session.scalar(template.limit(1)) is not None
+        if has_history and current:
+            return
+        if has_history:
+            # An older seed history: rebuild the template (it holds no visitor data).
+            from app.ml.embeddings import get_embedder
+            from app.seed import seed_all
+            from app.services.sandbox import clear_workspace
+
+            clear_workspace(session, WORKSPACE_ID)
+            session.flush()
+            seed_all(session, get_settings().seed_dir, get_embedder())
+            workspace = session.get_one(Workspace, WORKSPACE_ID)
         entries = json.loads((get_settings().seed_dir / "history.json").read_text(encoding="utf-8"))
+        workspace.settings = {**workspace.settings, "history_version": HISTORY_VERSION}
+        # The seeded rulebook predates the history, so per-version metrics line up.
+        oldest = max((e.get("days_ago", 0) for e in entries), default=0) + 7
+        for rule in session.scalars(select(Rule).where(Rule.workspace_id == WORKSPACE_ID)):
+            rule.created_at = utcnow() - timedelta(days=oldest)
+        session.commit()
         for entry in entries:
             try:
                 create_entry(session, entry)
