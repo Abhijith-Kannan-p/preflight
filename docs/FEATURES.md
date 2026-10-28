@@ -33,8 +33,21 @@ abhi5 Admin).
   arrive in under two seconds.
 - **Graceful degradation**: if Gemini times out or fails three times, a circuit breaker
   switches to deterministic mode and the review shows "AI checks temporarily limited".
-- **Result caching** by content hash, channel, rulebook version and factbook version.
+- **Result caching** by content hash and a fingerprint of the rulebook, facts, channel and date.
 - **Admin "Reset demo data"**, which also regenerates the fictional review history.
+
+## Added in Round 3 (so far)
+
+| Feature | Where to see it |
+|---|---|
+| **Proof Desk design**: the draft as a proof sheet with proof marks and margin notes joined by leader lines (inline below 1024 px); rule and fact tags open their source; preflight checklist with live claims; instrument Brand Score dial; "Next step" hint | Any review |
+| **Clearance stamp and certificate**: "CLEARED FOR PUBLICATION" (approver, time, audit hash) and "OVERRIDE NOTED"; boarding-pass certificate with QR code, A4 print and matching PDF | Approve a review, then View Review Receipt |
+| **Private demo workspace per visitor**: each browser gets its own copy of PayWise (rules, facts, personas, history, audit chain), kept in an httpOnly cookie; reset touches only that copy; idle copies are deleted after 24 h | Role switcher → "Reset my demo workspace"; open the app in two browsers |
+| **Review queue**: reviews are server-side jobs on a small worker pool; waiting reviews show their queue position; reloading the page reattaches to the running job | Start several reviews at once |
+| **No endless spinners**: every request gives up after 45 s with a clear message; a review is stopped after 2 minutes with a "Re-check" prompt; a stalled live stream is reported after 60 s | Review page |
+| **Double actions are safe**: `Idempotency-Key` on every write; repeated accepts, approvals or Run presses apply once | API docs; double-click anything |
+| **Clear errors**: empty, oversized, corrupt, password-protected, renamed-binary and unsupported uploads each get a specific message; styled 404 and error pages; wrong-role actions explain which role can do it | Try a 0-byte .pdf; open a review link from another browser |
+| **Keep-warm**: a scheduled GitHub Action pings `/health` every 10 minutes so visitors do not meet a sleeping backend | `.github/workflows/keep-warm.yml` |
 
 ## Not in Round 2 (planned for Round 3)
 
@@ -52,6 +65,7 @@ Creator Coach; Rulebook Compiler (brand-book PDF to rules) and Voice Fingerprint
   there is no held-out split yet.
 - Text inside images and scanned PDFs is not read (Round 3: OCR).
 - Demo authentication is a role switcher with signed tokens, not real accounts.
-- On Render's free plan the backend sleeps after 15 idle minutes; the first visit takes about a
-  minute, and the first review after waking loads the models (about 10–20 s extra). With 0.1
+- On Render's free plan the backend sleeps after 15 idle minutes. The keep-warm workflow pings
+  it every 10 minutes; GitHub can delay scheduled runs, so a cold start is still possible. Then
+  the first visit takes about a minute, and the first review loads the models (10–20 s extra). With 0.1
   CPU a full review takes roughly 30–40 s; deterministic findings still appear first.

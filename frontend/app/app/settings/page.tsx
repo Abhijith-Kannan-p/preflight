@@ -254,10 +254,11 @@ function AuditSection() {
 }
 
 function ResetSection() {
+  const { resetSandbox } = useSession();
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   return (
-    <Section title="Reset demo data" description="Deletes every review, decision and comment, restores the PayWise rulebook and facts, and starts a fresh audit chain. The demo history is regenerated within a minute. API keys and webhooks are kept.">
+    <Section title="Reset demo data" description="Puts your private demo workspace back to its starting state: the PayWise rulebook, facts, personas and review history, with a fresh audit chain. API keys and webhooks you created are removed. Other visitors are not affected.">
       <button
         type="button"
         className="btn-danger"
@@ -266,7 +267,7 @@ function ResetSection() {
           if (!window.confirm("Reset all demo data? This cannot be undone.")) return;
           setBusy(true);
           try {
-            await post("/api/settings/reset-demo");
+            await resetSandbox();
             setDone(true);
           } finally {
             setBusy(false);

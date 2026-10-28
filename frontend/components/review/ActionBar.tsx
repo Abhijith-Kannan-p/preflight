@@ -40,7 +40,10 @@ export function ActionBar({ review, onChanged, onRechecked }: { review: Review; 
     }
   }
 
-  const transition = (action: string, body: Record<string, unknown> = {}) => act(action, () => post(`/api/reviews/${submission.id}/transition`, { action, ...body }));
+  // One key per (review, action, revision, state): a double click or a second tab replays the
+  // first answer instead of failing on the second attempt.
+  const transition = (action: string, body: Record<string, unknown> = {}) =>
+    act(action, () => post(`/api/reviews/${submission.id}/transition`, { action, ...body }, `${submission.id}:${action}:r${revision.number}:${submission.state}`));
 
   return (
     <div className="space-y-2" data-tour="actions">
@@ -48,7 +51,7 @@ export function ActionBar({ review, onChanged, onRechecked }: { review: Review; 
         {isAuthor && editable && (
           <>
             <Tip text={pendingEdits ? `Creates revision ${revision.number + 1} with your ${pendingEdits} accepted or edited change(s) and checks it again.` : "Checks the current text again. Accept or edit suggestions first to apply them."}>
-              <button type="button" className="btn-ghost" disabled={reviewing || busy !== null} onClick={() => act("recheck", () => post(`/api/reviews/${submission.id}/revisions`, { use_draft: true }), onRechecked)}>
+              <button type="button" className="btn-ghost" disabled={reviewing || busy !== null} onClick={() => act("recheck", () => post(`/api/reviews/${submission.id}/revisions`, { use_draft: true }, `${submission.id}:recheck:r${revision.number}:e${pendingEdits}`), onRechecked)}>
                 {busy === "recheck" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" aria-hidden="true" />}
                 Re-check{pendingEdits ? ` with ${pendingEdits} change${pendingEdits > 1 ? "s" : ""}` : ""}
               </button>

@@ -11,11 +11,22 @@ Updated after every commit checkpoint. Build order follows section 13 of the Rou
   rebuilt around a Proof Sheet specimen, restyled splash and header. Checked at 1440/768/375
   with no horizontal scroll; backend 113 tests, e2e 5/5 locally, production build green.
 
+- 3. Per-visitor sandboxes, keep-warm, robustness foundations (2026-10-28):
+  - Sandboxes: template cloned in the database (about 80–110 ms locally), personas copied
+    with suffixed ids, per-workspace audit chains, first-party httpOnly cookie through a
+    Next.js rewrite, in-place reset, 24 h idle expiry with a sweeper, review cache keyed by
+    a context fingerprint so identical sandboxes share results safely.
+  - Robustness: review job queue (positions, reattach after restart, 120 s budget),
+    `Idempotency-Key` middleware plus no-op repeated decisions, client timeouts (45 s),
+    SSE reconnect with backoff and a 60 s stall state, friendly JSON 500s with a reference,
+    styled 404/500 pages and error boundaries, wrong-role hints, keep-warm workflow.
+  - Tests: backend 143 (new: sandboxes 8, queue 2, idempotency 6, bad input 14), e2e 6 including
+    a two-browser isolation test; five concurrent reviews all completed locally.
+
 ## In progress
-- 3. Per-visitor sandboxes, keep-warm, robustness foundations
+- 4. Improvement 1: Visual and accessibility review
 
 ## Next
-- 4. Improvement 1: Visual and accessibility review
 - 5. Improvement 2: Governance intelligence
 - 6. Improvement 3: Brand Autopilot
 - 7. Round 2 loose ends

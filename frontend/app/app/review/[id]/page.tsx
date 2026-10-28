@@ -18,8 +18,10 @@ import { PreflightChecklist } from "@/components/review/PreflightChecklist";
 import { ProofDesk } from "@/components/review/ProofDesk";
 import { Revisions } from "@/components/review/Revisions";
 import { SourceProvider } from "@/components/review/SourcePanel";
-import { useReviewStream } from "@/components/review/useReviewStream";
+import { type StreamState, useReviewStream } from "@/components/review/useReviewStream";
+import { ErrorSheet } from "@/components/ErrorSheet";
 import { Chip, ErrorState, NextStep, Skeleton } from "@/components/ui";
+import type { ApiError } from "@/lib/api";
 import { CHANNEL_LABEL, STATE_STYLE } from "@/lib/format";
 import { useSession } from "@/lib/session";
 import type { Review } from "@/lib/types";
@@ -35,10 +37,21 @@ const TOUR: TourStep[] = [
   { target: "actions", title: "Re-check, then submit", text: "Re-check applies your accepted changes as a new revision. Submit unlocks once no critical finding is open. Then switch to abhi4 (Approver) in the top right to clear it." },
 ];
 
-function nextStep(review: Review, isAuthor: boolean, canApprove: boolean, pending: boolean): { tone: "ink" | "signal" | "cleared"; text: string } {
+function nextStep(
+  review: Review,
+  isAuthor: boolean,
+  canApprove: boolean,
+  pending: boolean,
+  stream: StreamState,
+): { tone: "ink" | "signal" | "cleared"; text: string } {
   const { submission, gate, pending_edits: edits, revision } = review;
+  const position = stream.queue?.position ?? review.queue_position;
+  if (pending && stream.stalled)
+    return { tone: "signal", text: "No progress for a minute. The engine may be busy or waking up. Preflight stops any review after two minutes so you can re-check it; you can also keep waiting." };
+  if (pending && position)
+    return { tone: "ink", text: position === 1 ? "Your review is next in the queue. It starts as soon as the current one finishes." : `Your review is number ${position} in the queue; ${position - 1} ahead of it.` };
   if (pending) return { tone: "ink", text: "Preflight is checking the draft. Notes appear in the margin as each check finishes." };
-  if (revision.review_status === "failed") return { tone: "signal", text: "This check failed. Press Re-check to run it again." };
+  if (revision.review_status === "failed") return { tone: "signal", text: `${revision.report.error ?? "This check failed."} Press Re-check to run it again.` };
   switch (submission.state) {
     case "draft":
     case "changes_requested":
@@ -61,7 +74,7 @@ function Workspace() {
   const { id } = useParams<{ id: string }>();
   const params = useSearchParams();
   const { user, can } = useSession();
-  const { data, error, mutate } = useSWR<Review>(`/api/reviews/${id}`);
+  const { data, error, mutate } = useSWR<Review, ApiError>(`/api/reviews/${id}`);
   const [tab, setTab] = useState<Tab>("Proof");
   const [focused, setFocused] = useState<string | null>(null);
   const pending = data?.revision.review_status === "pending";
@@ -76,6 +89,16 @@ function Workspace() {
     return () => window.clearInterval(timer);
   }, [pending, refresh]);
 
+  if (error?.status === 404) {
+    return (
+      <ErrorSheet
+        code="404"
+        stamp="Not found"
+        title="This review is not in your workspace"
+        text="Each visitor works in a private copy of PayWise, so a review link from another browser opens nothing here. Start a review of your own, or pick one from the desk."
+      />
+    );
+  }
   if (error) return <ErrorState message={error.message} onRetry={refresh} />;
   if (!data) {
     return (
@@ -94,7 +117,8 @@ function Workspace() {
   const editable = submission.state === "draft" || submission.state === "changes_requested";
   const openCount = findings.filter((f) => ["open", "escalated", "disputed"].includes(f.status) && !f.needs_review).length;
   const latest = data.revisions.at(-1)?.number ?? revision.number;
-  const step = nextStep(data, isAuthor, can("approve"), pending);
+  const step = nextStep(data, isAuthor, can("approve"), pending, stream);
+  const queued = stream.queue?.position ?? data.queue_position;
 
   return (
     <SourceProvider>
@@ -120,7 +144,13 @@ function Workspace() {
         <section className="card mb-5 grid items-center gap-6 p-4 md:grid-cols-[auto_minmax(0,1fr)] xl:grid-cols-[auto_minmax(0,1fr)_minmax(260px,320px)]" aria-label="Instruments">
           <BrandScoreGauge score={revision.brand_score} pending={pending} />
           <div className="min-w-0">
-            <p className="label">{pending ? `Checking · ${stream.findingsSoFar} found so far` : `${openCount} open · ${claims.length} claims checked`}</p>
+            <p className="label" aria-live="polite">
+              {pending
+                ? queued
+                  ? `Queued · position ${queued}`
+                  : `Checking · ${stream.findingsSoFar} found so far${stream.reconnecting ? " · reconnecting" : ""}`
+                : `${openCount} open · ${claims.length} claims checked`}
+            </p>
             <PreflightChecklist stream={stream} report={revision.report.checkers} pending={pending} claims={claims} />
           </div>
           <div className="space-y-3 md:col-span-2 xl:col-span-1">
@@ -137,7 +167,11 @@ function Workspace() {
         {pending && stream.degraded && !revision.degraded && (
           <div role="status" className="mb-4 border-l-2 border-amber bg-sheet px-3 py-2 text-sm text-amber-700">AI checks temporarily limited: {stream.degraded}</div>
         )}
-        {revision.review_status === "failed" && <div className="mb-4"><ErrorState message="This review failed. Press Re-check to try again." /></div>}
+        {revision.review_status === "failed" && (
+          <div className="mb-4">
+            <ErrorState message={`${revision.report.error ?? "This review failed."} Press Re-check to try again.`} />
+          </div>
+        )}
 
         <div role="tablist" aria-label="Review sections" className="mb-5 flex gap-6 overflow-x-auto border-b border-rule" data-tour="tabs">
           {TABS.map((t) => (

@@ -29,6 +29,7 @@ function NewReviewForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const runKey = useRef("");
   const tour = params.get("tour") === "1";
 
   function pickSample(s: Sample) {
@@ -59,6 +60,10 @@ function NewReviewForm() {
     setError(null);
   }
 
+  useEffect(() => {
+    runKey.current = `run:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+  }, [content, title, channel, file, sample]);
+
   async function run() {
     setBusy(true);
     setError(null);
@@ -69,7 +74,8 @@ function NewReviewForm() {
     else if (sample?.filename) form.set("sample_id", sample.id);
     else form.set("content", content);
     try {
-      const created = await api<{ id: string }>("/api/reviews", { method: "POST", body: form });
+      // One key per form state: pressing Run twice (or retrying) opens the same review.
+      const created = await api<{ id: string }>("/api/reviews", { method: "POST", body: form, idempotencyKey: runKey.current });
       router.push(`/app/review/${created.id}${tour ? "?tour=1" : ""}`);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Could not start the review.");

@@ -92,6 +92,8 @@ export interface Report {
   tone?: ToneProfile | null;
   ai?: AiSummary;
   cached_from?: string;
+  /** Why the review failed, e.g. it ran past its time budget. */
+  error?: string;
 }
 
 export interface RevisionSummary {
@@ -140,6 +142,7 @@ export interface Review {
   claims: Claim[];
   decisions: Decision[];
   clearance: Clearance | null;
+  queue_position: number | null;
   gate: { can_submit: boolean; can_approve: boolean; blocking: string[]; message: string };
   pending_edits: number;
   permissions: string[];

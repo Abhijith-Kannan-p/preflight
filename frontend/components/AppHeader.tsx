@@ -98,7 +98,7 @@ function initials(name: string): string {
 }
 
 function RoleSwitcher() {
-  const { user, switchUser } = useSession();
+  const { user, switchUser, resetSandbox } = useSession();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const ref = useOutside(() => setOpen(false));
@@ -121,7 +121,7 @@ function RoleSwitcher() {
       </button>
       {open && (
         <div role="listbox" className="absolute right-0 z-50 mt-2 w-72 border border-rule bg-sheet p-2 shadow-sheet">
-          <p className="px-2 py-1 text-xs text-navy-500">Switch demo user. Each role sees and can do different things.</p>
+          <p className="px-2 py-1 text-xs text-graphite">Switch demo user. Each role sees and can do different things.</p>
           {users?.map((u) => (
             <button
               key={u.id}
@@ -147,6 +147,26 @@ function RoleSwitcher() {
               <span className="font-mono text-[10px] uppercase tracking-wide text-graphite">{ROLE_LABEL[u.role]}</span>
             </button>
           ))}
+          <div className="mt-1 border-t border-rule px-2 pt-2">
+            <p className="text-xs text-graphite">This is your private copy of the PayWise workspace. Nobody else sees it; it is deleted after 24 hours without use.</p>
+            <button
+              type="button"
+              disabled={busy}
+              className="mt-1 text-xs text-ink underline decoration-rule underline-offset-2 hover:decoration-ink"
+              onClick={async () => {
+                if (!window.confirm("Reset your demo workspace to its starting state?")) return;
+                setBusy(true);
+                setOpen(false);
+                try {
+                  await resetSandbox();
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Reset my demo workspace
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -174,7 +194,7 @@ export function AppHeader({ onHelp }: { onHelp: () => void }) {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <AiMode />
-          <Tip text="Demo mode: no passwords. Use the switcher to act as any seeded PayWise user. All data is fictional.">
+          <Tip text="Demo mode: you have a private copy of the fictional PayWise workspace. Use the switcher to act as any of its five users. Nothing you do is visible to other visitors.">
             <span className="hidden border border-amber/50 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-amber-700 sm:inline-flex">Demo mode</span>
           </Tip>
           <button type="button" onClick={onHelp} aria-label="Help and keyboard shortcuts" className="rounded p-2 text-graphite hover:bg-paper-100 hover:text-ink">
