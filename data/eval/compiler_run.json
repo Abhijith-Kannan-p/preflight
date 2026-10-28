@@ -1,0 +1,99 @@
+{
+ "source": "data/samples/paywise_brand_book.pdf",
+ "runs": {
+  "structured_only": {
+   "labelled": 51,
+   "candidates": 42,
+   "found": 42,
+   "recall": 0.824,
+   "precision": 1.0,
+   "exact": 41,
+   "page_correct": 1.0,
+   "accepted_without_edits": 0.976,
+   "missed": [
+    "p4 Revise drafts more than 0.3 from a voice target",
+    "p8 Write product names exactly",
+    "p12 Factual claims need an approved fact",
+    "p12 Use the current fact",
+    "p17 Colours within ΔE00 10 of the palette",
+    "p18 Keep logo proportions within 5%",
+    "p18 Logo clear space",
+    "p19 Contrast of at least 4.5:1",
+    "p19 Every image needs alt text"
+   ],
+   "needs_edit": [
+    "p20 disclaimer {\"triggers\": [\"special offer\", \"limited offer\", \"cashback\", "
+   ],
+   "unlabelled": []
+  },
+  "structured_and_llm": {
+   "labelled": 51,
+   "candidates": 48,
+   "found": 48,
+   "recall": 0.941,
+   "precision": 1.0,
+   "exact": 48,
+   "page_correct": 1.0,
+   "accepted_without_edits": 1.0,
+   "missed": [
+    "p12 Use the current fact",
+    "p18 Logo clear space",
+    "p19 Every image needs alt text"
+   ],
+   "needs_edit": [],
+   "unlabelled": [],
+   "llm": {
+    "llm": "ok",
+    "returned": 24,
+    "dropped": 0
+   },
+   "llm_seconds": 6.1,
+   "model": "gemini-3.5-flash-lite",
+   "trials": [
+    {
+     "recall": 0.941,
+     "precision": 1.0,
+     "accepted_without_edits": 1.0,
+     "page_correct": 1.0,
+     "llm_seconds": 5.9,
+     "found": 48,
+     "exact": 48,
+     "llm": {
+      "llm": "ok",
+      "returned": 24,
+      "dropped": 0
+     }
+    },
+    {
+     "recall": 0.941,
+     "precision": 1.0,
+     "accepted_without_edits": 1.0,
+     "page_correct": 1.0,
+     "llm_seconds": 5.7,
+     "found": 48,
+     "exact": 48,
+     "llm": {
+      "llm": "ok",
+      "returned": 24,
+      "dropped": 0
+     }
+    },
+    {
+     "recall": 0.941,
+     "precision": 1.0,
+     "accepted_without_edits": 1.0,
+     "page_correct": 1.0,
+     "llm_seconds": 6.7,
+     "found": 48,
+     "exact": 48,
+     "llm": {
+      "llm": "ok",
+      "returned": 24,
+      "dropped": 0
+     }
+    }
+   ]
+  }
+ },
+ "generated_at": "2026-10-28T20:27:03Z"
+}

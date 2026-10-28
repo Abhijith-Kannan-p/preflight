@@ -3,6 +3,7 @@
 import json
 import logging
 import threading
+from collections import Counter
 from datetime import datetime
 from typing import Any
 
@@ -18,7 +19,7 @@ from app.engine.context import load_context
 from app.eval.run import EVAL_DATE, evaluate, load_items, save
 from app.ml.embeddings import get_embedder
 from app.ml.nli import get_nli
-from app.models import EvalRun, User
+from app.models import CompileJob, EvalRun, RuleCandidate, User
 from app.seed import WORKSPACE_ID
 
 router = APIRouter(prefix="/api/eval", tags=["evaluation"])
@@ -121,4 +122,31 @@ def visual_evaluation() -> dict[str, Any]:
     if not path.exists():
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No visual evaluation run yet.")
     result: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return {**result, "precomputed": True}
+
+
+@router.get("/compiler")
+def compiler_evaluation(
+    user: User = Depends(current_user), session: Session = Depends(get_session)
+) -> dict[str, Any]:
+    """The Rulebook Compiler against the hand-labelled rules of the sample brand book
+    (precomputed with `python -m app.eval.compiler --export`), plus the brand manager's real
+    decisions in this workspace: how many accepted candidates needed no edits."""
+    path = get_settings().data_dir / "eval" / "compiler_run.json"
+    if not path.exists():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No compiler evaluation run yet.")
+    result: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    jobs = select(CompileJob.id).where(CompileJob.workspace_id == user.workspace_id)
+    decisions = Counter(
+        session.scalars(
+            select(RuleCandidate.decision).where(
+                RuleCandidate.job_id.in_(jobs), RuleCandidate.decision != "pending"
+            )
+        )
+    )
+    accepted = decisions["accepted"] + decisions["edited"]
+    result["decisions"] = {
+        **{k: decisions[k] for k in ("accepted", "edited", "rejected")},
+        "accepted_without_edits": round(decisions["accepted"] / accepted, 3) if accepted else None,
+    }
     return {**result, "precomputed": True}

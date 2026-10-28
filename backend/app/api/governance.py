@@ -15,7 +15,7 @@ from app.api.rulebook_edit import supersede_fact
 from app.auth import Permission, current_user, require
 from app.db import get_session
 from app.engine.normalise import from_text
-from app.governance import coach, health, radar, reword
+from app.governance import coach, health, radar, reword, voice
 from app.models import (
     ConfidentialTerm,
     Revision,
@@ -206,3 +206,26 @@ def team_coach(
     session: Session = Depends(get_session),
 ) -> list[dict[str, Any]]:
     return coach.team(session, user.workspace_id)
+
+
+# --- Voice Fingerprint ------------------------------------------------------------------
+
+
+@router.get("/voice/fingerprint")
+def voice_fingerprint(
+    user: User = Depends(current_user), session: Session = Depends(get_session)
+) -> dict[str, Any]:
+    return voice.fingerprint(session, user.workspace_id)
+
+
+@router.post("/voice/adopt")
+def adopt_voice(
+    user: User = Depends(require(Permission.edit_rulebook)),
+    session: Session = Depends(get_session),
+) -> dict[str, Any]:
+    try:
+        result = voice.adopt(session, user)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+    session.commit()
+    return result

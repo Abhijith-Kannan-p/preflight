@@ -31,6 +31,7 @@ from app.models import (
     ChannelProfile,
     Claim,
     Comment,
+    CompileJob,
     ConfidentialTerm,
     Decision,
     Fact,
@@ -40,6 +41,7 @@ from app.models import (
     Revision,
     RevisionAsset,
     Rule,
+    RuleCandidate,
     SampleDraft,
     Submission,
     Term,
@@ -236,6 +238,9 @@ def clear_workspace(session: Session, workspace_id: str) -> None:
     hooks = select(Webhook.id).where(Webhook.workspace_id == workspace_id)
     session.execute(delete(WebhookDelivery).where(WebhookDelivery.webhook_id.in_(hooks)))
     session.execute(delete(Webhook).where(Webhook.workspace_id == workspace_id))
+    jobs = select(CompileJob.id).where(CompileJob.workspace_id == workspace_id)
+    session.execute(delete(RuleCandidate).where(RuleCandidate.job_id.in_(jobs)))
+    session.execute(delete(CompileJob).where(CompileJob.workspace_id == workspace_id))
     session.execute(delete(ApiKey).where(ApiKey.workspace_id == workspace_id))
     session.execute(delete(Notification).where(Notification.user_id.in_(users)))
     session.execute(delete(IdempotencyKey).where(IdempotencyKey.scope.in_(users)))

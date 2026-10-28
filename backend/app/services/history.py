@@ -42,7 +42,7 @@ from app.workflow import apply_suggestions
 
 log = logging.getLogger(__name__)
 APPROVER = "usr_abhi4"
-HISTORY_VERSION = 2
+HISTORY_VERSION = 3
 
 
 def _new_revision(

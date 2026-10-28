@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api import (
+    compiler,
     evaluation,
     governance,
     health,
@@ -100,6 +101,7 @@ def create_app() -> FastAPI:
     app.include_router(settings_api.router)
     app.include_router(public.router)
     app.include_router(governance.router)
+    app.include_router(compiler.router)
     return app
 
 

@@ -489,3 +489,43 @@ class RevisionAsset(Base):
     scale: Mapped[float] = mapped_column(Float, default=1.0)
     data: Mapped[bytes] = mapped_column(LargeBinary)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CompileJob(Base):
+    """One run of the Rulebook Compiler over an uploaded brand book."""
+
+    __tablename__ = "compile_jobs"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("cmp"))
+    workspace_id: Mapped[str] = mapped_column(ForeignKey("workspaces.id"), index=True)
+    filename: Mapped[str] = mapped_column(String(200))
+    status: Mapped[str] = mapped_column(String(16), default="running")
+    # Stages with timings, LLM outcome, counts by kind and match status.
+    report: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RuleCandidate(Base):
+    """A rule the compiler found, waiting for a brand manager in the review queue."""
+
+    __tablename__ = "rule_candidates"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: new_id("cnd"))
+    job_id: Mapped[str] = mapped_column(ForeignKey("compile_jobs.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(16))
+    key: Mapped[str] = mapped_column(String(200))
+    # As extracted, and as finally accepted (equal unless the brand manager edited it).
+    extracted: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    payload: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    source_page: Mapped[int] = mapped_column(Integer)
+    excerpt: Mapped[str] = mapped_column(Text, default="")
+    origin: Mapped[str] = mapped_column(String(16))
+    # new | duplicate | update, compared with the rulebook when the job ran.
+    match_status: Mapped[str] = mapped_column(String(16), default="new")
+    match_ref: Mapped[str | None] = mapped_column(String(80))
+    match_note: Mapped[str] = mapped_column(Text, default="")
+    decision: Mapped[str] = mapped_column(String(16), default="pending")
+    decided_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    applied_ref: Mapped[str | None] = mapped_column(String(80))

@@ -1,0 +1,509 @@
+{
+ "source": "data/samples/paywise_brand_book.pdf",
+ "note": "Hand-labelled rules in the fictional PayWise Brand Book. Guidance rules match on page, category and any keyword in the title or description.",
+ "rules": [
+  {
+   "kind": "voice",
+   "page": 4,
+   "payload": {
+    "traits": {
+     "formal": 0.6,
+     "warm": 0.75,
+     "confident": 0.7,
+     "playful": 0.3,
+     "technical": 0.5
+    }
+   }
+  },
+  {
+   "kind": "threshold",
+   "page": 5,
+   "payload": {
+    "rule": "TON-03",
+    "field": "max_exclamations_per_100_words",
+    "value": 1.0
+   }
+  },
+  {
+   "kind": "threshold",
+   "page": 5,
+   "payload": {
+    "rule": "TON-03",
+    "field": "max_caps_word_length",
+    "value": 4.0
+   }
+  },
+  {
+   "kind": "threshold",
+   "page": 6,
+   "payload": {
+    "rule": "RDB-01",
+    "field": "min_flesch",
+    "value": 50.0
+   }
+  },
+  {
+   "kind": "threshold",
+   "page": 6,
+   "payload": {
+    "rule": "RDB-01",
+    "field": "max_sentence_words",
+    "value": 30.0
+   }
+  },
+  {
+   "kind": "channel",
+   "page": 7,
+   "payload": {
+    "channel": "linkedin",
+    "max_chars": 3000,
+    "max_hashtags": 5,
+    "subject_max_chars": null
+   }
+  },
+  {
+   "kind": "channel",
+   "page": 7,
+   "payload": {
+    "channel": "x",
+    "max_chars": 280,
+    "max_hashtags": 2,
+    "subject_max_chars": null
+   }
+  },
+  {
+   "kind": "channel",
+   "page": 7,
+   "payload": {
+    "channel": "email",
+    "max_chars": null,
+    "max_hashtags": null,
+    "subject_max_chars": 60
+   }
+  },
+  {
+   "kind": "term",
+   "page": 8,
+   "payload": {
+    "term": "PayWise",
+    "variants": [
+     "Paywise",
+     "Pay Wise",
+     "PAYWISE",
+     "Pay-Wise"
+    ],
+    "note": "Company and app name."
+   }
+  },
+  {
+   "kind": "term",
+   "page": 8,
+   "payload": {
+    "term": "PayWise Business",
+    "variants": [
+     "Paywise Business",
+     "PayWise business"
+    ],
+    "note": "Merchant product."
+   }
+  },
+  {
+   "kind": "term",
+   "page": 8,
+   "payload": {
+    "term": "PayWise Card",
+    "variants": [
+     "PayWise card",
+     "Paywise Card"
+    ],
+    "note": "Card product."
+   }
+  },
+  {
+   "kind": "term",
+   "page": 8,
+   "payload": {
+    "term": "PayWise Pay Later",
+    "variants": [
+     "PayWise PayLater",
+     "PayWise BNPL"
+    ],
+    "note": "Buy now, pay later."
+   }
+  },
+  {
+   "kind": "term",
+   "page": 8,
+   "payload": {
+    "term": "PayWise Rewards",
+    "variants": [
+     "Paywise Rewards",
+     "PayWise rewards"
+    ],
+    "note": "Loyalty programme (new in 2026)."
+   }
+  },
+  {
+   "kind": "word",
+   "page": 9,
+   "payload": {
+    "term": "cheap",
+    "status": "banned",
+    "replacement": "affordable"
+   }
+  },
+  {
+   "kind": "word",
+   "page": 9,
+   "payload": {
+    "term": "no risk",
+    "status": "banned",
+    "replacement": null
+   }
+  },
+  {
+   "kind": "word",
+   "page": 9,
+   "payload": {
+    "term": "instant loan",
+    "status": "banned",
+    "replacement": "quick credit decision"
+   }
+  },
+  {
+   "kind": "word",
+   "page": 9,
+   "payload": {
+    "term": "revolutionary",
+    "status": "banned",
+    "replacement": "new"
+   }
+  },
+  {
+   "kind": "word",
+   "page": 9,
+   "payload": {
+    "term": "hassle-free",
+    "status": "discouraged",
+    "replacement": "simple"
+   }
+  },
+  {
+   "kind": "word",
+   "page": 9,
+   "payload": {
+    "term": "world-class",
+    "status": "discouraged",
+    "replacement": "reliable"
+   }
+  },
+  {
+   "kind": "word",
+   "page": 9,
+   "payload": {
+    "term": "cutting-edge",
+    "status": "discouraged",
+    "replacement": "modern"
+   }
+  },
+  {
+   "kind": "word",
+   "page": 9,
+   "payload": {
+    "term": "seamless",
+    "status": "discouraged",
+    "replacement": "smooth"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 13,
+   "payload": {
+    "rule": "CLM-01",
+    "pattern": "#1"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 13,
+   "payload": {
+    "rule": "CLM-01",
+    "pattern": "best"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 13,
+   "payload": {
+    "rule": "CLM-01",
+    "pattern": "leading"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 13,
+   "payload": {
+    "rule": "CLM-01",
+    "pattern": "industry-leading"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 14,
+   "payload": {
+    "rule": "CLM-04",
+    "pattern": "100% secure"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 14,
+   "payload": {
+    "rule": "CLM-04",
+    "pattern": "unhackable"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 14,
+   "payload": {
+    "rule": "CLM-04",
+    "pattern": "completely safe"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 15,
+   "payload": {
+    "rule": "CLM-06",
+    "pattern": "guaranteed returns"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 15,
+   "payload": {
+    "rule": "CLM-06",
+    "pattern": "never worry again"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 15,
+   "payload": {
+    "rule": "CLM-06",
+    "pattern": "risk-free"
+   }
+  },
+  {
+   "kind": "pattern",
+   "page": 16,
+   "payload": {
+    "rule": "CLM-08",
+    "pattern": "free"
+   }
+  },
+  {
+   "kind": "colour",
+   "page": 17,
+   "payload": {
+    "name": "PayWise Navy",
+    "hex": "#13294B"
+   }
+  },
+  {
+   "kind": "colour",
+   "page": 17,
+   "payload": {
+    "name": "PayWise Teal",
+    "hex": "#12A594"
+   }
+  },
+  {
+   "kind": "colour",
+   "page": 17,
+   "payload": {
+    "name": "Sky",
+    "hex": "#4FB3E8"
+   }
+  },
+  {
+   "kind": "colour",
+   "page": 17,
+   "payload": {
+    "name": "Sunrise",
+    "hex": "#F5A623"
+   }
+  },
+  {
+   "kind": "colour",
+   "page": 17,
+   "payload": {
+    "name": "Charcoal",
+    "hex": "#2E3440"
+   }
+  },
+  {
+   "kind": "colour",
+   "page": 17,
+   "payload": {
+    "name": "Cloud",
+    "hex": "#F4F7FA"
+   }
+  },
+  {
+   "kind": "colour",
+   "page": 17,
+   "payload": {
+    "name": "White",
+    "hex": "#FFFFFF"
+   }
+  },
+  {
+   "kind": "disclaimer",
+   "page": 20,
+   "payload": {
+    "triggers": [
+     "special offer",
+     "limited offer",
+     "cashback",
+     "free"
+    ],
+    "disclaimer": "T&C apply."
+   }
+  },
+  {
+   "kind": "disclaimer",
+   "page": 20,
+   "payload": {
+    "triggers": [
+     "pay later"
+    ],
+    "disclaimer": "Subject to eligibility."
+   }
+  },
+  {
+   "kind": "disclaimer",
+   "page": 20,
+   "payload": {
+    "triggers": [
+     "interest-free"
+    ],
+    "disclaimer": "Interest-free period applies to eligible purchases only."
+   }
+  },
+  {
+   "kind": "guidance",
+   "page": 4,
+   "label": "Revise drafts more than 0.3 from a voice target",
+   "payload": {
+    "category": "tone"
+   },
+   "keywords": [
+    "0.3",
+    "deviat",
+    "away from"
+   ]
+  },
+  {
+   "kind": "guidance",
+   "page": 8,
+   "label": "Write product names exactly",
+   "payload": {
+    "category": "terminology"
+   },
+   "keywords": [
+    "abbreviat",
+    "capital",
+    "exactly"
+   ]
+  },
+  {
+   "kind": "guidance",
+   "page": 12,
+   "label": "Factual claims need an approved fact",
+   "payload": {
+    "category": "claims"
+   },
+   "keywords": [
+    "approved fact",
+    "contradict"
+   ]
+  },
+  {
+   "kind": "guidance",
+   "page": 12,
+   "label": "Use the current fact",
+   "payload": {
+    "category": "claims"
+   },
+   "keywords": [
+    "superseded",
+    "current version",
+    "outdated"
+   ]
+  },
+  {
+   "kind": "guidance",
+   "page": 17,
+   "label": "Colours within ΔE00 10 of the palette",
+   "payload": {
+    "category": "visual"
+   },
+   "keywords": [
+    "8%",
+    "palette",
+    "ΔE",
+    "delta"
+   ]
+  },
+  {
+   "kind": "guidance",
+   "page": 18,
+   "label": "Keep logo proportions within 5%",
+   "payload": {
+    "category": "visual"
+   },
+   "keywords": [
+    "stretch",
+    "squash",
+    "proportion"
+   ]
+  },
+  {
+   "kind": "guidance",
+   "page": 18,
+   "label": "Logo clear space",
+   "payload": {
+    "category": "visual"
+   },
+   "keywords": [
+    "clear space",
+    "quarter"
+   ]
+  },
+  {
+   "kind": "guidance",
+   "page": 19,
+   "label": "Contrast of at least 4.5:1",
+   "payload": {
+    "category": "accessibility"
+   },
+   "keywords": [
+    "contrast",
+    "4.5"
+   ]
+  },
+  {
+   "kind": "guidance",
+   "page": 19,
+   "label": "Every image needs alt text",
+   "payload": {
+    "category": "accessibility"
+   },
+   "keywords": [
+    "alt text"
+   ]
+  }
+ ]
+}
