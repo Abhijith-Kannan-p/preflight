@@ -2,8 +2,9 @@
 
 Two findings are duplicates when they cite the same rule on overlapping text, or when they
 cover nearly the same span (IoU >= 0.8). The higher-ranked one is kept and the other is
-attached as `related`. Different rules on partly overlapping text stay separate, because
-each is a distinct problem the author needs to fix (e.g. CLM-01 and CLM-04 on one phrase).
+attached as `related`; confident findings rank above "needs a human look" ones. Different
+rules on partly overlapping text stay separate, because each is a distinct problem the author
+needs to fix (e.g. CLM-01 and CLM-04 on one phrase).
 """
 
 from app.engine.schema import SEVERITY_WEIGHT, Finding
@@ -27,7 +28,11 @@ def _duplicates(a: Finding, b: Finding) -> bool:
 
 
 def merge_findings(findings: list[Finding]) -> list[Finding]:
-    ranked = sorted(findings, key=lambda f: (-f.rank, f.span.block, f.span.start))
+    # A finding that waits for a person never hides a confident one on the same text.
+    ranked = sorted(
+        findings,
+        key=lambda f: (f.confidence < CONFIDENCE_THRESHOLD, -f.rank, f.span.block, f.span.start),
+    )
     kept: list[Finding] = []
     for finding in ranked:
         primary = next((k for k in kept if _duplicates(k, finding)), None)

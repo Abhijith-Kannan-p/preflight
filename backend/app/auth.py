@@ -89,6 +89,18 @@ def _user_from(credentials: HTTPAuthorizationCredentials, session: Session) -> U
     return user
 
 
+def user_from_query_token(token: str, session: Session) -> User:
+    """For EventSource streams, which cannot send an Authorization header."""
+    try:
+        claims = jwt.decode(token, get_settings().jwt_secret, algorithms=["HS256"])
+    except jwt.PyJWTError as exc:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token.") from exc
+    user = session.get(User, claims.get("sub"))
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown user.")
+    return user
+
+
 def current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
     session: Session = Depends(get_session),

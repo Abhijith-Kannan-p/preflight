@@ -30,7 +30,7 @@ from app.models import (
 from app.seed import seed_all
 from app.services import sandbox
 from app.services.history import ensure_demo_history
-from app.services.webhooks import deliver
+from app.services.webhooks import EVENTS, WebhookEvent, deliver
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 admin = require(Permission.administer)
@@ -162,15 +162,24 @@ def revoke_key(
 class WebhookIn(BaseModel):
     url: HttpUrl
     slack_format: bool = False
+    events: list[WebhookEvent] = Field(default_factory=lambda: list(EVENTS), min_length=1)
+
+
+class WebhookPatch(BaseModel):
+    events: list[WebhookEvent] = Field(min_length=1)
 
 
 class DeliveryOut(BaseModel):
     id: int
     event: str
+    status: str
     status_code: int | None
     latency_ms: int
     ok: bool
     error: str | None
+    attempts: int
+    attempt_log: list[dict[str, Any]]
+    resent_from: int | None
     created_at: datetime
 
 
@@ -225,7 +234,7 @@ def create_webhook(
         url=str(body.url),
         slack_format=body.slack_format,
         secret=secrets.token_hex(24),
-        events=["submission.approved"],
+        events=list(dict.fromkeys(body.events)),
     )
     session.add(webhook)
     session.flush()
@@ -247,13 +256,36 @@ def delete_webhook(
     session.commit()
 
 
+def _own_webhook(session: Session, user: User, webhook_id: str) -> Webhook:
+    webhook = session.get(Webhook, webhook_id)
+    if webhook is None or webhook.workspace_id != user.workspace_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Webhook not found.")
+    return webhook
+
+
+@router.patch("/webhooks/{webhook_id}", response_model=WebhookOut)
+def update_webhook(
+    webhook_id: str,
+    body: WebhookPatch,
+    user: User = Depends(admin),
+    session: Session = Depends(get_session),
+) -> WebhookOut:
+    webhook = _own_webhook(session, user, webhook_id)
+    webhook.events = list(dict.fromkeys(body.events))
+    audit.record(
+        session, "webhook", webhook.id, "webhook_updated", user.id, {"events": webhook.events}
+    )
+    session.commit()
+    return _webhook_out(session, webhook)
+
+
 @router.post("/webhooks/{webhook_id}/test", response_model=DeliveryOut)
 def test_webhook(
     webhook_id: str, user: User = Depends(admin), session: Session = Depends(get_session)
 ) -> DeliveryOut:
-    webhook = session.get(Webhook, webhook_id)
-    if webhook is None or webhook.workspace_id != user.workspace_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Webhook not found.")
+    """One sample `submission.approved` event. Returns after the first attempt; retries, if
+    any, continue in the background and show up in the delivery log."""
+    webhook = _own_webhook(session, user, webhook_id)
     event = {
         "event": "submission.approved",
         "test": True,
@@ -268,7 +300,32 @@ def test_webhook(
         "approved_at": utcnow().isoformat(),
         "receipt_url": f"{get_settings().public_app_url.rstrip('/')}/receipt/sub_test",
     }
-    delivery = deliver(session, webhook, event)
+    delivery = deliver(session, webhook, event, wait=False)
+    return DeliveryOut.model_validate(delivery, from_attributes=True)
+
+
+@router.post("/webhooks/{webhook_id}/deliveries/{delivery_id}/resend", response_model=DeliveryOut)
+def resend_delivery(
+    webhook_id: str,
+    delivery_id: int,
+    user: User = Depends(admin),
+    session: Session = Depends(get_session),
+) -> DeliveryOut:
+    """Send the same event again as a new delivery (with its own retries)."""
+    webhook = _own_webhook(session, user, webhook_id)
+    original = session.get(WebhookDelivery, delivery_id)
+    if original is None or original.webhook_id != webhook.id or not original.payload:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Delivery not found or not resendable.")
+    delivery = deliver(session, webhook, original.payload, resent_from=original.id, wait=False)
+    audit.record(
+        session,
+        "webhook",
+        webhook.id,
+        "webhook_resent",
+        user.id,
+        {"delivery": original.id, "event": original.event},
+    )
+    session.commit()
     return DeliveryOut.model_validate(delivery, from_attributes=True)
 
 

@@ -5,14 +5,13 @@ import hashlib
 import json
 from collections.abc import AsyncIterator
 
-import jwt
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import Response, StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import audit
-from app.auth import Permission, can, current_user, permissions_for, require
+from app.auth import Permission, can, current_user, permissions_for, require, user_from_query_token
 from app.config import get_settings
 from app.db import get_session
 from app.engine.normalise import IntakeError, from_text, from_upload
@@ -56,7 +55,7 @@ from app.scoped import get_channel, get_sample
 from app.services import runner
 from app.services.events import TERMINAL, bus
 from app.services.notify import notify_roles, notify_users
-from app.services.webhooks import dispatch_approval
+from app.services.webhooks import dispatch_approval, dispatch_published
 from app.visual.intake import VisualUpload, encode_page
 from app.workflow import (
     TransitionError,
@@ -445,13 +444,7 @@ async def review_events(
     revision: int | None = None,
     session: Session = Depends(get_session),
 ) -> StreamingResponse:
-    try:
-        claims = jwt.decode(token, get_settings().jwt_secret, algorithms=["HS256"])
-    except jwt.PyJWTError as exc:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token.") from exc
-    viewer = session.get(User, claims.get("sub"))
-    if viewer is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown user.")
+    viewer = user_from_query_token(token, session)
     submission = _submission(session, review_id, viewer.workspace_id)
     target = _latest(session, submission)
     if revision is not None:
@@ -882,6 +875,8 @@ def transition(
     session.commit()
     if body.action == "approve":
         dispatch_approval(submission.id)
+    elif body.action == "publish":
+        dispatch_published(submission.id, user.id)
     return get_review(review_id, None, user, session)
 
 

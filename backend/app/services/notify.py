@@ -1,11 +1,44 @@
-"""In-app notifications (the bell in the header)."""
+"""In-app notifications (the bell in the header).
+
+New notifications are pushed to each recipient's live stream (`user:<id>` on the event bus)
+once the transaction that created them commits, wherever they were created; the header falls
+back to polling when the stream is down.
+"""
 
 from collections.abc import Iterable
 
-from sqlalchemy import select
+from sqlalchemy import event, select
 from sqlalchemy.orm import Session
 
 from app.models import Notification, Role, Submission, User
+from app.services.events import bus
+
+NOTIFICATION_EVENT = "notification"
+_PENDING = "pending_notifications"
+
+
+def stream_key(user_id: str) -> str:
+    return f"user:{user_id}"
+
+
+@event.listens_for(Session, "after_flush")
+def _collect(session: Session, _context: object) -> None:
+    for obj in session.new:
+        if isinstance(obj, Notification):
+            session.info.setdefault(_PENDING, []).append(
+                {"id": obj.id, "user_id": obj.user_id, "kind": obj.kind}
+            )
+
+
+@event.listens_for(Session, "after_commit")
+def _push(session: Session) -> None:
+    for item in session.info.pop(_PENDING, []):
+        bus.publish(stream_key(item["user_id"]), NOTIFICATION_EVENT, item, keep=False)
+
+
+@event.listens_for(Session, "after_rollback")
+def _drop(session: Session) -> None:
+    session.info.pop(_PENDING, None)
 
 
 def notify_users(

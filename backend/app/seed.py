@@ -122,6 +122,20 @@ def seed_facts(
     return len(rows)
 
 
+def backfill_fact_embeddings(session: Session, embedder: Embedder | None) -> int:
+    """Embed every fact that has no vector yet, in any workspace (a template seeded without
+    the model, or copied from one, would otherwise never use dense retrieval)."""
+    if embedder is None:
+        return 0
+    missing = list(session.scalars(select(Fact).where(Fact.embedding.is_(None))))
+    for start in range(0, len(missing), 64):
+        batch = missing[start : start + 64]
+        for fact, vector in zip(batch, embedder.embed([f.statement for f in batch]), strict=True):
+            fact.embedding = vector
+    session.commit()
+    return len(missing)
+
+
 def seed_terms(session: Session, data_dir: Path, workspace_id: str) -> int:
     rows = _read_csv(data_dir / "terms.csv")
     for row in rows:

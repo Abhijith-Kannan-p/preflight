@@ -15,26 +15,26 @@
     "support": 20
    },
    "contradicted": {
-    "precision": 0.943,
-    "recall": 0.943,
-    "f1": 0.943,
+    "precision": 0.971,
+    "recall": 0.971,
+    "f1": 0.971,
     "support": 35
    },
    "unsupported": {
-    "precision": 0.846,
-    "recall": 0.943,
-    "f1": 0.892,
+    "precision": 0.944,
+    "recall": 0.971,
+    "f1": 0.958,
     "support": 35
    },
    "needs_review": {
-    "precision": 0.714,
-    "recall": 0.667,
-    "f1": 0.69,
+    "precision": 0.824,
+    "recall": 0.933,
+    "f1": 0.875,
     "support": 15
    }
   },
-  "accuracy": 0.92,
-  "macro_recall": 0.897,
+  "accuracy": 0.96,
+  "macro_recall": 0.962,
   "problem_recall": 1.0,
   "problem_precision": 0.972,
   "detection_rate": 1.0
@@ -59,16 +59,16 @@
   "contradicted": {
    "supported": 0,
    "outdated": 0,
-   "contradicted": 33,
+   "contradicted": 34,
    "unsupported": 1,
-   "needs_review": 1,
+   "needs_review": 0,
    "not_detected": 0
   },
   "unsupported": {
    "supported": 0,
    "outdated": 0,
-   "contradicted": 2,
-   "unsupported": 33,
+   "contradicted": 1,
+   "unsupported": 34,
    "needs_review": 0,
    "not_detected": 0
   },
@@ -76,8 +76,8 @@
    "supported": 0,
    "outdated": 0,
    "contradicted": 0,
-   "unsupported": 5,
-   "needs_review": 10,
+   "unsupported": 1,
+   "needs_review": 14,
    "not_detected": 0
   }
  },
@@ -93,7 +93,7 @@
     "entailment": 0.993,
     "contradiction": 0.001,
     "neutral": 0.006,
-    "dense": 0.931,
+    "dense": 0.925,
     "bm25": 7.993,
     "numeric": "match"
    },
@@ -110,7 +110,7 @@
     "entailment": 0.98,
     "contradiction": 0.003,
     "neutral": 0.016,
-    "dense": 0.944,
+    "dense": 0.947,
     "bm25": 10.002,
     "numeric": "na"
    },
@@ -127,26 +127,9 @@
     "entailment": 0.996,
     "contradiction": 0.0,
     "neutral": 0.004,
-    "dense": 0.9,
+    "dense": 0.908,
     "bm25": 7.304,
     "numeric": "na"
-   },
-   "note": ""
-  },
-  {
-   "id": "c08",
-   "claim": "PayWise Card transactions carry zero merchant fees.",
-   "expected": "contradicted",
-   "predicted": "needs_review",
-   "expected_fact": "F-046",
-   "predicted_fact": "F-045",
-   "scores": {
-    "entailment": 0.974,
-    "contradiction": 0.009,
-    "neutral": 0.018,
-    "dense": 0.767,
-    "bm25": 3.082,
-    "numeric": "match"
    },
    "note": ""
   },
@@ -161,25 +144,8 @@
     "entailment": 0.02,
     "contradiction": 0.999,
     "neutral": 0.001,
-    "dense": 0.737,
+    "dense": 0.734,
     "bm25": 3.753,
-    "numeric": "mismatch"
-   },
-   "note": ""
-  },
-  {
-   "id": "u24",
-   "claim": "PayWise is rated 4.8 out of 5 on the Apple App Store.",
-   "expected": "unsupported",
-   "predicted": "contradicted",
-   "expected_fact": null,
-   "predicted_fact": "F-070",
-   "scores": {
-    "entailment": 0.02,
-    "contradiction": 0.995,
-    "neutral": 0.005,
-    "dense": 0.89,
-    "bm25": 13.811,
     "numeric": "mismatch"
    },
    "note": ""
@@ -195,104 +161,37 @@
     "entailment": 0.029,
     "contradiction": 0.71,
     "neutral": 0.261,
-    "dense": 0.759,
+    "dense": 0.765,
     "bm25": 2.088,
     "numeric": "na"
    },
    "note": ""
   },
   {
-   "id": "n02",
-   "claim": "PayWise is trusted by millions of users.",
+   "id": "n05",
+   "claim": "PayWise has very low fees for card payments.",
    "expected": "needs_review",
    "predicted": "unsupported",
-   "expected_fact": "F-031",
-   "predicted_fact": "F-031",
+   "expected_fact": "F-046",
+   "predicted_fact": "F-046",
    "scores": {
-    "entailment": 0.04,
-    "contradiction": 0.0,
-    "neutral": 0.959,
-    "dense": 0.788,
-    "bm25": 4.928,
+    "entailment": 0.21,
+    "contradiction": 0.027,
+    "neutral": 0.763,
+    "dense": 0.807,
+    "bm25": 3.753,
     "numeric": "na"
    },
-   "note": "registered is not trusted"
-  },
-  {
-   "id": "n07",
-   "claim": "PayWise is popular with small businesses.",
-   "expected": "needs_review",
-   "predicted": "unsupported",
-   "expected_fact": "F-032",
-   "predicted_fact": "F-032",
-   "scores": {
-    "entailment": 0.006,
-    "contradiction": 0.001,
-    "neutral": 0.993,
-    "dense": 0.749,
-    "bm25": 0.0,
-    "numeric": "na"
-   },
-   "note": "subjective"
-  },
-  {
-   "id": "n09",
-   "claim": "PayWise is growing fast in India.",
-   "expected": "needs_review",
-   "predicted": "unsupported",
-   "expected_fact": null,
-   "predicted_fact": "F-031",
-   "scores": {
-    "entailment": 0.006,
-    "contradiction": 0.0,
-    "neutral": 0.994,
-    "dense": 0.792,
-    "bm25": 1.959,
-    "numeric": "na"
-   },
-   "note": "no growth fact"
-  },
-  {
-   "id": "n13",
-   "claim": "PayWise charges merchants less than most competitors.",
-   "expected": "needs_review",
-   "predicted": "unsupported",
-   "expected_fact": null,
-   "predicted_fact": "F-045",
-   "scores": {
-    "entailment": 0.006,
-    "contradiction": 0.01,
-    "neutral": 0.984,
-    "dense": 0.716,
-    "bm25": 0.994,
-    "numeric": "na"
-   },
-   "note": "comparative without data"
-  },
-  {
-   "id": "n14",
-   "claim": "PayWise is available almost everywhere in India.",
-   "expected": "needs_review",
-   "predicted": "unsupported",
-   "expected_fact": null,
-   "predicted_fact": "F-032",
-   "scores": {
-    "entailment": 0.339,
-    "contradiction": 0.001,
-    "neutral": 0.659,
-    "dense": 0.797,
-    "bm25": 1.834,
-    "numeric": "na"
-   },
-   "note": "vague"
+   "note": "1.5% is a judgement call"
   }
  ],
- "latency_ms_p50": 484.8,
- "latency_ms_p95": 653.3,
+ "latency_ms_p50": 609.4,
+ "latency_ms_p95": 747.0,
  "config": {
   "nli_model": "cross-encoder/nli-deberta-v3-xsmall (ONNX int8)",
   "embedding_model": "BAAI/bge-small-en-v1.5",
   "eval_date": "2026-10-22",
-  "dataset": "data/eval/claims.jsonl"
+  "dataset": "data/eval/claims.jsonl",
+  "ledger_version": 2
  }
 }

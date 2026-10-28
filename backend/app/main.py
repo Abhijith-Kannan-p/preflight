@@ -38,6 +38,9 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 def bootstrap() -> None:
     from app.api.evaluation import ensure_evaluation
+    from app.db import SessionLocal
+    from app.ml.embeddings import get_embedder
+    from app.seed import backfill_fact_embeddings
     from app.services.history import ensure_demo_history
     from app.services.runner import resume_pending
     from app.services.sandbox import start_sweeper
@@ -46,6 +49,10 @@ def bootstrap() -> None:
     # while the history is still being generated on a slow host.
     # Reviews interrupted by a restart are queued again, so a reloaded page reattaches.
     resume_pending()
+    with SessionLocal() as session:
+        filled = backfill_fact_embeddings(session, get_embedder())
+    if filled:
+        log.info("embedded %d facts that had no vector", filled)
     ensure_evaluation()
     ensure_demo_history()
     start_sweeper()

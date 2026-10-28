@@ -22,6 +22,7 @@ from app.engine.claims.detect import ClaimCandidate, PatternHit, detect_claims, 
 from app.engine.claims.quantities import Quantity, compare, extract
 from app.engine.claims.quote import best_quote, quote_is_verbatim
 from app.engine.claims.retrieve import Candidate, Retriever, tokens
+from app.engine.claims.scope import is_vague, out_of_scope
 from app.engine.context import FactInfo, ReviewContext
 from app.engine.schema import Evidence, Finding, NliLabel, NormalisedDoc, Span
 from app.engine.text import compact
@@ -30,6 +31,9 @@ from app.ml.nli import NliModel, NliScores
 
 Verdict = Literal["supported", "outdated", "contradicted", "unsupported", "needs_review"]
 
+# Bumped when verdict logic changes, so stored evaluation runs of older logic are replaced.
+# 2: scope check and hedged-wording rule (Round 3).
+LEDGER_VERSION = 2
 ENTAIL_SUPPORTED = 0.7
 CONTRADICT = 0.6
 AMBIGUOUS = (0.4, 0.6)
@@ -225,6 +229,19 @@ class ClaimLedger:
             )
         if old:
             steps.append("Retrieved superseded facts: " + ", ".join(s.fact.id for s in old))
+        excluded = [
+            (s.fact.id, scope)
+            for s in (*current, *old)
+            if (scope := out_of_scope(claim.hypothesis, s.fact.statement))
+        ]
+        if excluded:
+            ids = {fact_id for fact_id, _ in excluded}
+            current = [s for s in current if s.fact.id not in ids]
+            old = [s for s in old if s.fact.id not in ids]
+            steps.append(
+                "Set aside facts about a different "
+                + ", ".join(f"{scope} ({fact_id})" for fact_id, scope in excluded)
+            )
         verifier = self.nli.name if self.nli else "lexical fallback (NLI model unavailable)"
         steps.append(f"Verified each pair with {verifier} and exact numeric comparison")
 
@@ -350,6 +367,9 @@ class ClaimLedger:
         # never "ambiguous": the rule exists precisely because such claims need proof.
         if top and AMBIGUOUS[0] <= top_score < AMBIGUOUS[1] and top.relevant and not claim.hits:
             steps.append(f"Best score {top_score:.2f} is ambiguous (0.40-0.60): a person decides")
+            return record("needs_review", top, 0.5)
+        if not claim.hits and is_vague(_numeric_text(claim)):
+            steps.append("Hedged wording and no number to check against a fact: a person decides")
             return record("needs_review", top, 0.5)
         steps.append("No approved fact supports this claim. Verdict: unsupported")
         return record("unsupported", top, 1 - (top.entail if top else 0.0))

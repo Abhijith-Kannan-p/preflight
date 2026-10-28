@@ -56,6 +56,19 @@ def _brand_terms(ctx: ReviewContext) -> list[str]:
     return [t.term for t in ctx.terms if t.kind == "product_name"] + ["UPI", "we", "our"]
 
 
+_FIRST_PERSON = re.compile(r"^(?P<word>we|our|us)\b", re.I)
+
+
+def _as_brand(hypothesis: str) -> str:
+    """Brand copy speaks as "we": "We settle payments in 3 seconds" is a claim about PayWise,
+    and retrieval and NLI compare it with facts that say "PayWise"."""
+    m = _FIRST_PERSON.match(hypothesis)
+    if m is None:
+        return hypothesis
+    brand = "PayWise's" if m.group("word").lower() == "our" else "PayWise"
+    return brand + hypothesis[m.end() :]
+
+
 def _clauses(sentence: TextSpan) -> list[tuple[TextSpan, str]]:
     """Split a sentence into atomic clauses: (span in block, hypothesis text)."""
     text = sentence.text
@@ -119,7 +132,8 @@ def detect_claims(doc: NormalisedDoc, ctx: ReviewContext) -> list[ClaimCandidate
         for sentence in sentences(block.text):
             if _DATELINE.match(sentence.text.strip()):
                 continue
-            for span, hypothesis in _clauses(sentence):
+            for span, clause in _clauses(sentence):
+                hypothesis = _as_brand(clause)
                 hits = _pattern_hits(span.text, span.start, ctx)
                 mentions_brand = any(
                     next(find_phrase(hypothesis, b), None) for b in brand

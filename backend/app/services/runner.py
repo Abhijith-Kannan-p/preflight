@@ -40,6 +40,7 @@ from app.models import (
     utcnow,
 )
 from app.services.events import TERMINAL, bus
+from app.services.webhooks import dispatch_critical
 from app.visual import ocr
 from app.visual.analyse import VisualResult, analyse, attach_regions
 from app.visual.intake import decode_page
@@ -413,6 +414,8 @@ def _persist(
         workspace_id=submission.workspace_id,
     )
     session.commit()
+    if any(f.severity == "critical" and not f.needs_review for f in result.findings):
+        dispatch_critical(submission.id, revision.id)
 
 
 def _previous_statuses(session: Session, revision: Revision) -> dict[tuple[str, str], str]:

@@ -441,6 +441,13 @@ class WebhookDelivery(Base):
     ok: Mapped[bool] = mapped_column(Boolean)
     error: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # delivered | retrying | failed. One row per delivery; each try is in attempt_log.
+    status: Mapped[str] = mapped_column(String(16), default="delivered", server_default="delivered")
+    attempts: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    attempt_log: Mapped[list[Any]] = mapped_column(default=list, server_default="[]")
+    # The event as sent, so it can be resent exactly.
+    payload: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    resent_from: Mapped[int | None] = mapped_column(Integer)
 
 
 class EvalRun(Base):

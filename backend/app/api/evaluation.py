@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.auth import current_user
 from app.config import get_settings
 from app.db import SessionLocal, get_session
+from app.engine.claims.ledger import LEDGER_VERSION
 from app.engine.context import load_context
 from app.eval.run import EVAL_DATE, evaluate, load_items, save
 from app.ml.embeddings import get_embedder
@@ -76,9 +77,11 @@ def load_precomputed(session: Session) -> bool:
 
 def ensure_evaluation() -> None:
     """Called after start-up: make sure judges see results instantly. On slow hosts
-    (EVAL_AT_BOOT=precomputed) the shipped run is loaded instead of running 150 claims."""
+    (EVAL_AT_BOOT=precomputed) the shipped run is loaded instead of running 150 claims.
+    A latest run made by older verdict logic is replaced the same way; it stays in the list."""
     with SessionLocal() as session:
-        if session.scalar(select(EvalRun.id).limit(1)) is not None:
+        latest = session.scalar(select(EvalRun).order_by(EvalRun.created_at.desc()).limit(1))
+        if latest is not None and latest.config.get("ledger_version") == LEDGER_VERSION:
             return
         if get_settings().eval_at_boot == "precomputed" and load_precomputed(session):
             return
@@ -150,3 +153,24 @@ def compiler_evaluation(
         "accepted_without_edits": round(decisions["accepted"] / accepted, 3) if accepted else None,
     }
     return {**result, "precomputed": True}
+
+
+def _precomputed(name: str, missing: str) -> dict[str, Any]:
+    path = get_settings().data_dir / "eval" / name
+    if not path.exists():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, missing)
+    result: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return {**result, "precomputed": True}
+
+
+@router.get("/drafts")
+def drafts_evaluation() -> dict[str, Any]:
+    """Whole reviews of the 20 labelled full drafts (`python -m app.eval.drafts --export`)."""
+    return _precomputed("drafts_run.json", "No full-draft evaluation run yet.")
+
+
+@router.get("/holdout")
+def holdout_evaluation() -> dict[str, Any]:
+    """The Claim Ledger on 27 claims written after its Round 3 rules were tuned
+    (`python -m app.eval.run --dataset claims_holdout.jsonl --export`)."""
+    return _precomputed("claims_holdout_run.json", "No held-out run yet.")

@@ -4,14 +4,13 @@ import asyncio
 from collections.abc import AsyncIterator
 from typing import Any, Literal
 
-import jwt
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth import Permission, current_user, require
+from app.auth import Permission, current_user, require, user_from_query_token
 from app.compiler import pipeline
 from app.compiler.apply import apply
 from app.compiler.schema import validate
@@ -142,13 +141,7 @@ def get_job(
 async def job_events(
     job_id: str, token: str = Query(...), session: Session = Depends(get_session)
 ) -> StreamingResponse:
-    try:
-        claims = jwt.decode(token, get_settings().jwt_secret, algorithms=["HS256"])
-    except jwt.PyJWTError as exc:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token.") from exc
-    viewer = session.get(User, claims.get("sub"))
-    if viewer is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown user.")
+    viewer = user_from_query_token(token, session)
     job = _job(session, job_id, viewer.workspace_id)
     finished = job.status != "running"
     bus.bind(asyncio.get_running_loop())

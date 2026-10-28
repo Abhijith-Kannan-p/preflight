@@ -156,3 +156,24 @@ def test_pipeline_reports_degraded_checker(session: Session) -> None:
     result = asyncio.run(run_review(from_text("Hello."), context(session), [Broken()]))
     assert result.degraded
     assert result.checkers[0].error == "RuntimeError"
+
+
+def test_low_confidence_finding_never_hides_a_confident_one() -> None:
+    from app.engine.merge import merge_findings
+    from app.engine.schema import Finding, RuleRef, Span
+
+    def finding(rule: str, severity: str, confidence: float) -> Finding:
+        return Finding(
+            type="tone",
+            span=Span(block=0, start=0, end=20),
+            text="Thank you for the love!!!",
+            rule=RuleRef(id=rule, source="brand_book.pdf#p5"),
+            severity=severity,
+            confidence=confidence,
+            explanation="",
+            detector="rules",
+        )
+
+    merged = merge_findings([finding("TON-01", "major", 0.55), finding("TON-03", "minor", 0.95)])
+    assert [f.rule.id for f in merged] == ["TON-03"]
+    assert not merged[0].needs_review

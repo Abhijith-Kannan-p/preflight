@@ -1,21 +1,32 @@
 """Demo sign-in (role switcher), notifications and the audit log."""
 
+import asyncio
+import json
+from collections.abc import AsyncIterator
 from typing import Any
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, status
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app import audit
-from app.auth import current_user, current_workspace_id, issue_token, permissions_for
+from app.auth import (
+    current_user,
+    current_workspace_id,
+    issue_token,
+    permissions_for,
+    user_from_query_token,
+)
 from app.config import get_settings
 from app.db import get_session
 from app.models import TEMPLATE_WORKSPACE_ID, AuditEvent, Notification, User
 from app.schemas.reviews import NotificationOut, UserRef
 from app.scoped import get_sample
 from app.services import sandbox
+from app.services.events import bus
+from app.services.notify import stream_key
 
 router = APIRouter(prefix="/api", tags=["session"])
 
@@ -72,6 +83,38 @@ def notifications(
             .order_by(Notification.created_at.desc())
             .limit(30)
         )
+    )
+
+
+@router.get("/notifications/stream")
+async def notification_stream(
+    token: str = Query(..., description="Demo JWT (EventSource cannot send headers)"),
+    session: Session = Depends(get_session),
+) -> StreamingResponse:
+    """New notifications as they are created (`event: notification`); the client then
+    refetches the list. Live only: nothing is replayed, the list endpoint is the history."""
+    user = user_from_query_token(token, session)
+    key = stream_key(user.id)
+    bus.bind(asyncio.get_running_loop())
+
+    async def stream() -> AsyncIterator[str]:
+        _history, queue = bus.subscribe(key)
+        try:
+            yield "event: ready\ndata: {}\n\n"
+            while True:
+                try:
+                    name, data = await asyncio.wait_for(queue.get(), timeout=15)
+                except TimeoutError:
+                    yield ": keep-alive\n\n"
+                    continue
+                yield f"event: {name}\ndata: {json.dumps(data)}\n\n"
+        finally:
+            bus.unsubscribe(key, queue)
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 

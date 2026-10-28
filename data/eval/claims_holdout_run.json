@@ -1,0 +1,183 @@
+{
+ "n_items": 27,
+ "metrics": {
+  "per_label": {
+   "supported": {
+    "precision": 0.857,
+    "recall": 1.0,
+    "f1": 0.923,
+    "support": 6
+   },
+   "outdated": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "support": 3
+   },
+   "contradicted": {
+    "precision": 0.857,
+    "recall": 1.0,
+    "f1": 0.923,
+    "support": 6
+   },
+   "unsupported": {
+    "precision": 0.667,
+    "recall": 0.667,
+    "f1": 0.667,
+    "support": 6
+   },
+   "needs_review": {
+    "precision": 1.0,
+    "recall": 0.333,
+    "f1": 0.5,
+    "support": 6
+   }
+  },
+  "accuracy": 0.778,
+  "macro_recall": 0.8,
+  "problem_recall": 0.857,
+  "problem_precision": 1.0,
+  "detection_rate": 0.926
+ },
+ "confusion": {
+  "supported": {
+   "supported": 6,
+   "outdated": 0,
+   "contradicted": 0,
+   "unsupported": 0,
+   "needs_review": 0,
+   "not_detected": 0
+  },
+  "outdated": {
+   "supported": 0,
+   "outdated": 3,
+   "contradicted": 0,
+   "unsupported": 0,
+   "needs_review": 0,
+   "not_detected": 0
+  },
+  "contradicted": {
+   "supported": 0,
+   "outdated": 0,
+   "contradicted": 6,
+   "unsupported": 0,
+   "needs_review": 0,
+   "not_detected": 0
+  },
+  "unsupported": {
+   "supported": 1,
+   "outdated": 0,
+   "contradicted": 1,
+   "unsupported": 4,
+   "needs_review": 0,
+   "not_detected": 0
+  },
+  "needs_review": {
+   "supported": 0,
+   "outdated": 0,
+   "contradicted": 0,
+   "unsupported": 2,
+   "needs_review": 2,
+   "not_detected": 2
+  }
+ },
+ "failures": [
+  {
+   "id": "h-u1",
+   "claim": "PayWise Card comes with a 45-day interest-free period.",
+   "expected": "unsupported",
+   "predicted": "contradicted",
+   "expected_fact": null,
+   "predicted_fact": "F-301",
+   "scores": {
+    "entailment": 0.002,
+    "contradiction": 0.994,
+    "neutral": 0.004,
+    "dense": 0.826,
+    "bm25": 7.782,
+    "numeric": "na"
+   },
+   "note": ""
+  },
+  {
+   "id": "h-u5",
+   "claim": "PayWise Pay Later has no late fees.",
+   "expected": "unsupported",
+   "predicted": "supported",
+   "expected_fact": null,
+   "predicted_fact": "F-301",
+   "scores": {
+    "entailment": 0.965,
+    "contradiction": 0.003,
+    "neutral": 0.032,
+    "dense": 0.777,
+    "bm25": 4.441,
+    "numeric": "na"
+   },
+   "note": ""
+  },
+  {
+   "id": "h-n1",
+   "claim": "PayWise is the app shop owners love.",
+   "expected": "needs_review",
+   "predicted": "unsupported",
+   "expected_fact": null,
+   "predicted_fact": "F-070",
+   "scores": {
+    "entailment": 0.001,
+    "contradiction": 0.002,
+    "neutral": 0.997,
+    "dense": 0.814,
+    "bm25": 1.97,
+    "numeric": "na"
+   },
+   "note": ""
+  },
+  {
+   "id": "h-n2",
+   "claim": "Thousands of new merchants join PayWise every week.",
+   "expected": "needs_review",
+   "predicted": "not_detected",
+   "expected_fact": null,
+   "predicted_fact": null,
+   "scores": {},
+   "note": ""
+  },
+  {
+   "id": "h-n4",
+   "claim": "Small shops across India trust PayWise.",
+   "expected": "needs_review",
+   "predicted": "not_detected",
+   "expected_fact": null,
+   "predicted_fact": null,
+   "scores": {},
+   "note": ""
+  },
+  {
+   "id": "h-n5",
+   "claim": "PayWise is quickly becoming a household name.",
+   "expected": "needs_review",
+   "predicted": "unsupported",
+   "expected_fact": null,
+   "predicted_fact": "F-210",
+   "scores": {
+    "entailment": 0.0,
+    "contradiction": 0.002,
+    "neutral": 0.998,
+    "dense": 0.747,
+    "bm25": 0.0,
+    "numeric": "na"
+   },
+   "note": ""
+  }
+ ],
+ "latency_ms_p50": 572.9,
+ "latency_ms_p95": 720.7,
+ "config": {
+  "nli_model": "cross-encoder/nli-deberta-v3-xsmall (ONNX int8)",
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "eval_date": "2026-10-22",
+  "dataset": "data/eval/claims_holdout.jsonl",
+  "ledger_version": 2
+ }
+}

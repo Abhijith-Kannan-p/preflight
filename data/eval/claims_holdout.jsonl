@@ -1,0 +1,27 @@
+{"id": "h-s1", "claim": "PayWise Business serves more than 2 million merchants across India.", "expected": "supported", "fact_id": "F-032"}
+{"id": "h-s2", "claim": "PayWise Card works on both the Visa and RuPay networks.", "expected": "supported", "fact_id": "F-050"}
+{"id": "h-s3", "claim": "Our app is rated 4.6 out of 5 on the Google Play Store.", "expected": "supported", "fact_id": "F-070"}
+{"id": "h-s4", "claim": "PayWise is ISO 27001 certified for information security.", "expected": "supported", "fact_id": "F-211"}
+{"id": "h-s5", "claim": "PayWise Pay Later credit limits go from ₹1,000 up to ₹50,000.", "expected": "supported", "fact_id": "F-302"}
+{"id": "h-s6", "claim": "PayWise was founded in 2019 in Bengaluru.", "expected": "supported", "fact_id": "F-090"}
+{"id": "h-o1", "claim": "PayWise settles payments for merchants in under 5 seconds.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "h-o2", "claim": "More than 8 million registered users in India use PayWise.", "expected": "outdated", "fact_id": "F-030"}
+{"id": "h-o3", "claim": "Merchants get paid in under 5 seconds with PayWise.", "expected": "outdated", "fact_id": "F-086"}
+{"id": "h-c1", "claim": "PayWise Card transactions carry a 0.5% merchant fee.", "expected": "contradicted", "fact_id": "F-046"}
+{"id": "h-c2", "claim": "PayWise was founded in 2021.", "expected": "contradicted", "fact_id": "F-090"}
+{"id": "h-c3", "claim": "The PayWise app is available in 20 Indian languages.", "expected": "contradicted", "fact_id": "F-071"}
+{"id": "h-c4", "claim": "PayWise Pay Later offers up to 60 interest-free days.", "expected": "contradicted", "fact_id": "F-301"}
+{"id": "h-c5", "claim": "PayWise resolves 99% of customer disputes within 48 hours.", "expected": "contradicted", "fact_id": "F-061"}
+{"id": "h-c6", "claim": "Net banking transactions on PayWise Business carry a 2% merchant fee.", "expected": "contradicted", "fact_id": "F-047"}
+{"id": "h-u1", "claim": "PayWise Card comes with a 45-day interest-free period.", "expected": "unsupported"}
+{"id": "h-u2", "claim": "PayWise Business gives every merchant a POS machine at no cost.", "expected": "unsupported"}
+{"id": "h-u3", "claim": "PayWise is available in Bangladesh and Nepal.", "expected": "unsupported"}
+{"id": "h-u4", "claim": "PayWise is rated 4.7 out of 5 on the Apple App Store.", "expected": "unsupported"}
+{"id": "h-u5", "claim": "PayWise Pay Later has no late fees.", "expected": "unsupported"}
+{"id": "h-u6", "claim": "Refunds on PayWise reach your bank account within 2 hours.", "expected": "unsupported"}
+{"id": "h-n1", "claim": "PayWise is the app shop owners love.", "expected": "needs_review"}
+{"id": "h-n2", "claim": "Thousands of new merchants join PayWise every week.", "expected": "needs_review"}
+{"id": "h-n3", "claim": "PayWise makes payments simpler than most other apps.", "expected": "needs_review"}
+{"id": "h-n4", "claim": "Small shops across India trust PayWise.", "expected": "needs_review"}
+{"id": "h-n5", "claim": "PayWise is quickly becoming a household name.", "expected": "needs_review"}
+{"id": "h-n6", "claim": "Most merchants in Bengaluru use PayWise.", "expected": "needs_review"}

@@ -1,0 +1,468 @@
+{
+ "n_drafts": 20,
+ "labelled_issues": 27,
+ "precision": 0.923,
+ "recall": 0.889,
+ "exact_drafts": 15,
+ "clean_drafts": 7,
+ "clean_drafts_passed": 7,
+ "per_rule": {
+  "CHN-02": {
+   "tp": 1,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "CHN-03": {
+   "tp": 1,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "CLM-01": {
+   "tp": 2,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "CLM-02": {
+   "tp": 3,
+   "fp": 0,
+   "fn": 1,
+   "precision": 1.0,
+   "recall": 0.75
+  },
+  "CLM-03": {
+   "tp": 1,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "CLM-04": {
+   "tp": 1,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "CLM-05": {
+   "tp": 1,
+   "fp": 2,
+   "fn": 2,
+   "precision": 0.333,
+   "recall": 0.333
+  },
+  "CLM-06": {
+   "tp": 2,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "CLM-08": {
+   "tp": 1,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "DSC-01": {
+   "tp": 2,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "DSC-02": {
+   "tp": 1,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "RDB-01": {
+   "tp": 1,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "TON-03": {
+   "tp": 2,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "TRM-02": {
+   "tp": 3,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  },
+  "TRM-05": {
+   "tp": 2,
+   "fp": 0,
+   "fn": 0,
+   "precision": 1.0,
+   "recall": 1.0
+  }
+ },
+ "drafts": [
+  {
+   "id": "d01",
+   "title": "Settlement speed",
+   "channel": "linkedin",
+   "expected": [],
+   "raised": [],
+   "needs_human_look": [
+    "TON-01"
+   ],
+   "missed": [],
+   "extra": [],
+   "note": "Clean: both claims match current facts F-087 and F-040."
+  },
+  {
+   "id": "d02",
+   "title": "Fastest way to get paid",
+   "channel": "linkedin",
+   "expected": [
+    "CLM-01",
+    "CLM-02",
+    "TRM-02"
+   ],
+   "raised": [
+    "CLM-01",
+    "CLM-02",
+    "TRM-02"
+   ],
+   "needs_human_look": [],
+   "missed": [],
+   "extra": [],
+   "note": "Misspelt name, unbacked superlative, settlement time contradicts F-087 (10 s)."
+  },
+  {
+   "id": "d03",
+   "title": "Play Store rating",
+   "channel": "x",
+   "expected": [
+    "CHN-02",
+    "CLM-02",
+    "TON-03"
+   ],
+   "raised": [
+    "CHN-02",
+    "CLM-02",
+    "TON-03"
+   ],
+   "needs_human_look": [],
+   "missed": [],
+   "extra": [],
+   "note": "Rating contradicts F-070 (4.6); four exclamation marks in ~20 words; three hashtags on X (max 2)."
+  },
+  {
+   "id": "d04",
+   "title": "Festive cashback",
+   "channel": "email",
+   "expected": [
+    "CHN-03",
+    "DSC-01"
+   ],
+   "raised": [
+    "CHN-03",
+    "DSC-01"
+   ],
+   "needs_human_look": [],
+   "missed": [],
+   "extra": [],
+   "note": "Subject line over 60 characters; cashback without \"T&C apply.\""
+  },
+  {
+   "id": "d05",
+   "title": "Pay Later for shops",
+   "channel": "linkedin",
+   "expected": [],
+   "raised": [],
+   "needs_human_look": [],
+   "missed": [],
+   "extra": [],
+   "note": "Clean: F-301 and the eligibility disclaimer is present."
+  },
+  {
+   "id": "d06",
+   "title": "PayLater launch",
+   "channel": "linkedin",
+   "expected": [
+    "CLM-06",
+    "DSC-02",
+    "TRM-02"
+   ],
+   "raised": [
+    "CLM-05",
+    "CLM-06",
+    "DSC-02",
+    "TRM-02"
+   ],
+   "needs_human_look": [
+    "TON-01"
+   ],
+   "missed": [],
+   "extra": [
+    "CLM-05"
+   ],
+   "note": "Wrong product name, no eligibility disclaimer, guaranteed-outcome language."
+  },
+  {
+   "id": "d07",
+   "title": "Security post",
+   "channel": "linkedin",
+   "expected": [
+    "CLM-04"
+   ],
+   "raised": [
+    "CLM-04"
+   ],
+   "needs_human_look": [
+    "TON-01"
+   ],
+   "missed": [],
+   "extra": [],
+   "note": "Absolute security claim; the second sentence is supported by F-112."
+  },
+  {
+   "id": "d08",
+   "title": "How we protect payments",
+   "channel": "linkedin",
+   "expected": [],
+   "raised": [],
+   "needs_human_look": [
+    "TON-01"
+   ],
+   "missed": [],
+   "extra": [],
+   "note": "Clean: F-112 and F-113."
+  },
+  {
+   "id": "d09",
+   "title": "Users milestone",
+   "channel": "x",
+   "expected": [
+    "CLM-03"
+   ],
+   "raised": [
+    "CLM-03"
+   ],
+   "needs_human_look": [
+    "TON-01"
+   ],
+   "missed": [],
+   "extra": [],
+   "note": "8 million comes from superseded fact F-030 (now 12 million, F-031)."
+  },
+  {
+   "id": "d10",
+   "title": "Scale and reliability",
+   "channel": "linkedin",
+   "expected": [],
+   "raised": [],
+   "needs_human_look": [
+    "TON-01"
+   ],
+   "missed": [],
+   "extra": [],
+   "note": "Clean: F-033, F-120 and F-032."
+  },
+  {
+   "id": "d11",
+   "title": "Pricing for small shops",
+   "channel": "linkedin",
+   "expected": [
+    "TRM-05"
+   ],
+   "raised": [
+    "CLM-05",
+    "TRM-05"
+   ],
+   "needs_human_look": [
+    "TON-01"
+   ],
+   "missed": [],
+   "extra": [
+    "CLM-05"
+   ],
+   "note": "Banned word \"cheap\" and discouraged \"world-class\"; zero MDR on UPI is F-045."
+  },
+  {
+   "id": "d12",
+   "title": "First month free",
+   "channel": "email",
+   "expected": [
+    "CLM-05",
+    "CLM-08",
+    "DSC-01"
+   ],
+   "raised": [
+    "CLM-08",
+    "DSC-01"
+   ],
+   "needs_human_look": [
+    "CLM-05"
+   ],
+   "missed": [
+    "CLM-05"
+   ],
+   "extra": [],
+   "note": "\"free\" with no fact or disclaimer (CLM-08 and DSC-01); no approved fact for a fee-free first month."
+  },
+  {
+   "id": "d13",
+   "title": "Why shops choose us",
+   "channel": "linkedin",
+   "expected": [
+    "RDB-01"
+   ],
+   "raised": [
+    "RDB-01"
+   ],
+   "needs_human_look": [],
+   "missed": [],
+   "extra": [],
+   "note": "One sentence of about fifty words (limit 30)."
+  },
+  {
+   "id": "d14",
+   "title": "Support hours",
+   "channel": "x",
+   "expected": [],
+   "raised": [],
+   "needs_human_look": [
+    "CLM-05"
+   ],
+   "missed": [],
+   "extra": [],
+   "note": "Clean: F-060."
+  },
+  {
+   "id": "d15",
+   "title": "Company story",
+   "channel": "linkedin",
+   "expected": [
+    "CLM-01",
+    "CLM-02",
+    "CLM-05"
+   ],
+   "raised": [
+    "CLM-01",
+    "CLM-05"
+   ],
+   "needs_human_look": [],
+   "missed": [
+    "CLM-02"
+   ],
+   "extra": [],
+   "note": "Unbacked superlative; founding year contradicts F-090 (2019); no fact for every state."
+  },
+  {
+   "id": "d16",
+   "title": "Languages",
+   "channel": "linkedin",
+   "expected": [
+    "CLM-02"
+   ],
+   "raised": [
+    "CLM-02"
+   ],
+   "needs_human_look": [
+    "TON-01"
+   ],
+   "missed": [],
+   "extra": [],
+   "note": "15 contradicts F-071 (12 languages)."
+  },
+  {
+   "id": "d17",
+   "title": "Card cashback offer",
+   "channel": "email",
+   "expected": [],
+   "raised": [],
+   "needs_human_look": [
+    "CLM-05",
+    "TON-01"
+   ],
+   "missed": [],
+   "extra": [],
+   "note": "Clean: F-051 and the offer disclaimer is present."
+  },
+  {
+   "id": "d18",
+   "title": "Late payments",
+   "channel": "linkedin",
+   "expected": [
+    "CLM-06",
+    "TRM-05"
+   ],
+   "raised": [
+    "CLM-06",
+    "TRM-05"
+   ],
+   "needs_human_look": [],
+   "missed": [],
+   "extra": [],
+   "note": "Banned \"no risk\"; guaranteed-outcome \"never worry again\"."
+  },
+  {
+   "id": "d19",
+   "title": "Pay Later limits",
+   "channel": "x",
+   "expected": [],
+   "raised": [],
+   "needs_human_look": [
+    "TON-01"
+   ],
+   "missed": [],
+   "extra": [],
+   "note": "Clean: F-302 with the eligibility disclaimer."
+  },
+  {
+   "id": "d20",
+   "title": "Card launch shout",
+   "channel": "linkedin",
+   "expected": [
+    "CLM-05",
+    "TON-03",
+    "TRM-02"
+   ],
+   "raised": [
+    "TON-03",
+    "TRM-02"
+   ],
+   "needs_human_look": [
+    "CLM-05"
+   ],
+   "missed": [
+    "CLM-05"
+   ],
+   "extra": [],
+   "note": "Capitalised product name; capitals and exclamations; \"works everywhere\" has no fact."
+  }
+ ],
+ "latency_s": {
+  "p50": 0.97,
+  "max": 1.6
+ },
+ "config": {
+  "mode": "deterministic (local NLI and embeddings, no LLM)",
+  "nli_model": "cross-encoder/nli-deberta-v3-xsmall (ONNX int8)",
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "eval_date": "2026-10-22",
+  "dataset": "data/eval/full_drafts.json",
+  "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+  "python": "3.13.2",
+  "created_at": "2026-10-28T21:45:54Z"
+ }
+}

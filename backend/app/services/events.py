@@ -25,11 +25,13 @@ class EventBus:
     def bind(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
 
-    def publish(self, key: str, event: str, data: dict[str, Any]) -> None:
-        """Safe to call from any thread."""
+    def publish(self, key: str, event: str, data: dict[str, Any], keep: bool = True) -> None:
+        """Safe to call from any thread. `keep=False` skips the replay history (live-only
+        streams such as notifications, which never finish)."""
         with self._lock:
-            self._history[key].append((event, data))
-            queues = list(self._subscribers[key])
+            if keep:
+                self._history[key].append((event, data))
+            queues = list(self._subscribers.get(key, ()))
             if len(self._history) > MAX_HISTORIES:
                 self._trim()
         for queue in queues:

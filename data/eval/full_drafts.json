@@ -1,0 +1,206 @@
+{
+ "description": "20 full drafts labelled by hand with the rules a careful reviewer would raise (confident findings only). Labels were written from the rulebook before the engine was run on them.",
+ "eval_date": "2026-10-22",
+ "drafts": [
+  {
+   "id": "d01",
+   "channel": "linkedin",
+   "title": "Settlement speed",
+   "content": "PayWise Business now settles merchant payments in under 10 seconds. Small shops get their money while the customer is still at the counter.\n\nMerchants can start accepting payments in under 10 minutes with digital KYC.",
+   "expected": [],
+   "note": "Clean: both claims match current facts F-087 and F-040."
+  },
+  {
+   "id": "d02",
+   "channel": "linkedin",
+   "title": "Fastest way to get paid",
+   "content": "Paywise is the fastest way for shops to get paid. We settle merchant payments in under 3 seconds, so your cash never waits.",
+   "expected": [
+    "TRM-02",
+    "CLM-01",
+    "CLM-02"
+   ],
+   "note": "Misspelt name, unbacked superlative, settlement time contradicts F-087 (10 s)."
+  },
+  {
+   "id": "d03",
+   "channel": "x",
+   "title": "Play Store rating",
+   "content": "Our app is rated 4.9 out of 5 on the Google Play Store! Thank you for the love!!! #PayWise #Payments #India",
+   "expected": [
+    "CLM-02",
+    "TON-03",
+    "CHN-02"
+   ],
+   "note": "Rating contradicts F-070 (4.6); four exclamation marks in ~20 words; three hashtags on X (max 2)."
+  },
+  {
+   "id": "d04",
+   "channel": "email",
+   "title": "Festive cashback",
+   "content": "Subject: Your PayWise Card now earns cashback on every online purchase this festive season\n\nHi there,\n\nPayWise Card offers 1% cashback on online purchases, capped at ₹500 per month. Shop online with the card you already carry.",
+   "expected": [
+    "CHN-03",
+    "DSC-01"
+   ],
+   "note": "Subject line over 60 characters; cashback without \"T&C apply.\""
+  },
+  {
+   "id": "d05",
+   "channel": "linkedin",
+   "title": "Pay Later for shops",
+   "content": "PayWise Pay Later gives your customers up to 30 interest-free days, so a big purchase does not have to wait for payday. Subject to eligibility.",
+   "expected": [],
+   "note": "Clean: F-301 and the eligibility disclaimer is present."
+  },
+  {
+   "id": "d06",
+   "channel": "linkedin",
+   "title": "PayLater launch",
+   "content": "Introducing PayWise PayLater: buy now and pay in 30 days. Guaranteed approval for every shop owner.",
+   "expected": [
+    "TRM-02",
+    "DSC-02",
+    "CLM-06"
+   ],
+   "note": "Wrong product name, no eligibility disclaimer, guaranteed-outcome language."
+  },
+  {
+   "id": "d07",
+   "channel": "linkedin",
+   "title": "Security post",
+   "content": "Your payments are 100% secure with PayWise. We use bank-grade AES-256 encryption and are PCI DSS certified.",
+   "expected": [
+    "CLM-04"
+   ],
+   "note": "Absolute security claim; the second sentence is supported by F-112."
+  },
+  {
+   "id": "d08",
+   "channel": "linkedin",
+   "title": "How we protect payments",
+   "content": "PayWise secures payments with bank-grade AES-256 encryption and is PCI DSS certified. Every login from a new device needs two-factor authentication.",
+   "expected": [],
+   "note": "Clean: F-112 and F-113."
+  },
+  {
+   "id": "d09",
+   "channel": "x",
+   "title": "Users milestone",
+   "content": "Over 8 million people across India use PayWise. Join them today.",
+   "expected": [
+    "CLM-03"
+   ],
+   "note": "8 million comes from superseded fact F-030 (now 12 million, F-031)."
+  },
+  {
+   "id": "d10",
+   "channel": "linkedin",
+   "title": "Scale and reliability",
+   "content": "PayWise processes over 400 million transactions every month and maintained 99.95% platform uptime over the last 12 months. PayWise Business serves over 2 million merchants across India.",
+   "expected": [],
+   "note": "Clean: F-033, F-120 and F-032."
+  },
+  {
+   "id": "d11",
+   "channel": "linkedin",
+   "title": "Pricing for small shops",
+   "content": "Accepting payments should not be expensive. PayWise Business is the cheap, world-class option for small shops, with zero merchant discount rate on UPI payments.",
+   "expected": [
+    "TRM-05"
+   ],
+   "note": "Banned word \"cheap\" and discouraged \"world-class\"; zero MDR on UPI is F-045."
+  },
+  {
+   "id": "d12",
+   "channel": "email",
+   "title": "First month free",
+   "content": "Subject: Your first month is free\n\nNew merchants pay no fees for their first month on PayWise Business. Sign up this week and start accepting payments today.",
+   "expected": [
+    "CLM-08",
+    "DSC-01",
+    "CLM-05"
+   ],
+   "note": "\"free\" with no fact or disclaimer (CLM-08 and DSC-01); no approved fact for a fee-free first month."
+  },
+  {
+   "id": "d13",
+   "channel": "linkedin",
+   "title": "Why shops choose us",
+   "content": "When you run a busy kirana store and every minute at the counter counts, you need a payments partner that understands why settlement speed, transparent pricing, round-the-clock help in your language and simple onboarding all matter to the way your business grows over the years.",
+   "expected": [
+    "RDB-01"
+   ],
+   "note": "One sentence of about fifty words (limit 30)."
+  },
+  {
+   "id": "d14",
+   "channel": "x",
+   "title": "Support hours",
+   "content": "PayWise customer support is available 24x7 in English and Hindi. Need help? Reply here and we will get back to you.",
+   "expected": [],
+   "note": "Clean: F-060."
+  },
+  {
+   "id": "d15",
+   "channel": "linkedin",
+   "title": "Company story",
+   "content": "PayWise is the leading payments app for India's small businesses. Founded in 2017 in Bengaluru, we now serve shops in every state of India.",
+   "expected": [
+    "CLM-01",
+    "CLM-02",
+    "CLM-05"
+   ],
+   "note": "Unbacked superlative; founding year contradicts F-090 (2019); no fact for every state."
+  },
+  {
+   "id": "d16",
+   "channel": "linkedin",
+   "title": "Languages",
+   "content": "The PayWise app is available in 15 Indian languages, so every shop owner can use it in the language they think in.",
+   "expected": [
+    "CLM-02"
+   ],
+   "note": "15 contradicts F-071 (12 languages)."
+  },
+  {
+   "id": "d17",
+   "channel": "email",
+   "title": "Card cashback offer",
+   "content": "Subject: Special offer for PayWise Card holders\n\nPayWise Card offers 1% cashback on online purchases, capped at ₹500 per month. T&C apply.",
+   "expected": [],
+   "note": "Clean: F-051 and the offer disclaimer is present."
+  },
+  {
+   "id": "d18",
+   "channel": "linkedin",
+   "title": "Late payments",
+   "content": "No risk: with PayWise you will never worry again about late payments.",
+   "expected": [
+    "TRM-05",
+    "CLM-06"
+   ],
+   "note": "Banned \"no risk\"; guaranteed-outcome \"never worry again\"."
+  },
+  {
+   "id": "d19",
+   "channel": "x",
+   "title": "Pay Later limits",
+   "content": "Need stock before the festival rush? PayWise Pay Later credit limits range from ₹1,000 to ₹50,000. Subject to eligibility.",
+   "expected": [],
+   "note": "Clean: F-302 with the eligibility disclaimer."
+  },
+  {
+   "id": "d20",
+   "channel": "linkedin",
+   "title": "Card launch shout",
+   "content": "PAYWISE CARD WORKS EVERYWHERE!!! PayWise Card is available on the Visa and RuPay networks.",
+   "expected": [
+    "TRM-02",
+    "TON-03",
+    "CLM-05"
+   ],
+   "note": "Capitalised product name; capitals and exclamations; \"works everywhere\" has no fact."
+  }
+ ]
+}

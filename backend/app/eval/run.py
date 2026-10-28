@@ -15,7 +15,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.engine.claims.ledger import ClaimLedger, ClaimRecord
+from app.engine.claims.ledger import LEDGER_VERSION, ClaimLedger, ClaimRecord
 from app.engine.context import ReviewContext, load_context
 from app.engine.normalise import from_text
 from app.eval.metrics import NOT_DETECTED, VERDICTS, compute
@@ -45,6 +45,7 @@ def evaluate(
     ctx: ReviewContext,
     nli: NliModel | None,
     embedder: Embedder | None,
+    dataset: str = "data/eval/claims.jsonl",
 ) -> dict[str, Any]:
     pairs: list[tuple[str, str]] = []
     latencies: list[float] = []
@@ -83,7 +84,8 @@ def evaluate(
             "nli_model": nli.name if nli else "lexical fallback",
             "embedding_model": embedder.name if embedder else None,
             "eval_date": EVAL_DATE.isoformat(),
-            "dataset": "data/eval/claims.jsonl",
+            "dataset": dataset,
+            "ledger_version": LEDGER_VERSION,
         },
     }
 
@@ -127,11 +129,16 @@ def main() -> None:
     parser.add_argument(
         "--export", type=Path, help="also write the result as JSON (for EVAL_AT_BOOT=precomputed)"
     )
+    parser.add_argument(
+        "--dataset",
+        default="claims.jsonl",
+        help="file in data/eval; claims_holdout.jsonl was written after the rules were tuned",
+    )
     args = parser.parse_args()
-    items = load_items(get_settings().data_dir / "eval" / "claims.jsonl")
+    items = load_items(get_settings().data_dir / "eval" / args.dataset)
     with SessionLocal() as session:
         ctx = load_context(session, WORKSPACE_ID, "blog", today=EVAL_DATE)
-        result = evaluate(items, ctx, get_nli(), get_embedder())
+        result = evaluate(items, ctx, get_nli(), get_embedder(), f"data/eval/{args.dataset}")
         _print(result)
         if args.export:
             args.export.write_text(json.dumps(result, indent=1, default=str), encoding="utf-8")
