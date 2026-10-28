@@ -4,7 +4,7 @@ import { BarChart3 } from "lucide-react";
 import useSWR from "swr";
 
 import { HBar, ScoreTrend } from "@/components/charts";
-import { ComingInRound3, EmptyState, ErrorState, InfoTip, PageHeader, Skeleton } from "@/components/ui";
+import { EmptyState, ErrorState, InfoTip, PageHeader, Skeleton } from "@/components/ui";
 import { useSession } from "@/lib/session";
 
 interface Insights {
@@ -104,10 +104,10 @@ export default function InsightsPage() {
             </table>
           </section>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <ComingInRound3 title="Guideline Health" text="Rules with high dispute or override rates flagged as ambiguous, with suggested rewordings for the brand manager." />
-            <ComingInRound3 title="Stale-Content Radar" text="When a fact changes, list every already-approved item that relied on the old fact." />
-          </div>
+          <p className="border-t border-rule pt-4 text-sm text-graphite">
+            Which rules are ambiguous, which approved content went stale, and each writer&apos;s recurring mistakes:{" "}
+            <a href="/app/governance" className="text-ink underline decoration-rule underline-offset-4 hover:decoration-ink">Governance</a>.
+          </p>
         </div>
       )}
     </div>

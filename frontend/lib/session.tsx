@@ -62,7 +62,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const opening = useRef<Promise<void> | null>(null);
+  const opening = useRef<{ userId: string; done: Promise<void> } | null>(null);
 
   const adopt = useCallback((s: SessionOut) => {
     setToken(s.token);
@@ -74,11 +74,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /** Open (or resume) the sandbox. A sleeping free-tier backend can take a while to wake,
-   * so network failures and 5xx answers are retried with backoff for about 90 seconds. */
+   * so network failures and 5xx answers are retried with backoff for about 90 seconds.
+   * Calls queue up: switching user while the first session is still opening waits for it
+   * and then switches, instead of being dropped. */
   const open = useCallback(
-    (userId: string) => {
-      if (opening.current) return opening.current;
+    (userId: string): Promise<void> => {
+      const pending = opening.current;
+      if (pending?.userId === userId) return pending.done;
       const run = async () => {
+        if (pending) await pending.done.catch(() => undefined);
         let delay = 1500;
         for (let attempt = 0; ; attempt++) {
           try {
@@ -99,10 +103,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           }
         }
       };
-      opening.current = run().finally(() => {
-        opening.current = null;
+      const done = run().finally(() => {
+        if (opening.current?.done === done) opening.current = null;
       });
-      return opening.current;
+      opening.current = { userId, done };
+      return done;
     },
     [adopt],
   );

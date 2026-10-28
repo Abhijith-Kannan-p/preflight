@@ -18,8 +18,9 @@ import { Tip } from "./ui";
 const NAV = [
   { href: "/app", label: "Dashboard", exact: true },
   { href: "/app/review/new", label: "New review" },
-  { href: "/app/queue", label: "Approval queue", permission: "approve" },
+  { href: "/app/queue", label: "Queue", permission: "approve" },
   { href: "/app/rulebook", label: "Rulebook" },
+  { href: "/app/governance", label: "Governance" },
   { href: "/app/insights", label: "Insights", permission: "view_insights" },
   { href: "/app/evaluation", label: "Evaluation" },
   { href: "/app/settings", label: "Settings" },

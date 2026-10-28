@@ -87,6 +87,11 @@
   .label {
     @apply mb-1 block font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-graphite;
   }
+  /* A table header styled as a label must stay a table cell. */
+  th.label,
+  td.label {
+    display: table-cell;
+  }
   .page-title {
     @apply font-serif text-[28px] font-medium leading-tight tracking-tight text-ink;
   }

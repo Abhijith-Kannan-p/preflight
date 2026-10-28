@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 
+import { CoachPanel } from "@/components/CoachTips";
+import { SourceProvider } from "@/components/review/SourcePanel";
 import { ErrorState, NextStep, PageHeader, Skeleton } from "@/components/ui";
 import { API_URL, ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/session";
@@ -137,6 +139,10 @@ function NewReviewForm() {
         title="New review"
         subtitle="Paste a draft or upload a file: text, Word, PDF (including scans), an HTML email or an image. Preflight checks it against the PayWise rulebook and approved facts."
       />
+
+      <SourceProvider>
+        <CoachPanel />
+      </SourceProvider>
 
       <section aria-labelledby="samples" className="mb-8 space-y-5" data-tour="samples">
         <div>

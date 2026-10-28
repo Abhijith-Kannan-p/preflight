@@ -30,11 +30,17 @@ Updated after every commit checkpoint. Build order follows section 13 of the Rou
   437 MiB, OCR 6.8 s per banner (target 6 s missed on 0.1 CPU; 1.3 s on a normal CPU).
   Tests: backend 185, e2e 7.
 
+- 5. Improvement 2: Governance intelligence (2026-10-28): richer seeded history (36 entries,
+  disputes with reasons, overrides, DSC-01 reworded to v2, recurring mistakes) generated in
+  deterministic mode in ~9 s; Guideline Health, Stale-Content Radar (notifications on every
+  fact change), Creator Coach (Governance page + New review panel). Found and fixed: offline
+  tone heuristic flagged two-thirds of drafts (now waits in Needs a human look); a role
+  switch during the first session load was dropped. Tests: backend 190, e2e 8.
+
 ## In progress
-- 5. Improvement 2: Governance intelligence
+- 6. Improvement 3: Brand Autopilot
 
 ## Next
-- 6. Improvement 3: Brand Autopilot
 - 7. Round 2 loose ends
 - 8. Hardening and testing
 - 9. Documentation and handover

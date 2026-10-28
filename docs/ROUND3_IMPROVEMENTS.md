@@ -67,35 +67,47 @@ released during OCR and reloaded after). Remote images in HTML emails are not do
 alt text is checked; upload the image itself for a visual review). OCR sometimes glues two words
 ("onevery"). The public API accepts text documents only; images are reviewed in the web app.
 
-## 2. Governance intelligence
+## 2. Governance intelligence (delivered)
 
-**What it is.** Three views that turn review history into guidance:
-- **Guideline Health:** rules with high dispute or override rates are flagged as ambiguous,
-  with an LLM-drafted rewording for the brand manager to accept or reject.
-- **Stale-Content Radar:** when a fact is superseded, list every already-approved item whose
-  Claim Ledger relied on the old fact, and offer a one-click re-check.
-- **Creator Coach:** a per-author profile of recurring findings, with short tips shown on the
-  New review page before the next draft.
+**Try it.** Governance (top menu) as abhi3 (Brand Manager). The seeded six-week history has
+realistic disputes, overrides, a reworded rule and recurring mistakes, so every view has data
+on first open.
 
-**Why it matters.** Brand governance fails quietly: rules nobody understands get disputed
-forever, approved content keeps quoting old numbers after a fact changes (exactly the F-086 →
-F-087 case), and the same people repeat the same mistakes. Round 2 already records the data
-needed to fix all three.
+**Guideline Health.** Per rule and per rule version: findings raised (once per review),
+dispute, override and acceptance rates, and
+`ambiguity = 0.6 × dispute rate + 0.4 × override rate` (shown from 4 findings, flagged at
+30%). The board lists flagged rules with the writers' dispute reasons grouped by theme
+(word-stem overlap). "Suggest clearer wording" sends the rule and those reasons to the hosted
+LLM (masked) and returns a rewrite with a rationale; without the LLM a labelled deterministic
+draft quotes the main objection. The brand manager edits it and publishes it as a new rule
+version (audit-logged). Dispute rate is then compared per version.
 
-**Technical approach.** Guideline Health: per-rule dispute and override rates with a Wilson
-lower bound to avoid noise from small counts; rewording proposals go through the AI gateway
-(masked) and the normal versioned rule edit. Stale-Content Radar: the `claims` table already
-stores the `fact_id` behind every verdict; a supersede event queries approved submissions
-whose final revision cites the old fact. Creator Coach: aggregate findings by author and rule
-over a rolling 60 days, with tips drawn from each rule's description and fallback wording.
+**Stale-Content Radar.** A fact-dependency index from Claim Ledger evidence on cleared items:
+item → cleared revision → claim → fact, with the fact's wording at review time. Facts that are
+superseded, edited, retired or past their valid-until date list every item that relied on them:
+the item, the exact sentence, old wording struck through, new wording, and "Re-check now", which
+opens the cleared text as a new review against today's facts. Every fact edit, supersession and
+retirement notifies the authors and brand managers in the same request. "Simulate fact update
+on F-087" supersedes the settlement-time fact in the visitor's own workspace.
 
-**Reuses.** Insights API and charts, decisions and audit events (dispute and override data),
-the Claim Ledger table, the supersede flow, notifications, and the re-check workflow.
+**Creator Coach.** Per author: recurring first-draft rules, trend, the repeat-mistake rate (a
+first-draft finding on a rule that already flagged an earlier first draft of the same author,
+divided by all first-draft findings; older half vs newer half of their drafts) and two or three
+tips from the rule's guidance, the brand-approved wording and the author's own last fix. A
+compact panel sits on the New review page before writing; the full Coach is on Governance.
 
-**Success measures.** Rules flagged by Guideline Health and reworded show a ≥ 30 % drop in
-dispute rate over the next 50 reviews; 100 % of approved items citing a superseded fact are
-listed within a minute of the change; repeat findings per author fall by ≥ 25 % after four
-weeks with Coach tips.
+**Measured results vs targets.**
+
+| Measure | Target | Result |
+|---|---|---|
+| Disputes on reworded rules | 30% fewer | **DSC-01: 80% → 0% disputes per finding (−100%)** after v2 narrowed its triggers (seeded history: 5 findings on v1, 4 on v2, a small sample) |
+| Affected approved items listed after a fact change | 100% within one minute | **100%** (test: 4 of 4 dependents, no false entries); listed **0.3 s** after the change locally |
+| Repeat mistakes per author | 25% fewer | **Baseline measured, target not yet testable**: abhi1 42% (older half) → 100% (newer half, "repeating"); abhi3 0% → 50%. The seeded history has no Coach in it, so these are the "before" numbers; the target needs authors writing after seeing the Coach. |
+
+**Limitations.** Coach tips are deterministic (the LLM tip option was cut per the agreed cut
+order; the rulebook's wording proved specific enough). The repeat-mistake rate rises naturally
+as an author's history grows (more earlier rules to repeat), so it should be compared over equal
+spans. Version metrics on the seeded history are small samples.
 
 ## 3. Brand Autopilot
 

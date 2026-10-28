@@ -48,12 +48,13 @@ abhi5 Admin).
 | **Double actions are safe**: `Idempotency-Key` on every write; repeated accepts, approvals or Run presses apply once | API docs; double-click anything |
 | **Clear errors**: empty, oversized, corrupt, password-protected, renamed-binary and unsupported uploads each get a specific message; styled 404 and error pages; wrong-role actions explain which role can do it | Try a 0-byte .pdf; open a review link from another browser |
 | **Keep-warm**: a scheduled GitHub Action pings `/health` every 10 minutes so visitors do not meet a sleeping backend | `.github/workflows/keep-warm.yml` |
+| **Improvement 2: Governance intelligence**: Guideline Health (ambiguity score, grouped dispute reasons, LLM rewording published as a new rule version, before/after per version), Stale-Content Radar (fact-dependency index, notifications on every fact change, "Simulate fact update on F-087", Re-check now), Creator Coach (repeat-mistake rate, trend, tips on New review) | Governance (top menu) as abhi3; New review shows your coach |
 | **Improvement 1: Visual and accessibility review**: images, scanned PDFs and HTML emails; OCR text checked like any draft; brand palette (CIEDE2000), WCAG 2.2 contrast, logo distortion and clear space, alt text; overlay boxes, palette strip, contrast table; upload a corrected version | New review → the five visual samples; Rulebook → Palette; Evaluation → Visual review (precision 1.00 on 100 labelled assets) |
 
 ## Not in Round 2 (planned for Round 3)
 
 Shown in the app as clearly labelled "Coming in Round 3" cards, never faked:
-Guideline Health; Stale-Content Radar;
+
 Creator Coach; Rulebook Compiler (brand-book PDF to rules) and Voice Fingerprint. See
 [ROUND3_IMPROVEMENTS.md](ROUND3_IMPROVEMENTS.md).
 

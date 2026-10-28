@@ -15,7 +15,7 @@ submitted product or in building it.
 |---|---|---|---|
 | `BAAI/bge-small-en-v1.5`, int8 ONNX export `Xenova/bge-small-en-v1.5` (`onnx/model_quantized.onnx`) | Locally on the backend CPU (ONNX Runtime) | 384-d embeddings for dense fact retrieval and semantic-drift scores | MIT |
 | `cross-encoder/nli-deberta-v3-xsmall`, official int8 ONNX export (`onnx/model_quint8_avx2.onnx`) | Locally on the backend CPU (ONNX Runtime + SentencePiece) | Natural-language inference (fact ⇒ claim) in the Claim Ledger | Apache-2.0 |
-| Google Gemini `gemini-3.5-flash-lite` (Gemini API) | Google, via HTTPS, **after masking** | Claim extraction (proposals only), tone scoring, suggestion wording where the rulebook has none | Google API terms |
+| Google Gemini `gemini-3.5-flash-lite` (Gemini API) | Google, via HTTPS, **after masking** | Claim extraction (proposals only), tone scoring, suggestion wording where the rulebook has none, and clearer wording for disputed rules (Guideline Health; a person edits and publishes) | Google API terms |
 | Groq-hosted model (optional, `LLM_PROVIDER=groq`) | Groq, via HTTPS, after masking | Same as Gemini; alternative provider | Groq API terms |
 | PaddleOCR PP-OCRv4 detection + recognition (ONNX, bundled in `rapidocr-onnxruntime`) | Locally on the backend CPU (ONNX Runtime) | Reading text in images and scanned PDFs (visual review) | Apache-2.0 |
 
