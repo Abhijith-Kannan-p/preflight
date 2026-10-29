@@ -44,7 +44,7 @@ export function HelpPanel({ open, onClose }: { open: boolean; onClose: () => voi
         {SHORTCUTS.map(([key, text]) => (
           <div key={key} className="contents">
             <dt>
-              <kbd className="rounded-md border border-paper-200 bg-white px-1.5 py-0.5 font-mono text-xs">{key}</kbd>
+              <kbd className="rounded-md border border-paper-200 bg-raised px-1.5 py-0.5 font-mono text-xs">{key}</kbd>
             </dt>
             <dd className="text-navy-500">{text}</dd>
           </div>

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Newsreader } from "next/font/google";
 
+import { THEME_SCRIPT } from "@/lib/theme-script";
+
 import "./globals.css";
 
 // Self-hosted at build time by next/font: no runtime requests to Google.
@@ -13,11 +15,20 @@ export const metadata: Metadata = {
   description: "Content cleared before it goes live. Pre-publication brand governance with cited, explainable findings.",
 };
 
-export const viewport: Viewport = { themeColor: "#F7F4EC" };
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F7F4EC" },
+    { media: "(prefers-color-scheme: dark)", color: "#141414" },
+  ],
+};
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    // The theme attribute is set before hydration by THEME_SCRIPT, so React must not warn.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className={`${newsreader.variable} ${plexSans.variable} ${plexMono.variable} min-h-screen font-sans`}>{children}</body>
     </html>
   );

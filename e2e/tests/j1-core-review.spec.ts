@@ -13,13 +13,13 @@ test("J1 core review: off-brand LinkedIn post to cleared certificate", async ({ 
   });
   page.on("pageerror", (err) => consoleErrors.push(err.message));
 
-  // Landing: two-second splash, then the hero with the demo button.
+  // Landing: the intro, skipped, then the hero with the demo button.
   await page.goto("/");
-  await expect(page.getByRole("status", { name: "Loading Preflight" })).toBeVisible();
-  await shot(page, "01-splash", false);
+  await expect(page.getByRole("heading", { name: "Every claim, cleared." })).toBeVisible();
+  await shot(page, "01-intro", false);
+  await page.getByRole("button", { name: "Skip intro" }).first().click();
   const demo = page.getByRole("link", { name: "Open the demo desk" }).first();
-  await expect(demo).toBeVisible({ timeout: 10_000 });
-  await page.waitForTimeout(2200);
+  await expect(demo).toBeInViewport({ timeout: 10_000 });
   await shot(page, "02-landing", false);
   await demo.click();
 
@@ -70,4 +70,32 @@ test("J1 core review: off-brand LinkedIn post to cleared certificate", async ({ 
   await expect(page.getByText("Audit chain verified")).toBeVisible();
   await shot(page, "06-receipt", false);
   expect(consoleErrors, consoleErrors.join("\n")).toEqual([]);
+});
+
+// "Accept all suggested fixes" accepts every open suggestion at once (one request per note,
+// each with its own idempotency key), exactly as pressing every Accept would.
+test("J1 accept all suggested fixes, numbered notes and filters", async ({ page }) => {
+  test.setTimeout(420_000);
+  await page.addInitScript(() => window.localStorage.setItem("preflight.tour.done", "1"));
+  await page.goto("/app/review/new?sample=sample_linkedin");
+  await expect(page.locator("#draft")).toHaveValue(/India's #1/, { timeout: 60_000 });
+  await page.locator("#draft").fill(`${await page.locator("#draft").inputValue()} Ref ${Date.now()}.`);
+  await page.getByRole("button", { name: "Run Preflight" }).click();
+  await page.waitForURL(/\/app\/review\/sub_/);
+  await expect(page.getByLabel("Critical finding CLM-04", { exact: true })).toBeVisible({ timeout: 300_000 });
+
+  const summary = page.getByRole("region", { name: "Proof summary" });
+  await expect(summary).toContainText("Not ready to publish");
+  // Severity filter hides and restores the critical notes.
+  await summary.getByRole("button", { name: /critical/ }).click();
+  await expect(page.getByLabel("Critical finding CLM-04", { exact: true })).toHaveCount(0);
+  await summary.getByRole("button", { name: /critical/ }).click();
+  await expect(page.getByLabel("Critical finding CLM-04", { exact: true })).toBeVisible();
+
+  const acceptAll = summary.getByRole("button", { name: /Accept all suggested fixes/ });
+  const fixable = Number((await acceptAll.innerText()).match(/(\d+)\s*$/)?.[1]);
+  expect(fixable).toBeGreaterThan(0);
+  await acceptAll.dblclick(); // a double click must still accept each fix once
+  await expect(page.getByRole("button", { name: new RegExp(`Re-check with ${fixable} change`) })).toBeVisible({ timeout: 60_000 });
+  await expect(summary.getByRole("button", { name: /Accept all suggested fixes/ })).toHaveCount(0);
 });

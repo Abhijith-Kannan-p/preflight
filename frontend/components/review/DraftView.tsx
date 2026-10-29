@@ -36,25 +36,50 @@ function segments(block: Block, findings: Finding[]): Segment[] {
   return out;
 }
 
-/** The draft as a proof sheet. Marks carry `data-covers` so margin notes can draw leader
- * lines to them; `after` renders content (inline notes on narrow screens) below a block. */
+/** A small numbered pill in the severity colour, matching the margin note's number. */
+export function NoteNumber({ n, severity, settled = false, active = false, className }: { n: number; severity: Finding["severity"]; settled?: boolean; active?: boolean; className?: string }) {
+  return (
+    <span
+      className={clsx(
+        "inline-flex h-4 min-w-4 items-center justify-center rounded-full border px-[3px] font-sans text-[10px] font-semibold leading-none tabular-nums transition-colors duration-150",
+        settled ? "border-teal-700 text-teal-700" : SEVERITY_STYLE[severity].number,
+        active && (settled ? "bg-teal-700 text-sheet" : SEVERITY_STYLE[severity].numberActive),
+        className,
+      )}
+    >
+      {n}
+    </span>
+  );
+}
+
+/** The draft as a proof sheet. Each mark carries `data-covers` (the findings it anchors) and
+ * is followed by numbered markers; `after` renders content (inline notes on narrow screens)
+ * below a block. */
 export function DraftView({
   blocks,
   findings,
+  numbers,
   focused,
+  active,
   onFocus,
+  onHover,
   after,
 }: {
   blocks: Block[];
   findings: Finding[];
+  numbers: Record<string, number>;
   focused: string | null;
+  /** The note being pointed at or focused: its mark and marker are highlighted. */
+  active: string | null;
   onFocus: (id: string) => void;
+  onHover?: (id: string | null) => void;
   after?: (block: Block) => React.ReactNode;
 }) {
   return (
-    <article className="space-y-4 font-serif text-[17px] leading-[1.7] text-ink" aria-label="Draft with proof marks" data-tour="draft">
+    <article className="space-y-4 font-serif text-[17px] leading-[1.85] text-ink" aria-label="Draft with proof marks" data-tour="draft">
       {blocks.map((block) => {
         const mine = findings.filter((f) => f.span.block === block.id && !f.needs_review);
+        const placed = new Set<string>();
         return (
           <div key={block.id} data-block={block.id}>
             <p className="whitespace-pre-wrap">
@@ -62,26 +87,41 @@ export function DraftView({
                 if (!seg.finding) return <span key={i}>{seg.text}</span>;
                 const f = seg.finding;
                 const open = OPEN.has(f.status);
-                const active = seg.covers?.some((c) => c.id === focused);
+                const lit = seg.covers?.some((c) => c.id === active || c.id === focused);
+                // Each finding gets one marker, after the first mark that anchors it.
+                const markers = (seg.covers ?? []).filter((c) => numbers[c.id] && !placed.has(c.id)).sort((a, b) => numbers[a.id] - numbers[b.id]);
+                markers.forEach((c) => placed.add(c.id));
                 return (
-                  // An inline span, not a <button>: a button becomes inline-block and breaks
-                  // the line flow when a mark wraps.
-                  <span
-                    key={i}
-                    role="button"
-                    tabIndex={0}
-                    data-covers={seg.covers?.map((c) => c.id).join(" ")}
-                    onClick={() => onFocus(f.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onFocus(f.id);
-                      }
-                    }}
-                    aria-label={`${open ? SEVERITY_STYLE[f.severity].label : "Settled"} finding ${f.rule.id}: ${seg.text}`}
-                    className={clsx("cursor-pointer [box-decoration-break:clone] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink", open ? SEVERITY_STYLE[f.severity].mark : "mark-settled", active && "mark-active")}
-                  >
-                    {seg.text}
+                  <span key={i}>
+                    {/* An inline span, not a <button>: a button becomes inline-block and breaks
+                        the line flow when a mark wraps. */}
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      data-covers={seg.covers?.map((c) => c.id).join(" ")}
+                      onClick={() => onFocus(f.id)}
+                      onMouseEnter={() => onHover?.(f.id)}
+                      onMouseLeave={() => onHover?.(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onFocus(f.id);
+                        }
+                      }}
+                      aria-label={`${open ? SEVERITY_STYLE[f.severity].label : "Settled"} finding ${f.rule.id}: ${seg.text}`}
+                      className={clsx("cursor-pointer rounded-[2px] [box-decoration-break:clone] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink", open ? SEVERITY_STYLE[f.severity].mark : "mark-settled", lit && "mark-active")}
+                    >
+                      {seg.text}
+                    </span>
+                    {markers.length > 0 && (
+                      <span className="relative -top-[0.55em] ml-0.5 inline-flex gap-0.5 align-baseline" aria-hidden="true">
+                        {markers.map((c) => (
+                          <span key={c.id} data-marker={c.id} onMouseEnter={() => onHover?.(c.id)} onMouseLeave={() => onHover?.(null)} onClick={() => onFocus(c.id)} className="cursor-pointer">
+                            <NoteNumber n={numbers[c.id]} severity={c.severity} settled={!OPEN.has(c.status)} active={c.id === active || c.id === focused} />
+                          </span>
+                        ))}
+                      </span>
+                    )}
                   </span>
                 );
               })}

@@ -16,7 +16,7 @@ keep the author's intent. People approve; the AI never does.
 Built solo for CodeAxis by team **kabhijith447**. **All brand data is fictional: PayWise is
 not a real company.**
 
-![The review desk: draft, Brand Score, checklist and margin notes](docs/images/review.png)
+![The review desk on the Night Desk theme: Brand Score, preflight checklist and the proof](docs/images/review-dark.png)
 
 ## Try it in two minutes
 
@@ -24,13 +24,15 @@ Every visitor gets a **private copy** of the PayWise workspace, so nothing you d
 anyone else. If the free server was asleep you will see "Waking up the engine…" for up to a
 minute.
 
-1. Open the [live demo](https://preflight-eight-smoky.vercel.app) and press **Open the demo
-   desk**. You are abhi1, a content creator.
+1. Open the [live demo](https://preflight-eight-smoky.vercel.app), scroll through the short
+   intro (or press **Skip intro**) and press **Open the demo desk**. You are abhi1, a content
+   creator.
 2. Pick **LinkedIn post (off-brand)** and press **Run Preflight**. The checklist ticks as each
    checker finishes.
 3. Read the margin notes: **CLM-04** "100% secure" (critical, brand book p14), a misspelt
    product name, and an **outdated** settlement time (fact F-086 superseded by F-087).
-4. **Accept** the suggestions, then **Re-check**: the Brand Score goes from 24 to 97.
+4. **Accept** the suggestions (or **Accept all suggested fixes**), then **Re-check**: the Brand
+   Score goes from 24 to 97. Each mark is numbered; its note sits beside the line it is on.
 5. **Submit for approval**, switch to **abhi4 (Approver)** in the top-right role switcher,
    **Approve**, and open the **Clearance Certificate**: "Audit chain verified".
 
@@ -54,13 +56,20 @@ Then try the three Round 3 improvements:
 
 ## Screens
 
+Two themes: **Night Desk** (dark, shown first) and **Paper Desk** (light). The theme follows the
+system setting until you pick one with the sun/moon button in the header; the proof sheet and
+the certificate stay a lit paper sheet in both. Every screen below is in `docs/images/` in both
+themes (`*-dark.png`, `*-light.png`).
+
 | | |
 |---|---|
-| ![Proof sheet with margin notes](docs/images/proof-sheet.png) | ![Visual review: findings drawn on the banner](docs/images/visual-review.png) |
-| **Proof sheet**: each finding is a margin note tied to the exact words, with its rule, source page and a suggestion | **Visual review**: OCR text, palette, contrast and claims drawn on the image |
-| ![Guideline Health](docs/images/guideline-health.png) | ![Clearance Certificate](docs/images/certificate.png) |
+| ![The intro: review pieces flying through a perspective tunnel](docs/images/intro-dark.png) | ![Landing page with the specimen proof](docs/images/landing-light.png) |
+| **Intro**: scroll through a tunnel of real review pieces into the landing page (skippable; still for reduced motion) | **Landing**: the specimen proof with numbered marks and notes |
+| ![Proof sheet with numbered notes](docs/images/proof-sheet-dark.png) | ![Visual review: numbered boxes on the banner](docs/images/visual-review-dark.png) |
+| **Proof sheet**: each mark carries a number; its note sits level with the line and opens for the rule, evidence and actions; "Accept all suggested fixes" | **Visual review**: OCR text, palette, contrast and claims as numbered boxes on the image |
+| ![Guideline Health](docs/images/guideline-health-light.png) | ![Clearance Certificate](docs/images/certificate-dark.png) |
 | **Guideline Health**: rules writers push back on, with grouped reasons and the effect of rewording | **Clearance Certificate**: who cleared what, when, against which rules, with a verifiable audit hash |
-| ![Rulebook Compiler review queue](docs/images/compiler.png) | ![Voice Fingerprint](docs/images/voice-fingerprint.png) |
+| ![Rulebook Compiler review queue](docs/images/compiler-dark.png) | ![Voice Fingerprint](docs/images/voice-fingerprint-light.png) |
 | **Rulebook Compiler**: rules drafted from a brand book, each beside the sentence it came from | **Voice Fingerprint**: the voice learned from approved content against the hand-set targets |
 
 ## Features

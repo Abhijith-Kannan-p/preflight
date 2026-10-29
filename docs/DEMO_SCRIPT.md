@@ -6,7 +6,7 @@ PayWise workspace, so the demo can be repeated from a fresh window.
 
 | Time | Do | Say |
 |---|---|---|
-| 0:00 | Landing page | "Content now comes from employees, agencies and AI tools. Off-brand wording, outdated facts and unsupported claims go live before the brand owner sees them. Preflight is the proof desk before publication: grounded, explainable, human-controlled." |
+| 0:00 | Home page: scroll through the intro (review pieces fly past "Every claim, cleared.") into the landing page | "Content now comes from employees, agencies and AI tools. Off-brand wording, outdated facts and unsupported claims go live before the brand owner sees them. Preflight is the proof desk before publication: grounded, explainable, human-controlled." |
 | 0:15 | **Open the demo desk** → **LinkedIn post (off-brand)** → **Run Preflight** | "No sign-up: I'm abhi1, a creator at the fictional fintech PayWise, in my own private copy of the workspace." |
 | 0:25 | The preflight checklist ticking, then the margin notes | "Deterministic checks land first; the Claim Ledger and tone follow. Each finding is a margin note on the exact words, with its rule and source page." |
 | 0:40 | The **CLM-04** note, then the outdated settlement-time note, then the **Claim Ledger** tab | "'100% secure' breaks CLM-04, brand book page 14; the suggestion keeps the meaning. 'Under 5 seconds' was true until September: F-086 was superseded by F-087, so it is outdated. The LLM never decides truth: retrieval, a local NLI model, exact numbers and a verbatim quote do." |

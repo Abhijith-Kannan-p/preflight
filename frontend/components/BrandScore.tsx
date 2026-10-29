@@ -43,7 +43,7 @@ export function BrandScoreGauge({ score, size = 148, pending = false }: { score:
           return <line x1={cx} y1={cy} x2={tip.x} y2={tip.y} stroke="rgb(var(--ink))" strokeWidth="1.25" />;
         })()}
         <circle cx={cx} cy={cy} r="3" fill="rgb(var(--ink))" />
-        <text x={cx} y={cy + size * 0.27} textAnchor="middle" className="fill-ink font-mono" style={{ fontSize: size / 5.2, fontWeight: 500 }}>
+        <text x={cx} y={cy + size * 0.27} textAnchor="middle" className="fill-ink font-serif" style={{ fontSize: size / 4.3, fontWeight: 500 }}>
           {pending ? "––" : String(value).padStart(2, "0")}
         </text>
       </svg>

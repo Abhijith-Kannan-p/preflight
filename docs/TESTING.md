@@ -325,3 +325,47 @@ Found by the tests, evaluations or checks above and fixed (Round 3):
 - A line that is only a number is treated as a factual claim.
 - Webhooks can target any URL, including private addresses; a production service would block those (SSRF).
 - Lighthouse performance on app pages is 75–83 under mobile throttling: each first visit creates a private demo workspace before drawing.
+
+## UI refresh (final round)
+
+The visual redesign (Night Desk and Paper Desk themes, grouped navigation, numbered proof marks,
+the intro) changed no behaviour. Tested on a local production build with the local API.
+
+| What | How | Result |
+|---|---|---|
+| Journeys and pages | Playwright, all specs | 26/26 (J1–J6, pages, landing, accessibility, navigation, intro) |
+| New tests | J1 "accept all" (numbered notes, severity filter hides and restores notes, "Accept all suggested fixes" double-clicked still accepts each fix once); navigation (no overflow at 1024 px, the phone drawer opens, passes axe, navigates and closes with Escape); intro (wheel, PageDown and Space, the glide to the landing page, scrolling back replays it, Skip, session memory and Replay, reduced motion with Continue, phone fit) | all pass |
+| Accessibility | axe on 12 pages × 375 / 768 / 1440 px × both themes (72 page checks) | 0 violations of any impact |
+| Lighthouse | 9 pages, mobile defaults, Paper Desk | accessibility 100 and best practices 100 everywhere |
+| Manual checklist | `scripts/exploratory.mjs` at 375, 768 and 1440 px, screenshots reviewed | 54/54 |
+
+Lighthouse after the refresh (local production build):
+
+| Page | Accessibility | Best practices | Performance | LCP |
+|---|---|---|---|---|
+| `/` | 100 | 100 | 91 | 3 s |
+| `/app` | 100 | 100 | 78 | 4.3 s |
+| `/app/review/new` | 100 | 100 | 79 | 4.2 s |
+| `/app/queue` | 100 | 100 | 84 | 4.3 s |
+| `/app/rulebook` | 100 | 100 | 71 | 5 s |
+| `/app/governance` | 100 | 100 | 77 | 4.8 s |
+| `/app/insights` | 100 | 100 | 79 | 5 s |
+| `/app/evaluation` | 100 | 100 | 80 | 4.2 s |
+| `/app/settings` | 100 | 100 | 82 | 4.3 s |
+
+Found and fixed during the refresh:
+
+| Found by | Problem | Fix |
+|---|---|---|
+| axe, Night Desk | Inputs kept a white fill under ivory text; ivory numbers on the strongest confusion-matrix cells | Inputs use the raised surface; the matrix fill is capped per theme |
+| Lighthouse | App pages dropped from about 78 to 60: the Review and Governance sub-navigation is client-rendered (it reads `?tab=`) and appeared after hydration, shifting the page (CLS 0.93) | The Suspense fallback renders the same row, so it takes its space from the first paint (CLS back to about 0.1, scores 71–84) |
+| Intro screenshots | Card positions written differently by the server and the browser (hydration warning) | Rounded percentages |
+| Intro test | The landing specimen scrolled its open note into view on arrival, pulling the page past the intro | Notes scroll into view only when the reader opens one |
+| Intro test | Passing the intro hid it at once, so scrolling back could not replay it; after a reload the browser restored a scroll position measured with the intro above | "Seen" applies from the next page load; a session that starts at the landing page starts at its top |
+| Screenshots | Wrapping the intro behind the cards; the certificate's punched holes showed as pale dots on the dark desk; tooltips inside a note opened on hover | Title above the cards and a wider spread; holes take the desk colour; removed a stray `group` class |
+| Full suite (11 min) | Five tests failed with "Waking up the engine": Windows ran out of socket buffers (`WinError 10055`) after hours of test traffic against the same dev servers | Environment, not the app: with 20 notification streams open the API kept 7 database connections and answered in 0.24 s; the five passed after a restart |
+
+Not automated: touch drag on a real phone. Headless Chrome's synthetic touch gestures do not
+scroll even a plain page, so the intro test checks that nothing blocks touch (no
+`touch-action: none`, no touch handlers) and drives the scroll with the default gesture. The
+intro uses the page's own scrolling, so touch behaves as on any page; check it once on a phone.

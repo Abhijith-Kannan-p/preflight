@@ -82,6 +82,57 @@ Updated after every commit checkpoint. Build order follows section 13 of the Rou
 ## Next
 - After the competition: see ROADMAP.md.
 
+## UI refresh (final round)
+
+Visual and interaction design only; all functionality unchanged.
+
+- U1. Theme and navigation (2026-10-29): Night Desk (dark) and Paper Desk (light) tokens,
+  following the system until the visitor picks one in the header (stored in localStorage);
+  the proof sheet, certificate, stamp, error sheet and splash stay a lit paper sheet in both
+  themes (`.proof-paper`); primary actions are ivory on the night desk; radius scale
+  0 / 6 / 10 / 999. Header: six sections (Review, Queue, Rulebook, Governance, Evaluation,
+  Settings) with a section accent line, a sub-nav row for Review and Governance (Governance's
+  tabs and Insights), one "Demo · AI on" status pill, a theme toggle, and below 1024 px a menu
+  drawer. axe in both themes at 375 / 768 / 1440 px: 0 violations after fixing the input fill
+  and the confusion-matrix contrast in Night Desk. e2e 21/21.
+- U2. Proof sheet and margin notes (2026-10-29): every marked span carries a numbered marker
+  in its severity colour (reading order), matching its note; notes sit level with the line of
+  their mark and stack below each other on a shared line; the sheet grows to the notes' height
+  and its text stays in view beside them; one connector, only for the note being pointed at or
+  opened; compact notes (number, severity, one-line reason, the fix, Accept) expand on click or
+  Enter (rule, confidence, evidence, Edit / Dispute / Escalate); a summary bar ("Not ready to
+  publish", severity filter chips, "Accept all suggested fixes" with an idempotency key per
+  note); the legend in a "?" popover. Same on the visual desk (numbered boxes on the image) and
+  the landing specimen; inline numbered notes below 1024 px. e2e 22/22 (new: accept all,
+  filters, double click), axe clean in both themes.
+- U3. Intro before the landing page (2026-10-29): a perspective tunnel of ten review pieces
+  (the LinkedIn draft, a CLM-04 note, fact F-087, the festive banner with its VIS-01 box, Brand
+  Score 24 and 97, the stamp, a certificate stub with QR, an OUTDATED ledger row, the palette)
+  flying from z −1700 to +500 px on staggered windows, golden-angle spread, spring-smoothed
+  pointer parallax, a dot grid and ring guides, "Every claim, cleared." scaling up. Driven by
+  the page's own scroll through a sticky stage (1.75 viewports of travel), so wheel, trackpad,
+  touch and keys all work and nothing is intercepted; stopping in the last stretch glides on to
+  the landing page, scrolling up replays it, "Skip intro" (top right and bottom) jumps there;
+  reduced motion gets a still composition with Continue; the session remembers it (pre-paint,
+  so no flash) with "Replay intro". Six cards on phones. Replaces the 2-second splash. The
+  landing page itself is unchanged. Fixed on the way: the landing specimen scrolled its open
+  note into view on arrival; card positions differed between server and browser rendering.
+  e2e 26/26 (new intro spec: wheel, keys, skip, reverse, session memory, reduced motion,
+  phone). Touch on a real phone is a manual check: headless Chrome's synthetic touch gestures
+  do not scroll any page.
+- U4. Depth and variety (2026-10-29): a section icon chip tinted with the section's accent in
+  every page header; page intros cut to one sentence with "How this works" for the rest; plain
+  sans labels (mono capitals kept for kickers and table headers); body text 15 px; metrics and
+  the Brand Score in serif display numbers; checklist states as coloured icon chips with ticks
+  that pop in; empty states with our own line drawing; the certificate keeps its print labels
+  and its punched holes show the dark desk. Sub-navigation rendered on the server so app pages
+  do not shift (Lighthouse back to 71–84 from about 60).
+- U5. Tests, screenshots, docs (2026-10-29): e2e 26/26 on a production build, axe clean on 72
+  page checks (12 pages × 3 widths × 2 themes), Lighthouse accessibility 100 on 9 pages,
+  exploratory checklist 54/54 at 375 / 768 / 1440 px. Eighteen screenshots (nine scenes, both
+  themes) in `docs/images/` from `e2e/scripts/readme-shots.mjs`; README, TESTING ("UI
+  refresh"), FEATURES, CHANGES_FROM_PLAN, DEMO_SCRIPT updated.
+
 ## Blockers
 - None.
 

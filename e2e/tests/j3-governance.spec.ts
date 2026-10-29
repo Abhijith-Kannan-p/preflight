@@ -29,7 +29,7 @@ test("J3 governance: rewording, stale-content radar and coach", async ({ page })
   const after = (await apiGet<Health>(page, "/api/governance/health")).rules.find((r) => r.code === flagged!.code);
   expect(after?.version).toBe(flagged!.version + 1);
 
-  await page.getByRole("tab", { name: "Stale-Content Radar" }).click();
+  await page.getByRole("navigation", { name: "Governance sections" }).getByRole("link", { name: "Stale-Content Radar" }).click();
   await expect(page.getByText("Nothing stale")).toBeVisible();
   await page.getByRole("button", { name: "Simulate fact update on F-087" }).click();
   // Supersedes the fact and re-indexes every cleared item: about 20 s on the free hosting.
@@ -41,7 +41,7 @@ test("J3 governance: rewording, stale-content radar and coach", async ({ page })
   await expect(page.getByLabel(/finding CLM-03$/).first()).toBeVisible({ timeout: 300_000 });
 
   await page.goto("/app/governance");
-  await page.getByRole("tab", { name: "Creator Coach" }).click();
+  await page.getByRole("navigation", { name: "Governance sections" }).getByRole("link", { name: "Creator Coach" }).click();
   await expect(page.getByRole("heading", { name: "Before your next draft" })).toBeVisible();
   await shot(page, "32-coach");
 

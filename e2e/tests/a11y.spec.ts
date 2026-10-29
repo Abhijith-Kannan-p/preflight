@@ -5,7 +5,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { apiGet, switchTo } from "./helpers";
 
-// Accessibility and layout on every main page at phone, tablet and desktop widths:
+// Accessibility and layout on every main page at phone, tablet and desktop widths, in both
+// themes (the theme follows the system colour scheme when the visitor has not chosen one):
 // - axe (WCAG 2.0/2.1/2.2 A and AA rules): no serious or critical violations;
 // - no horizontal page scroll.
 // Set E2E_A11Y_REPORT to a file path to write every result (including minor issues) as JSON.
@@ -41,8 +42,10 @@ async function pages(page: Page): Promise<{ name: string; path: string; ready: (
 
 const results: Record<string, unknown>[] = [];
 
+for (const scheme of ["light", "dark"] as const)
 for (const width of WIDTHS) {
-  test(`a11y and layout at ${width} px`, async ({ page }) => {
+  test(`a11y and layout at ${width} px, ${scheme === "dark" ? "Night Desk" : "Paper Desk"}`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
     test.setTimeout(600_000);
     await page.setViewportSize({ width, height: width < 768 ? 812 : 900 });
     await page.addInitScript(() => window.localStorage.setItem("preflight.tour.done", "1"));
@@ -65,15 +68,39 @@ for (const width of WIDTHS) {
       const serious = axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       results.push({
+        scheme,
         width,
         page: target.name,
         violations: axe.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length, sample: v.nodes.slice(0, 4).map((n) => ({ target: n.target, html: n.html.slice(0, 160), why: n.any[0]?.message })) })),
         overflow_px: overflow,
       });
-      for (const v of serious) problems.push(`${width}px ${target.name}: ${v.impact} ${v.id} (${v.nodes.length}) e.g. ${JSON.stringify(v.nodes[0]?.target)}`);
-      if (overflow > 1) problems.push(`${width}px ${target.name}: page scrolls sideways by ${overflow}px`);
+      for (const v of serious) problems.push(`${scheme} ${width}px ${target.name}: ${v.impact} ${v.id} (${v.nodes.length}) e.g. ${JSON.stringify(v.nodes[0]?.target)}`);
+      if (overflow > 1) problems.push(`${scheme} ${width}px ${target.name}: page scrolls sideways by ${overflow}px`);
       if (process.env.E2E_A11Y_REPORT) writeFileSync(process.env.E2E_A11Y_REPORT, JSON.stringify(results, null, 1));
     }
     expect(problems, problems.join("\n")).toEqual([]);
   });
 }
+
+test("navigation fits at 1024 px and the phone menu works", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await page.goto("/app");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await expect(nav.getByRole("link", { name: "Settings" })).toBeVisible({ timeout: 60_000 });
+  const overflow = await nav.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(overflow, "the main navigation never scrolls sideways").toBeLessThanOrEqual(0);
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(nav).toBeHidden();
+  await page.getByRole("button", { name: "Open menu" }).click();
+  const drawer = page.getByRole("dialog", { name: "Menu" });
+  await expect(drawer).toBeVisible();
+  const axe = await new AxeBuilder({ page }).include('[role="dialog"]').analyze();
+  expect(axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
+  await drawer.getByRole("link", { name: "Evaluation" }).click();
+  await expect(page).toHaveURL(/\/app\/evaluation/);
+  await expect(drawer).toBeHidden();
+  await page.getByRole("button", { name: "Open menu" }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Menu" })).toBeHidden();
+});

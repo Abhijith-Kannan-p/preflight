@@ -49,7 +49,7 @@ function Tile({ label, value, hint, target }: { label: string; value: string; hi
   return (
     <div className="card p-5">
       <p className="label flex items-center gap-1">{label} <InfoTip text={hint} /></p>
-      <p className="text-3xl font-bold">{value}</p>
+      <p className="display-number mt-1">{value}</p>
       {target && <p className={`mt-1 text-xs font-medium ${target.met ? "text-teal-700" : "text-amber-700"}`}>{target.met ? "✓ " : "Below target · "}{target.text}</p>}
     </div>
   );
@@ -154,7 +154,7 @@ function ClaimsEvaluation() {
                             title={`Labelled ${row}, predicted ${col}: ${n}`}
                             className={`h-10 min-w-12 rounded-md font-mono font-semibold text-navy ${row === col ? "ring-1 ring-inset ring-navy/30" : ""}`}
                             // Ink text on every cell, so the darkest fill stays light enough for it.
-                            style={{ background: n ? `rgba(18,165,148,${0.12 + 0.63 * strength})` : "#F6F1E3" }}
+                            style={{ background: n ? `rgb(var(--teal) / calc(0.12 + var(--matrix-max) * ${strength.toFixed(3)}))` : "rgb(var(--paper-deep))" }}
                           >
                             {n}
                           </td>

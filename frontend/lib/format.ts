@@ -1,10 +1,10 @@
 import type { Severity, State, Verdict } from "./types";
 
 // Proof marks on the sheet and matching margin-note accents. Colour carries meaning only.
-export const SEVERITY_STYLE: Record<Severity, { chip: string; mark: string; dot: string; rule: string; stroke: string; label: string }> = {
-  critical: { chip: "border-signal/40 bg-signal-50 text-signal-700", mark: "mark-critical", dot: "bg-signal", rule: "border-signal", stroke: "rgb(var(--signal))", label: "Critical" },
-  major: { chip: "border-amber/40 bg-amber-50 text-amber-700", mark: "mark-major", dot: "bg-amber", rule: "border-amber", stroke: "rgb(var(--amber))", label: "Major" },
-  minor: { chip: "border-slate/40 bg-slate-50 text-slate-700", mark: "mark-minor", dot: "bg-slate", rule: "border-slate", stroke: "rgb(var(--slate))", label: "Minor" },
+export const SEVERITY_STYLE: Record<Severity, { chip: string; mark: string; dot: string; rule: string; stroke: string; label: string; number: string; numberActive: string; text: string }> = {
+  critical: { chip: "border-signal/40 bg-signal-50 text-signal-700", mark: "mark-critical", dot: "bg-signal", rule: "border-signal", stroke: "rgb(var(--signal))", label: "Critical", number: "border-signal-700 bg-signal-50 text-signal-700", numberActive: "!bg-signal-700 !text-sheet", text: "text-signal-700" },
+  major: { chip: "border-amber/40 bg-amber-50 text-amber-700", mark: "mark-major", dot: "bg-amber", rule: "border-amber", stroke: "rgb(var(--amber))", label: "Major", number: "border-amber-700 bg-amber-50 text-amber-700", numberActive: "!bg-amber-700 !text-sheet", text: "text-amber-700" },
+  minor: { chip: "border-slate/40 bg-slate-50 text-slate-700", mark: "mark-minor", dot: "bg-slate", rule: "border-slate", stroke: "rgb(var(--slate))", label: "Minor", number: "border-slate-700 bg-slate-50 text-slate-700", numberActive: "!bg-slate-700 !text-sheet", text: "text-slate-700" },
 };
 
 // Departures-board status codes.

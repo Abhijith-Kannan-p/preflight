@@ -77,7 +77,7 @@ Pillow's bundled font. CIEDE2000 and the WCAG contrast formula are implemented i
 | Next.js 15, React 19 | Web app | MIT |
 | Tailwind CSS 3 | Styling | MIT |
 | Newsreader, IBM Plex Sans, IBM Plex Mono (Google Fonts via next/font) | Proof Desk typefaces: serif, sans and mono | OFL |
-| framer-motion | Splash and tour animation | MIT |
+| framer-motion | The landing intro (scroll-linked perspective tunnel, spring parallax) and the tour | MIT |
 | lucide-react | Icons | ISC |
 | SWR | Data fetching and cache revalidation | MIT |
 | jsdiff (`diff`) | Word-level revision diff | BSD-3 |

@@ -2,9 +2,9 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { Footer } from "@/components/Footer";
+import { Intro, ReplayIntro } from "@/components/intro/Intro";
 import { LandingProof } from "@/components/LandingProof";
 import { Logo } from "@/components/Logo";
-import { Splash } from "@/components/Splash";
 import { API_URL, GITHUB_URL } from "@/lib/api";
 
 const PROOF_POINTS = [
@@ -23,11 +23,13 @@ const STEPS = [
 export default function Landing() {
   return (
     <>
-      <Splash />
+      <Intro />
+      <div id="landing" className="scroll-mt-0">
       <header className="border-b border-rule bg-paper">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Logo />
           <nav className="flex items-center gap-5 text-sm">
+            <ReplayIntro />
             <a href={`${API_URL}/docs`} target="_blank" rel="noreferrer" className="hidden text-graphite hover:text-ink sm:inline">API</a>
             <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="hidden text-graphite hover:text-ink sm:inline">GitHub</a>
             <Link href="/app" className="btn-ghost py-1.5">Sign in to the desk</Link>
@@ -39,7 +41,7 @@ export default function Landing() {
         <section className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 lg:pt-16" aria-labelledby="hero">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-end">
             <div>
-              <p className="label">Pre-publication brand governance · PayWise demo</p>
+              <p className="kicker">Pre-publication brand governance · PayWise demo</p>
               <h1 id="hero" className="mt-3 max-w-[18ch] font-serif text-[40px] leading-[1.1] text-ink sm:text-[48px]">
                 Every claim checked against the rulebook before it goes live.
               </h1>
@@ -66,7 +68,7 @@ export default function Landing() {
 
         <section className="border-y border-rule bg-sheet" aria-labelledby="proof-points">
           <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
-            <h2 id="proof-points" className="label">Why a reviewer can trust the marks</h2>
+            <h2 id="proof-points" className="kicker">Why a reviewer can trust the marks</h2>
             <ol className="mt-6 grid gap-x-10 gap-y-8 md:grid-cols-3">
               {PROOF_POINTS.map((p) => (
                 <li key={p.mark} className="border-t border-ink pt-4">
@@ -97,6 +99,7 @@ export default function Landing() {
           </div>
         </section>
       </main>
+      </div>
       <Footer />
     </>
   );

@@ -20,7 +20,7 @@ export function ErrorSheet({
 }) {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4 py-12">
-      <section className="sheet relative w-full max-w-lg px-8 py-8" aria-labelledby="error-title">
+      <section className="proof-paper relative w-full max-w-lg px-8 py-8" aria-labelledby="error-title">
         <p className="label">Proof returned · {code}</p>
         <h1 id="error-title" className="mt-2 font-serif text-[28px] leading-tight text-ink">
           {title}

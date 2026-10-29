@@ -2,17 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Proof Desk tokens (RGB triplets so Tailwind can apply opacity). */
-:root {
+/* Proof Desk tokens (RGB triplets so Tailwind can apply opacity).
+ * Paper Desk (light) is the base. Night Desk (dark) overrides it under [data-theme="dark"].
+ * Anything inside .paper-scope (the proof sheet, certificate, stamp) re-declares the light
+ * values, so a lit paper sheet sits on the dark desk. */
+:root,
+.paper-scope,
+.proof-paper {
   --paper: 247 244 236; /* #F7F4EC app background */
   --paper-deep: 239 234 223; /* table heads, quiet fills */
-  --sheet: 255 253 248; /* #FFFDF8 document surface */
+  --sheet: 255 253 248; /* #FFFDF8 document and card surface */
+  --raised: 255 255 255; /* menus, popovers, drawers */
   --ink: 27 42 74; /* #1B2A4A text and primary */
   --ink-soft: 42 59 95;
-  --graphite: 91 101 115; /* #5B6573 secondary text */
-  --graphite-light: 150 157 168;
+  --graphite: 74 83 97; /* #4A5361 secondary text */
+  --graphite-light: 110 118 130;
   --rule: 227 222 210; /* #E3DED2 hairlines */
-  --teal: 15 139 126; /* #0F8B7E primary action */
+  --teal: 15 139 126; /* #0F8B7E brand teal */
   --teal-deep: 11 107 97;
   --teal-wash: 232 244 241;
   --teal-wash-strong: 205 233 227;
@@ -31,11 +37,72 @@
   --cleared: 30 142 90; /* #1E8E5A cleared */
   --cleared-deep: 22 104 66;
   --cleared-wash: 231 244 237;
+  /* Primary action fill. White on the brand teal is 4.2:1, so buttons use the deep teal. */
+  --action: 11 107 97;
+  --action-hover: 42 59 95;
+  --on-action: 255 255 255;
+  --shadow: 27 42 74;
+  --matrix-max: 0.63; /* strongest confusion-matrix fill behind ink numbers */
+  color-scheme: light;
+}
+
+.paper-scope,
+.proof-paper {
+  color: rgb(var(--ink));
+}
+
+/* On the night desk the paper casts a real, dark shadow. */
+[data-theme="dark"] .proof-paper {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.5),
+    0 24px 48px -20px rgb(0 0 0 / 0.85);
+}
+
+/* The certificate's punched holes show the desk through the paper. */
+[data-theme="dark"] .proof-paper .ticket-hole {
+  background: rgb(20 20 20);
+}
+
+/* Night Desk: layered warm greys, ivory text, muted accents used as text and thin lines. */
+[data-theme="dark"] {
+  --paper: 20 20 20; /* #141414 desk */
+  --paper-deep: 38 38 38; /* #262626 muted surface */
+  --sheet: 27 27 27; /* #1B1B1B card */
+  --raised: 34 34 34; /* #222222 raised surface */
+  --ink: 236 232 223; /* #ECE8DF warm ivory */
+  --ink-soft: 217 212 199;
+  --graphite: 168 163 154; /* #A8A39A secondary */
+  --graphite-light: 124 119 111; /* #7C776F tertiary */
+  --rule: 42 42 42; /* #2A2A2A borders */
+  --teal: 43 168 154; /* #2BA89A brand teal */
+  --teal-deep: 92 197 184;
+  --teal-wash: 22 38 36;
+  --teal-wash-strong: 27 52 48;
+  --signal: 239 68 68; /* #EF4444 critical */
+  --signal-deep: 248 128 128;
+  --signal-wash: 44 24 24;
+  --signal-wash-strong: 64 30 30;
+  --amber: 224 164 74; /* #E0A44A major */
+  --amber-deep: 234 188 120;
+  --amber-wash: 40 32 20;
+  --amber-wash-strong: 58 45 24;
+  --slate: 107 155 216; /* #6B9BD8 minor */
+  --slate-deep: 150 184 230;
+  --slate-wash: 24 32 44;
+  --slate-wash-strong: 30 42 60;
+  --cleared: 76 175 122; /* #4CAF7A cleared */
+  --cleared-deep: 120 200 155;
+  --cleared-wash: 22 36 28;
+  --action: 217 212 199; /* #D9D4C7 ivory fill */
+  --action-hover: 236 232 223;
+  --on-action: 20 20 20;
+  --shadow: 0 0 0;
+  --matrix-max: 0.3;
+  color-scheme: dark;
 }
 
 @layer base {
   html {
-    color-scheme: light;
     font-feature-settings: "tnum" 1; /* tabular numbers everywhere */
   }
   body {
@@ -56,11 +123,15 @@
 }
 
 @layer components {
-  /* Surfaces: hairlines, not shadows. Only the document sheet gets a paper shadow. */
+  /* Surfaces: hairlines, not shadows. Cards sit on the desk; only paper gets a shadow. */
   .card {
     @apply rounded border border-rule bg-sheet;
   }
   .sheet {
+    @apply rounded border border-rule bg-sheet;
+  }
+  /* A lit paper sheet (proofs, certificate): light in both themes, square, with a shadow. */
+  .proof-paper {
     @apply border border-rule bg-sheet shadow-sheet;
   }
   .hairline {
@@ -69,29 +140,42 @@
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded px-4 py-2 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50;
   }
+  .surface-raised {
+    @apply border border-rule bg-raised;
+  }
   .btn-primary {
     @apply btn bg-ink text-sheet hover:bg-ink-soft;
   }
-  /* Fill is the deep teal: white on #0F8B7E is 4.2:1, under WCAG AA for button text. */
+  /* The main action: deep teal on paper, ivory on the night desk (see --action). */
   .btn-teal {
-    @apply btn bg-teal-700 text-white hover:bg-ink-soft;
+    @apply btn bg-action text-on-action hover:bg-action-hover;
   }
   .btn-ghost {
-    @apply btn border border-rule bg-sheet text-ink hover:border-graphite/40 hover:bg-paper;
+    @apply btn border border-rule bg-sheet text-ink hover:border-graphite/40 hover:bg-raised;
   }
   .btn-danger {
-    @apply btn bg-signal text-white hover:bg-signal-700;
+    @apply btn bg-signal text-sheet hover:bg-signal-700;
   }
   .input {
-    @apply w-full rounded border border-rule bg-white px-3 py-2 text-sm text-ink placeholder:text-graphite/70 focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/25;
+    @apply w-full rounded border border-rule bg-raised px-3 py-2 text-sm text-ink placeholder:text-graphite focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/25;
   }
+  /* Field and section labels: plain small sans. The mono capitals are kept for kickers and
+   * table headers, where they read as print. */
   .label {
+    @apply mb-1 block text-[13px] font-medium leading-snug text-graphite;
+  }
+  .kicker {
     @apply mb-1 block font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-graphite;
   }
   /* A table header styled as a label must stay a table cell. */
   th.label,
   td.label {
+    @apply font-mono text-[11px] uppercase tracking-[0.08em];
     display: table-cell;
+  }
+  /* Numbers that matter: scores and metrics. */
+  .display-number {
+    @apply font-serif text-[40px] font-medium leading-none tracking-tight text-ink tabular-nums;
   }
   .page-title {
     @apply font-serif text-[28px] font-medium leading-tight tracking-tight text-ink;
@@ -134,6 +218,15 @@
     outline: 1.5px solid rgb(var(--ink));
     outline-offset: 2px;
   }
+}
+
+/* The landing intro is hidden for the rest of a session once passed; "Replay intro" only
+ * shows then. */
+html[data-intro="seen"] .intro-stage {
+  display: none;
+}
+html:not([data-intro="seen"]) .replay-intro {
+  display: none;
 }
 
 @media print {

@@ -99,7 +99,7 @@ test("J6 a fresh sandbox shows helpful empty states", async ({ browser }) => {
   await page.getByRole("tab", { name: "Compiler" }).click();
   await expect(page.getByText("No brand book compiled yet")).toBeVisible();
   await page.goto("/app/governance");
-  await page.getByRole("tab", { name: "Stale-Content Radar" }).click();
+  await page.getByRole("navigation", { name: "Governance sections" }).getByRole("link", { name: "Stale-Content Radar" }).click();
   await expect(page.getByText("Nothing stale")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole("button", { name: "Simulate fact update on F-087" })).toBeVisible();
   await page.goto("/app/settings");

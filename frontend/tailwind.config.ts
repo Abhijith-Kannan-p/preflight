@@ -5,23 +5,29 @@ import type { Config } from "tailwindcss";
 const v = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
 export default {
+  // `dark:` variants follow the Night Desk theme attribute, not the media query.
+  darkMode: ["selector", '[data-theme="dark"]'],
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   theme: {
+    // 0 for the proof sheet and certificate, 6 to 10 for controls and cards, pills for badges.
     borderRadius: {
       none: "0",
-      sm: "2px",
-      DEFAULT: "4px",
-      md: "4px",
-      lg: "4px",
-      xl: "4px",
-      "2xl": "4px",
-      "3xl": "6px",
-      full: "9999px",
+      sm: "4px",
+      DEFAULT: "6px",
+      md: "6px",
+      lg: "10px",
+      xl: "10px",
+      "2xl": "10px",
+      "3xl": "10px",
+      full: "999px",
     },
     extend: {
       colors: {
         paper: { DEFAULT: v("paper"), 50: v("sheet"), 100: v("paper-deep"), 200: v("rule") },
         sheet: v("sheet"),
+        raised: v("raised"),
+        action: { DEFAULT: v("action"), hover: v("action-hover") },
+        "on-action": v("on-action"),
         ink: { DEFAULT: v("ink"), soft: v("ink-soft") },
         graphite: v("graphite"),
         rule: v("rule"),
@@ -45,7 +51,7 @@ export default {
       fontSize: {
         // 12 / 14 / 16 / 20 / 28 / 40 scale.
         xs: ["12px", "16px"],
-        sm: ["14px", "20px"],
+        sm: ["15px", "22px"],
         base: ["16px", "24px"],
         lg: ["20px", "28px"],
         xl: ["20px", "28px"],
@@ -59,12 +65,18 @@ export default {
       },
       boxShadow: {
         card: "none",
-        lift: "0 1px 0 rgb(var(--rule)), 0 12px 32px -16px rgb(var(--ink) / 0.25)",
-        sheet: "0 1px 1px rgb(var(--ink) / 0.06), 0 18px 40px -24px rgb(var(--ink) / 0.35)",
+        lift: "0 1px 0 rgb(var(--rule)), 0 12px 32px -16px rgb(var(--shadow) / 0.35)",
+        sheet: "0 1px 1px rgb(var(--shadow) / 0.08), 0 18px 40px -24px rgb(var(--shadow) / 0.45)",
       },
       keyframes: {
         "fade-in": { from: { opacity: "0" }, to: { opacity: "1" } },
+        "slide-in": { from: { transform: "translateX(100%)" }, to: { transform: "translateX(0)" } },
         shimmer: { "100%": { transform: "translateX(100%)" } },
+        tick: {
+          "0%": { opacity: "0", transform: "scale(0.4)" },
+          "70%": { opacity: "1", transform: "scale(1.15)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
         stamp: {
           "0%": { opacity: "0", transform: "scale(1.6) rotate(-14deg)" },
           "60%": { opacity: "1", transform: "scale(0.96) rotate(-8deg)" },
@@ -73,8 +85,10 @@ export default {
       },
       animation: {
         "fade-in": "fade-in 180ms ease-out",
+        "slide-in": "slide-in 200ms ease-out",
         shimmer: "shimmer 1.4s infinite",
         stamp: "stamp 240ms ease-out both",
+        tick: "tick 200ms ease-out both",
       },
     },
   },

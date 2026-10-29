@@ -64,7 +64,7 @@ const KIND: Record<string, string> = {
 function Field({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
     <div className="min-w-0">
-      <p className="label mb-0.5">{label}</p>
+      <p className="kicker mb-0.5">{label}</p>
       <p className={mono ? "break-all font-mono text-sm text-ink" : "break-words text-sm font-medium text-ink"}>{value}</p>
     </div>
   );
@@ -113,13 +113,13 @@ export default function ReceiptPage() {
         {error && <ErrorState message={error.message} onRetry={() => mutate()} />}
         {!data && !error && <Skeleton className="h-[80vh]" />}
         {data && (
-          <article className="sheet print:shadow-none" aria-label="Clearance Certificate">
+          <article className="proof-paper print:shadow-none" aria-label="Clearance Certificate">
             {/* Boarding-pass head: the pass on the left, a tear-off stub on the right. */}
             <div className="grid md:grid-cols-[minmax(0,1fr)_13rem]">
               <div className="relative p-6 sm:p-8">
                 <div className="flex items-center justify-between gap-4">
                   <Logo />
-                  <p className="label mb-0">Clearance Certificate</p>
+                  <p className="kicker mb-0">Clearance Certificate</p>
                 </div>
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
                   <h1 className="font-serif text-[28px] leading-tight text-ink">{data.title}</h1>
@@ -129,7 +129,7 @@ export default function ReceiptPage() {
                 </div>
                 <div className="mt-6 flex items-center gap-4 border-y border-rule py-4">
                   <div>
-                    <p className="label mb-0">From</p>
+                    <p className="kicker mb-0">From</p>
                     <p className="font-mono text-2xl text-ink">DRAFT</p>
                     <p className="font-mono text-xs text-graphite">score {pad(data.first_score)}</p>
                   </div>
@@ -137,7 +137,7 @@ export default function ReceiptPage() {
                     <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-sheet px-2 font-mono text-[11px] text-graphite">{data.revisions} revision{data.revisions === 1 ? "" : "s"}</span>
                   </div>
                   <div className="text-right">
-                    <p className="label mb-0">To</p>
+                    <p className="kicker mb-0">To</p>
                     <p className="font-mono text-2xl text-cleared">{data.state === "published" ? "PUBLISHED" : "CLEARED"}</p>
                     <p className="font-mono text-xs text-graphite">score {pad(data.final_score)}</p>
                   </div>
@@ -151,8 +151,8 @@ export default function ReceiptPage() {
               </div>
 
               <aside className="relative flex min-w-0 flex-col items-start gap-3 border-t-2 border-dashed border-rule p-6 md:border-l-2 md:border-t-0" aria-label="Certificate stub">
-                <span className="absolute -left-3 -top-3 hidden h-6 w-6 rounded-full bg-paper md:block" aria-hidden="true" />
-                <span className="absolute -bottom-3 -left-3 hidden h-6 w-6 rounded-full bg-paper md:block" aria-hidden="true" />
+                <span className="absolute -left-3 -top-3 hidden h-6 w-6 ticket-hole rounded-full bg-paper md:block" aria-hidden="true" />
+                <span className="absolute -bottom-3 -left-3 hidden h-6 w-6 ticket-hole rounded-full bg-paper md:block" aria-hidden="true" />
                 {url && <div className="self-center"><Qr value={url} /></div>}
                 <Field label="Certificate" value={data.id} mono />
                 <Field label="Hash" value={data.receipt_hash ? `${data.receipt_hash.slice(0, 8)}…` : "—"} mono />
@@ -165,8 +165,8 @@ export default function ReceiptPage() {
 
             {/* Perforation between the pass and the record. */}
             <div className="relative border-t-2 border-dashed border-rule" aria-hidden="true">
-              <span className="absolute -left-3 -top-3 h-6 w-6 rounded-full bg-paper print:hidden" />
-              <span className="absolute -right-3 -top-3 h-6 w-6 rounded-full bg-paper print:hidden" />
+              <span className="absolute -left-3 -top-3 h-6 w-6 ticket-hole rounded-full bg-paper print:hidden" />
+              <span className="absolute -right-3 -top-3 h-6 w-6 ticket-hole rounded-full bg-paper print:hidden" />
             </div>
 
             <div className="space-y-7 p-6 sm:p-8">
@@ -184,13 +184,13 @@ export default function ReceiptPage() {
               )}
 
               <section>
-                <p className="label">Cleared text · revision {data.revisions}</p>
+                <p className="kicker">Cleared text · revision {data.revisions}</p>
                 <div className="whitespace-pre-wrap border-l-2 border-ink pl-4 font-serif text-[16px] leading-relaxed text-ink">{data.final_text}</div>
               </section>
 
               <section className="grid gap-8 sm:grid-cols-2">
                 <div>
-                  <p className="label">Checks run</p>
+                  <p className="kicker">Checks run</p>
                   <ul className="divide-y divide-rule border-y border-rule text-sm">
                     {data.checks.map((c) => (
                       <li key={c.name} className="flex justify-between py-1.5">
@@ -201,7 +201,7 @@ export default function ReceiptPage() {
                   </ul>
                 </div>
                 <div>
-                  <p className="label">Claim Ledger · final revision</p>
+                  <p className="kicker">Claim Ledger · final revision</p>
                   <ul className="divide-y divide-rule border-y border-rule text-sm">
                     {Object.entries(data.claims).map(([verdict, n]) => (
                       <li key={verdict} className="flex justify-between py-1.5 capitalize">
@@ -211,14 +211,14 @@ export default function ReceiptPage() {
                     ))}
                     {!Object.keys(data.claims).length && <li className="py-1.5 text-graphite">No factual claims.</li>}
                   </ul>
-                  <p className="label mt-4">Findings in the first draft</p>
+                  <p className="kicker mt-4">Findings in the first draft</p>
                   <p className="font-mono text-sm">{(["critical", "major", "minor"] as Severity[]).map((s) => `${data.findings_first[s] ?? 0} ${s}`).join(" · ")}</p>
                 </div>
               </section>
 
               {data.findings_final.length > 0 && (
                 <section>
-                  <p className="label">Findings remaining at clearance</p>
+                  <p className="kicker">Findings remaining at clearance</p>
                   <ul className="space-y-1 text-sm">
                     {data.findings_final.map((f, i) => (
                       <li key={i}>
@@ -231,7 +231,7 @@ export default function ReceiptPage() {
               )}
 
               <section>
-                <p className="label">Decisions</p>
+                <p className="kicker">Decisions</p>
                 <ol className="divide-y divide-rule border-y border-rule text-sm">
                   {data.timeline.map((d, i) => (
                     <li key={i} className="grid gap-x-4 py-1.5 sm:grid-cols-[10rem_1fr]">
@@ -247,7 +247,7 @@ export default function ReceiptPage() {
               </section>
 
               <section className="border-t border-rule pt-4 text-xs leading-relaxed text-graphite">
-                <p className="label">AI used in this review</p>
+                <p className="kicker">AI used in this review</p>
                 <p>
                   {data.ai.purposes?.length ? `${data.ai.purposes.join(", ").replace(/_/g, " ")} via ${data.ai.provider}/${data.ai.model}. ` : "No hosted LLM (deterministic mode). "}
                   Verification by local NLI model {data.ai.nli_model ?? "(fallback)"}; embeddings {data.ai.embedding_model ?? "(BM25 only)"}.{" "}

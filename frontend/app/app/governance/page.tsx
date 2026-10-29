@@ -95,7 +95,7 @@ function Metric({ label, value, hint }: { label: string; value: string; hint?: s
         {label}
         {hint && <InfoTip text={hint} />}
       </p>
-      <p className="font-mono text-lg text-ink">{value}</p>
+      <p className="font-serif text-[30px] font-medium leading-tight text-ink tabular-nums">{value}</p>
     </div>
   );
 }
@@ -500,20 +500,15 @@ function CoachTab() {
 // --- page ---------------------------------------------------------------------------------
 
 function Governance() {
+  // The section is chosen in the header's Governance row (?tab=guideline|stale|creator).
   const params = useSearchParams();
-  const initial = TABS.find((t) => t.toLowerCase().startsWith(params.get("tab") ?? "")) ?? "Guideline Health";
-  const [tab, setTab] = useState<Tab>(params.get("tab") ? initial : "Guideline Health");
+  const wanted = params.get("tab");
+  const tab: Tab = (wanted && TABS.find((t) => t.toLowerCase().startsWith(wanted))) || "Guideline Health";
   return (
     <SourceProvider>
       <div className="animate-fade-in">
         <PageHeader eyebrow="Governance intelligence" title="Guidelines, facts and writers over time" subtitle="Which rules are unclear, which approved content went stale, and what each writer keeps tripping on." />
-        <div role="tablist" aria-label="Governance" className="mb-6 flex gap-6 overflow-x-auto border-b border-rule">
-          {TABS.map((t) => (
-            <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx("-mb-px whitespace-nowrap border-b-2 pb-2 pt-1 text-sm", tab === t ? "border-ink font-medium text-ink" : "border-transparent text-graphite hover:text-ink")}>
-              {t}
-            </button>
-          ))}
-        </div>
+        <h2 className="sr-only">{tab}</h2>
         {tab === "Guideline Health" && <HealthTab />}
         {tab === "Stale-Content Radar" && <RadarTab />}
         {tab === "Creator Coach" && <CoachTab />}

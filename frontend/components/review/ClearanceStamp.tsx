@@ -13,7 +13,7 @@ export const stampTime = (iso: string) =>
 export function Stamp({ tone, title, lines, className }: { tone: "cleared" | "amber"; title: string; lines: string[]; className?: string }) {
   const colour = tone === "cleared" ? "border-cleared text-cleared-700" : "border-amber text-amber-700";
   return (
-    <div className={clsx("inline-block -rotate-[8deg] animate-stamp select-none border-[3px] border-double px-4 py-2 text-center font-mono uppercase mix-blend-multiply", colour, className)}>
+    <div className={clsx("inline-block -rotate-[8deg] animate-stamp select-none border-[3px] border-double px-4 py-2 text-center font-mono uppercase mix-blend-multiply dark:mix-blend-normal", colour, className)}>
       <p className="text-[15px] font-medium tracking-[0.18em]">{title}</p>
       {lines.map((l) => (
         <p key={l} className="text-[10px] tracking-[0.12em]">{l}</p>

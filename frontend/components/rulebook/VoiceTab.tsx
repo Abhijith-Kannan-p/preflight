@@ -84,19 +84,19 @@ export function VoiceTab({ canEdit }: { canEdit: boolean }) {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="sheet p-4">
           <p className="label mb-0">Approved items learned from</p>
-          <p className="mt-1 font-mono text-2xl">{data.items}</p>
+          <p className="display-number mt-1">{data.items}</p>
           <p className="text-xs text-graphite">At least {data.min_items} are needed to adopt.</p>
         </div>
         <div className="sheet p-4">
           <p className="label mb-0 flex items-center gap-1">
             Confidence <InfoTip text="High from 15 items with every trait's standard error at most 0.05; medium from 8 items; low below that." />
           </p>
-          <p className="mt-1 font-mono text-2xl capitalize">{data.confidence}</p>
+          <p className="display-number mt-1 capitalize">{data.confidence}</p>
           <p className="text-xs text-graphite">Largest standard error {Math.max(0, ...Object.values(data.learned).map((l) => l.std_error)).toFixed(3)}</p>
         </div>
         <div className="sheet p-4">
           <p className="label mb-0">Voice profile in use</p>
-          <p className="mt-1 font-mono text-2xl">v{data.profile.version}</p>
+          <p className="display-number mt-1">v{data.profile.version}</p>
           <p className="text-xs text-graphite">{data.profile.source}</p>
         </div>
       </div>

@@ -32,7 +32,7 @@ function Stat({ label, value, hint }: { label: string; value: string | number; h
   return (
     <div className="card p-5">
       <p className="label flex items-center gap-1">{label} <InfoTip text={hint} /></p>
-      <p className="text-3xl font-bold">{value}</p>
+      <p className="display-number mt-1">{value}</p>
     </div>
   );
 }

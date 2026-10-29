@@ -167,7 +167,7 @@ function KeysSection() {
       {created && (
         <div className="mt-3 rounded-xl border border-teal/30 bg-teal-50 p-3 text-sm">
           <p className="font-semibold text-teal-700">Copy this key now. It is shown only once.</p>
-          <div className="mt-2 flex items-center gap-2"><code className="flex-1 break-all rounded bg-white px-2 py-1 font-mono text-xs">{created}</code><CopyButton text={created} /></div>
+          <div className="mt-2 flex items-center gap-2"><code className="flex-1 break-all rounded bg-raised px-2 py-1 font-mono text-xs">{created}</code><CopyButton text={created} /></div>
         </div>
       )}
       <ul className="mt-4 divide-y divide-paper-200 text-sm">

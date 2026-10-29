@@ -1,8 +1,10 @@
 "use client";
 
-// The Proof Sheet: the draft set like a printed proof, proof marks on the flagged text,
-// and margin notes in the gutter joined to their marks by leader lines. Below 1024px the
-// notes sit inline under the paragraph they belong to.
+// The Proof Sheet: the draft set like a printed proof, numbered proof marks on the flagged
+// text, and margin notes in the gutter, each level with the line its mark is on. Only the note
+// being pointed at (or opened) is joined to its mark by a connector. The sheet grows to the
+// height of the notes and its text stays in view beside them. Below 1024px the notes sit
+// inline under the paragraph they belong to.
 
 import { clsx } from "clsx";
 import { ChevronDown } from "lucide-react";
@@ -14,12 +16,13 @@ import type { Block, Finding, Severity } from "@/lib/types";
 import { Skeleton } from "../ui";
 import { DraftView } from "./DraftView";
 import { MarginNote } from "./MarginNote";
-import { useDecisions } from "./useDecisions";
+import { ProofSummary } from "./ProofSummary";
+import { ACCEPT_ALL, useDecisions } from "./useDecisions";
 
-const GAP = 10;
-const NOTE_OFFSET = 14; // the leader line meets a note this far below its top edge
+const GAP = 8;
+const LINE_NUDGE = 4; // a note's first line sits a little below the top of its text line
 
-function useWide() {
+export function useWide() {
   const [wide, setWide] = useState(false);
   useEffect(() => {
     const query = window.matchMedia("(min-width: 1024px)");
@@ -31,37 +34,33 @@ function useWide() {
   return wide;
 }
 
-interface Leader {
-  id: string;
-  severity: Severity;
-  open: boolean;
-  ax: number;
-  ay: number;
-  edge: number;
-  nx: number;
-  ny: number;
+/** Notes in reading order, each as high as its anchor allows without overlapping the one
+ * before: notes on the same line stack directly below each other. */
+export function placeNotes(items: { id: string; anchor: number; height: number }[]): { tops: Record<string, number>; height: number } {
+  const tops: Record<string, number> = {};
+  let bottom = 0;
+  for (const it of items) {
+    const top = Math.max(it.anchor, bottom ? bottom + GAP : 0);
+    tops[it.id] = top;
+    bottom = top + it.height;
+  }
+  return { tops, height: bottom };
 }
 
-interface Layout {
-  tops: Record<string, number>;
-  leaders: Leader[];
-  height: number;
-}
-
-/** Place notes as close to their anchors as possible without overlapping. The focused note
- * sits on its anchor and the others move around it. */
-export function placeNotes(items: { id: string; anchor: number; height: number }[], focused: string | null): Record<string, number> {
-  const tops = items.map((it) => Math.max(0, it.anchor - NOTE_OFFSET));
-  const pivot = Math.max(0, items.findIndex((it) => it.id === focused));
-  for (let i = pivot + 1; i < items.length; i++) tops[i] = Math.max(tops[i], tops[i - 1] + items[i - 1].height + GAP);
-  for (let i = pivot - 1; i >= 0; i--) tops[i] = Math.min(tops[i], tops[i + 1] - items[i].height - GAP);
-  // Anything pushed above the top edge flows back down.
-  for (let i = 0; i < items.length; i++) tops[i] = Math.max(tops[i], i ? tops[i - 1] + items[i - 1].height + GAP : 0);
-  return Object.fromEntries(items.map((it, i) => [it.id, tops[i]]));
+/** Reading-order numbers: block, then position in the block. */
+export function numberFindings(findings: Finding[]): Record<string, number> {
+  return Object.fromEntries(findings.map((f, i) => [f.id, i + 1]));
 }
 
 const OPEN = new Set(["open", "escalated", "disputed"]);
 const byPosition = (a: Finding, b: Finding) => a.span.block - b.span.block || a.span.start - b.span.start;
+
+interface Connector {
+  d: string;
+  colour: string;
+  x: number;
+  y: number;
+}
 
 interface Props {
   blocks: Block[];
@@ -79,66 +78,57 @@ export function ProofDesk({ blocks, findings, pending, focused, onFocus, canDeci
   const wide = useWide();
   const deskRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
   const noteRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [layout, setLayout] = useState<Layout | null>(null);
+  const [layout, setLayout] = useState<{ tops: Record<string, number>; height: number } | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [connector, setConnector] = useState<Connector | null>(null);
+  const [hidden, setHidden] = useState<Set<Severity>>(new Set());
   const [showReview, setShowReview] = useState(false);
 
   const main = useMemo(() => findings.filter((f) => !f.needs_review).sort(byPosition), [findings]);
+  const numbers = useMemo(() => numberFindings(main), [main]);
+  const shown = useMemo(() => main.filter((f) => !hidden.has(f.severity)), [main, hidden]);
   const humanLook = useMemo(() => findings.filter((f) => f.needs_review), [findings]);
   const blockIds = useMemo(() => new Set(blocks.map((b) => b.id)), [blocks]);
-  const { start, saving, error, modal } = useDecisions({ ordered: main, focused, onFocus, canDecide, onChanged });
+  const { start, acceptAll, saving, error, modal } = useDecisions({ ordered: shown, focused, onFocus, canDecide, onChanged });
+  const active = hovered ?? focused;
 
   const measure = useCallback(() => {
-    const desk = deskRef.current;
+    const text = textRef.current;
     const sheet = sheetRef.current;
-    const gutter = gutterRef.current;
-    if (!wide || !desk || !sheet || !gutter) return setLayout(null);
-    const box = desk.getBoundingClientRect();
-    const sheetBox = sheet.getBoundingClientRect();
-    const gutterLeft = gutter.getBoundingClientRect().left - box.left;
-    const edge = sheetBox.right - box.left;
-    const anchors = main.map((f) => {
-      const mark = desk.querySelector<HTMLElement>(`[data-covers~="${f.id}"]`);
-      const host = mark ?? desk.querySelector<HTMLElement>(`[data-block="${f.span.block}"]`) ?? sheet;
-      const rect = (mark?.getClientRects()[0] ?? host.getBoundingClientRect()) as DOMRect;
+    if (!wide || !text || !sheet) return setLayout(null);
+    // Positions relative to the text block, which stays put relative to its marks even while
+    // it is held in view (sticky); the gutter starts where the sheet's padding ends.
+    const textTop = text.getBoundingClientRect().top;
+    const padTop = parseFloat(getComputedStyle(sheet).paddingTop) || 0;
+    const items = shown.map((f) => {
+      const mark = text.querySelector<HTMLElement>(`[data-covers~="${f.id}"]`) ?? text.querySelector<HTMLElement>(`[data-block="${f.span.block}"]`);
+      const rect = mark?.getClientRects()[0] ?? mark?.getBoundingClientRect();
       return {
         id: f.id,
-        ax: mark ? rect.right - box.left : edge - 24,
-        anchor: rect.top - box.top + rect.height / 2,
-        height: noteRefs.current[f.id]?.offsetHeight ?? 96,
+        anchor: Math.max(0, (rect ? rect.top - textTop : 0) + padTop + LINE_NUDGE),
+        height: noteRefs.current[f.id]?.offsetHeight ?? 88,
       };
     });
-    const sorted = [...anchors].sort((a, b) => a.anchor - b.anchor);
-    const gutterTop = gutter.getBoundingClientRect().top - box.top;
-    const tops = placeNotes(sorted.map((a) => ({ ...a, anchor: a.anchor - gutterTop })), focused);
-    const leaders = sorted.map((a) => {
-      const f = main.find((x) => x.id === a.id)!;
-      return { id: a.id, severity: f.severity, open: OPEN.has(f.status), ax: a.ax, ay: a.anchor, edge, nx: gutterLeft, ny: gutterTop + tops[a.id] + NOTE_OFFSET };
-    });
-    const last = sorted.at(-1);
-    const height = last ? tops[last.id] + last.height : 0;
-    setLayout((prev) => {
-      const next = { tops, leaders, height };
-      return prev && JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
-    });
-  }, [wide, main, focused]);
+    const next = placeNotes(items);
+    setLayout((prev) => (prev && JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+  }, [wide, shown]);
 
   useLayoutEffect(() => {
     measure();
-  }, [measure]);
+  }, [measure, focused]);
 
   useEffect(() => {
-    const desk = deskRef.current;
-    if (!desk || !wide) return;
+    if (!wide) return;
     let frame = 0;
     const schedule = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(measure);
     };
     const observer = new ResizeObserver(schedule);
-    observer.observe(desk);
-    if (sheetRef.current) observer.observe(sheetRef.current);
+    if (textRef.current) observer.observe(textRef.current);
     Object.values(noteRefs.current).forEach((el) => el && observer.observe(el));
     void document.fonts?.ready.then(schedule);
     return () => {
@@ -147,8 +137,53 @@ export function ProofDesk({ blocks, findings, pending, focused, onFocus, canDeci
     };
   }, [measure, wide]);
 
+  // One connector, for the note being pointed at or opened, redrawn as the page scrolls.
+  const drawConnector = useCallback(() => {
+    const desk = deskRef.current;
+    const sheet = sheetRef.current;
+    if (!wide || !desk || !sheet || !active) return setConnector(null);
+    const f = main.find((x) => x.id === active);
+    const marker = desk.querySelector<HTMLElement>(`[data-marker="${active}"]`) ?? desk.querySelector<HTMLElement>(`[data-covers~="${active}"]`);
+    const note = noteRefs.current[active];
+    if (!f || !marker || !note) return setConnector(null);
+    const box = desk.getBoundingClientRect();
+    const m = marker.getBoundingClientRect();
+    const n = note.getBoundingClientRect();
+    const edge = sheet.getBoundingClientRect().right - box.left;
+    // From the sheet's edge, level with the marker, to the note: inside the text the lit mark
+    // and its filled number already show which words the note is about.
+    const y1 = m.top - box.top + m.height / 2;
+    const x2 = n.left - box.left;
+    const y2 = n.top - box.top + 14;
+    const colour = OPEN.has(f.status) ? SEVERITY_STYLE[f.severity].stroke : "rgb(var(--teal))";
+    setConnector({ d: `M ${edge} ${y1} L ${edge + 8} ${y1} L ${x2 - 8} ${y2} L ${x2} ${y2}`, colour, x: edge, y: y1 });
+  }, [wide, active, main]);
+
+  useLayoutEffect(() => {
+    drawConnector();
+  }, [drawConnector, layout]);
+
   useEffect(() => {
-    if (focused) noteRefs.current[focused]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (!wide) return;
+    let frame = 0;
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(drawConnector);
+    };
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [drawConnector, wide]);
+
+  // Bring a note into view when the reader opens one, not for a note open on arrival.
+  const initialFocus = useRef(focused);
+  useEffect(() => {
+    if (focused && focused !== initialFocus.current) noteRefs.current[focused]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    initialFocus.current = null;
   }, [focused]);
 
   const note = (f: Finding, style?: React.CSSProperties) => (
@@ -158,94 +193,97 @@ export function ProofDesk({ blocks, findings, pending, focused, onFocus, canDeci
         noteRefs.current[f.id] = el;
       }}
       finding={f}
+      number={numbers[f.id]}
       focused={focused === f.id}
+      active={active === f.id}
       canDecide={canDecide}
       canEscalate={canEscalate}
       saving={saving === f.id}
       locked={saving !== null}
-      onFocus={() => onFocus(f.id)}
+      onFocus={() => onFocus(focused === f.id ? null : f.id)}
+      onHover={(on) => setHovered(on ? f.id : null)}
       onDecide={(kind) => start(f, kind)}
       style={style}
     />
   );
 
-  const counts = (["critical", "major", "minor"] as const).map((s) => [s, main.filter((f) => f.severity === s && OPEN.has(f.status)).length] as const);
-  const orphans = main.filter((f) => !blockIds.has(f.span.block));
+  const orphans = shown.filter((f) => !blockIds.has(f.span.block));
+  const padBottom = 32;
 
   return (
     <div data-tour="findings">
+      {!pending && main.length > 0 && (
+        <ProofSummary
+          findings={main}
+          hidden={hidden}
+          onToggle={(s) =>
+            setHidden((prev) => {
+              const next = new Set(prev);
+              if (next.has(s)) next.delete(s);
+              else next.add(s);
+              return next;
+            })
+          }
+          canDecide={canDecide}
+          busy={saving === ACCEPT_ALL}
+          onAcceptAll={() => void acceptAll(main)}
+        />
+      )}
       <div ref={deskRef} className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
-        <section ref={sheetRef} className="sheet h-fit px-6 py-8 sm:px-10" aria-label="Proof sheet">
-          {header}
-          <DraftView
-            blocks={blocks}
-            findings={pending ? [] : main}
-            focused={focused}
-            onFocus={onFocus}
-            after={wide || pending ? undefined : (block) => {
-              const mine = main.filter((f) => f.span.block === block.id);
-              return mine.length ? <div className="mt-3 space-y-2 border-l border-rule pl-3 font-sans">{mine.map((f) => note(f))}</div> : null;
-            }}
-          />
-          {!wide && !pending && orphans.length > 0 && <div className="mt-4 space-y-2 border-l border-rule pl-3">{orphans.map((f) => note(f))}</div>}
-          <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-rule pt-3 text-[11px] text-graphite">
-            <span><span className="mark-critical">wavy</span> critical</span>
-            <span><span className="mark-major">underline</span> major</span>
-            <span><span className="mark-minor">dotted</span> minor</span>
-            <span><span className="mark-settled">thin</span> settled</span>
-            <span className="ml-auto font-mono">J / K move · A accept · E edit · D dispute · ? help</span>
+        <section ref={sheetRef} className="proof-paper px-6 py-8 sm:px-10" style={{ minHeight: wide && layout ? layout.height + padBottom + 32 : undefined }} aria-label="Proof sheet">
+          <div ref={textRef} className="lg:sticky lg:top-32">
+            {header}
+            <DraftView
+              blocks={blocks}
+              findings={pending ? [] : shown}
+              numbers={numbers}
+              focused={focused}
+              active={active}
+              onFocus={onFocus}
+              onHover={setHovered}
+              after={
+                wide || pending
+                  ? undefined
+                  : (block) => {
+                      const mine = shown.filter((f) => f.span.block === block.id);
+                      return mine.length ? <div className="mt-3 space-y-2 font-sans">{mine.map((f) => note(f))}</div> : null;
+                    }
+              }
+            />
+            {!wide && !pending && orphans.length > 0 && <div className="mt-4 space-y-2 font-sans">{orphans.map((f) => note(f))}</div>}
           </div>
         </section>
 
         <div className="hidden lg:block" aria-label="Margin notes">
-          <p className="label flex flex-wrap items-center gap-x-3">
-            Margin notes
-            {!pending &&
-              counts.map(([s, n]) => (
-                <span key={s} className="font-mono normal-case tracking-normal">
-                  <span className={clsx("mr-1 inline-block h-1.5 w-1.5 align-middle", SEVERITY_STYLE[s].dot)} aria-hidden="true" />
-                  {n} {s}
-                </span>
-              ))}
-          </p>
           {pending ? (
-            <div className="space-y-3">
-              <Skeleton className="h-24" />
-              <Skeleton className="h-24" />
-              <Skeleton className="h-24" />
+            <div className="space-y-3 pt-8">
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
             </div>
           ) : main.length === 0 ? (
-            <p className="border-l-2 border-cleared bg-sheet px-3 py-2 text-sm text-ink">No marks on this proof. Every check passed and every claim matches an approved fact.</p>
+            <p className="mt-8 rounded border border-rule border-l-[3px] border-l-cleared bg-sheet px-3 py-2 text-sm text-ink">No marks on this proof. Every check passed and every claim matches an approved fact.</p>
           ) : (
             wide && (
               <div ref={gutterRef} className="relative" style={{ minHeight: layout?.height }}>
-                {main.map((f) => note(f, layout ? { position: "absolute", top: layout.tops[f.id], left: 0, right: 0, transition: "top 200ms ease" } : { marginBottom: GAP }))}
+                {shown.map((f) => note(f, layout ? { position: "absolute", top: layout.tops[f.id], left: 0, right: 0, transition: "top 200ms ease" } : { marginBottom: GAP }))}
               </div>
             )
           )}
         </div>
 
-        {wide && layout && !pending && (
-          <svg className="pointer-events-none absolute inset-0 hidden h-full w-full lg:block" aria-hidden="true">
-            {layout.leaders.map((l) => {
-              const active = l.id === focused;
-              const colour = l.open ? SEVERITY_STYLE[l.severity].stroke : "rgb(var(--teal))";
-              return (
-                <g key={l.id} opacity={active ? 1 : 0.5}>
-                  {active && <path d={`M ${l.ax} ${l.ay + 6} L ${l.edge} ${l.ay + 6}`} stroke={colour} strokeWidth="1" strokeDasharray="2 3" fill="none" />}
-                  <path d={`M ${l.edge} ${l.ay + 6} L ${l.edge + 10} ${l.ay + 6} L ${l.nx - 6} ${l.ny} L ${l.nx} ${l.ny}`} stroke={colour} strokeWidth={active ? 1.25 : 0.75} fill="none" />
-                  <circle cx={l.edge} cy={l.ay + 6} r="2" fill={colour} />
-                </g>
-              );
-            })}
+        {wide && connector && !pending && (
+          <svg className="pointer-events-none absolute inset-0 hidden h-full w-full overflow-visible lg:block" aria-hidden="true">
+            <path d={connector.d} stroke={connector.colour} strokeWidth="1.25" fill="none" />
+            <circle cx={connector.x} cy={connector.y} r="2.5" fill={connector.colour} />
           </svg>
         )}
       </div>
 
-      {error && <p role="alert" className="mt-4 border-l-2 border-signal bg-sheet px-3 py-2 text-sm text-signal-700">{error}</p>}
+      {error && <p role="alert" className="mt-4 rounded border border-rule border-l-[3px] border-l-signal bg-sheet px-3 py-2 text-sm text-signal-700">{error}</p>}
 
       {humanLook.length > 0 && !pending && (
-        <section className="mt-6 border border-dashed border-rule p-3">
+        <section className="mt-6 rounded border border-dashed border-rule p-3">
           <button type="button" onClick={() => setShowReview((s) => !s)} aria-expanded={showReview} className="flex w-full items-center gap-2 text-left text-sm font-medium">
             <ChevronDown className={clsx("h-4 w-4 transition", showReview && "rotate-180")} aria-hidden="true" />
             Needs a human look <span className="font-mono text-xs text-graphite">{humanLook.length}</span>

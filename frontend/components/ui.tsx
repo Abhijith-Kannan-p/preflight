@@ -1,9 +1,10 @@
 "use client";
 
-// Proof Desk primitives: hairline surfaces, square corners, mono labels. Colour means state.
+// Proof Desk primitives: layered surfaces, soft corners, theme tokens. Colour means state.
 
 import { clsx } from "clsx";
-import { AlertTriangle, ArrowRight, Info, RotateCcw, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, BookOpen, ChevronDown, Compass, FileCheck2, Gauge, Inbox, Info, RotateCcw, Settings2, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 /** A small status label. Pass a tone class such as SEVERITY_STYLE.critical.chip. */
@@ -16,13 +17,16 @@ export function Chip({ className, children }: { className?: string; children: Re
 }
 
 /** Accessible tooltip: shows on hover and on keyboard focus. */
-export function Tip({ text, children, className }: { text: string; children: React.ReactNode; className?: string }) {
+export function Tip({ text, children, className, below = false }: { text: string; children: React.ReactNode; className?: string; below?: boolean }) {
   return (
     <span className={clsx("group relative inline-flex", className)}>
       {children}
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-max max-w-[260px] -translate-x-1/2 rounded bg-ink px-3 py-2 text-xs font-normal leading-snug text-sheet group-focus-within:block group-hover:block"
+        className={clsx(
+          "pointer-events-none absolute left-1/2 z-50 hidden w-max max-w-[260px] -translate-x-1/2 rounded bg-ink px-3 py-2 text-xs font-normal leading-snug text-sheet group-focus-within:block group-hover:block",
+          below ? "top-full mt-2" : "bottom-full mb-2",
+        )}
       >
         {text}
       </span>
@@ -83,14 +87,28 @@ export function Modal({
   );
 }
 
+/** Our own line drawing for empty states: a blank proof sheet with a pencilled tick. */
+function EmptyArt() {
+  return (
+    <svg width="72" height="64" viewBox="0 0 72 64" fill="none" aria-hidden="true" className="shrink-0">
+      <rect x="10" y="6" width="40" height="52" rx="2" className="fill-paper stroke-graphite" strokeWidth="1.5" />
+      <path d="M17 18h26M17 25h22M17 32h26M17 39h14" className="stroke-graphite-light" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="52" cy="44" r="12" className="fill-sheet stroke-teal" strokeWidth="1.5" />
+      <path d="m46.5 44 3.8 3.6L57.5 40" className="stroke-teal" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** Every empty list says what it is for and offers the next action. */
 export function EmptyState({ icon, title, text, action }: { icon?: React.ReactNode; title: string; text: string; action?: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-start gap-2 border border-dashed border-rule bg-sheet px-6 py-8">
-      {icon && <div className="text-graphite">{icon}</div>}
-      <p className="font-serif text-lg">{title}</p>
+    <div className="flex flex-col items-start gap-4 rounded-lg border border-dashed border-rule bg-sheet px-6 py-7 sm:flex-row sm:items-center">
+      {icon ? <div className="text-graphite">{icon}</div> : <EmptyArt />}
+      <div className="space-y-1.5">
+      <p className="font-serif text-xl text-ink">{title}</p>
       <p className="max-w-[56ch] text-sm text-graphite">{text}</p>
-      {action && <div className="mt-2">{action}</div>}
+      {action && <div className="pt-1">{action}</div>}
+      </div>
     </div>
   );
 }
@@ -116,14 +134,48 @@ export function Skeleton({ className }: { className?: string }) {
   return <div className={clsx("skeleton", className)} aria-hidden="true" />;
 }
 
-/** Serif page title, one line on what the screen is for, and its primary action. */
+/** Each section's icon and tint (the header draws the same colour as its accent line). */
+const SECTIONS: { prefix: string; icon: typeof BookOpen; tint: string }[] = [
+  { prefix: "/app/queue", icon: Inbox, tint: "bg-paper-100 text-ink" },
+  { prefix: "/app/rulebook", icon: BookOpen, tint: "bg-amber-50 text-amber-700" },
+  { prefix: "/app/governance", icon: Compass, tint: "bg-slate-50 text-slate-700" },
+  { prefix: "/app/insights", icon: Compass, tint: "bg-slate-50 text-slate-700" },
+  { prefix: "/app/evaluation", icon: Gauge, tint: "bg-cleared-50 text-cleared-700" },
+  { prefix: "/app/settings", icon: Settings2, tint: "bg-paper-100 text-graphite" },
+  { prefix: "/app", icon: FileCheck2, tint: "bg-teal-50 text-teal-700" },
+];
+
+/** Serif page title, one sentence on what the screen is for, the rest under "How this works",
+ * and the page's primary action. */
 export function PageHeader({ title, subtitle, actions, eyebrow }: { title: string; subtitle?: string; actions?: React.ReactNode; eyebrow?: string }) {
+  const pathname = usePathname() ?? "";
+  const section = SECTIONS.find((s) => pathname.startsWith(s.prefix));
+  const Icon = section?.icon;
+  const split = subtitle?.match(/^(.+?[.!?])\s+([\s\S]+)$/);
+  const lead = split ? split[1] : subtitle;
+  const more = split?.[2];
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-rule pb-5">
-      <div>
-        {eyebrow && <p className="label mb-1">{eyebrow}</p>}
-        <h1 className="page-title">{title}</h1>
-        {subtitle && <p className="mt-1.5 max-w-[72ch] text-sm text-graphite">{subtitle}</p>}
+      <div className="flex min-w-0 items-start gap-3">
+        {Icon && (
+          <span className={clsx("mt-1 hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:inline-flex", section.tint)} aria-hidden="true">
+            <Icon className="h-5 w-5" strokeWidth={1.75} />
+          </span>
+        )}
+        <div className="min-w-0">
+          {eyebrow && <p className="kicker">{eyebrow}</p>}
+          <h1 className="page-title">{title}</h1>
+          {lead && <p className="mt-1.5 max-w-[72ch] text-[15px] text-graphite">{lead}</p>}
+          {more && (
+            <details className="group mt-1.5 max-w-[72ch] text-sm text-graphite">
+              <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded text-ink underline decoration-rule underline-offset-4 hover:decoration-ink [&::-webkit-details-marker]:hidden">
+                How this works
+                <ChevronDown className="h-3.5 w-3.5 transition-transform duration-150 group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <p className="mt-1.5">{more}</p>
+            </details>
+          )}
+        </div>
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>

@@ -10,12 +10,14 @@ import { useEffect, useMemo, useState } from "react";
 
 import { API_URL } from "@/lib/api";
 import { SEVERITY_STYLE } from "@/lib/format";
-import type { Block, Finding, Region, Report, VisualPage } from "@/lib/types";
+import type { Block, Finding, Region, Report, Severity, VisualPage } from "@/lib/types";
 
 import { Skeleton } from "../ui";
-import { DraftView } from "./DraftView";
+import { DraftView, NoteNumber } from "./DraftView";
 import { MarginNote } from "./MarginNote";
-import { useDecisions } from "./useDecisions";
+import { numberFindings } from "./ProofDesk";
+import { ProofSummary } from "./ProofSummary";
+import { ACCEPT_ALL, useDecisions } from "./useDecisions";
 
 const OPEN = new Set(["open", "escalated", "disputed"]);
 
@@ -51,7 +53,12 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
         .sort((a, b) => (a.region?.page ?? 0) - (b.region?.page ?? 0) || (a.region?.y ?? 2) - (b.region?.y ?? 2)),
     [findings],
   );
-  const { start, saving, error, modal } = useDecisions({ ordered: main, focused, onFocus, canDecide, onChanged });
+  const numbers = useMemo(() => numberFindings(main), [main]);
+  const [hidden, setHidden] = useState<Set<Severity>>(new Set());
+  const [hovered, setHovered] = useState<string | null>(null);
+  const shown = useMemo(() => main.filter((f) => !hidden.has(f.severity)), [main, hidden]);
+  const { start, acceptAll, saving, error, modal } = useDecisions({ ordered: shown, focused, onFocus, canDecide, onChanged });
+  const active = hovered ?? focused;
 
   // Focusing a note on another page turns to that page.
   useEffect(() => {
@@ -60,27 +67,47 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
   }, [focused, main]);
 
   const page: VisualPage | undefined = visual?.pages[pageIndex];
-  const onPage = main.filter((f) => f.region && f.region.page === pageIndex);
-  const elsewhere = main.filter((f) => !f.region);
+  const onPage = shown.filter((f) => f.region && f.region.page === pageIndex);
+  const elsewhere = shown.filter((f) => !f.region);
 
   const note = (f: Finding) => (
     <MarginNote
       key={f.id}
       finding={f}
+      number={numbers[f.id]}
       focused={focused === f.id}
+      active={active === f.id}
+      onHover={(on) => setHovered(on ? f.id : null)}
       canDecide={canDecide}
       canEscalate={canEscalate}
       saving={saving === f.id}
       locked={saving !== null}
-      onFocus={() => onFocus(f.id)}
+      onFocus={() => onFocus(focused === f.id ? null : f.id)}
       onDecide={(kind) => start(f, kind)}
     />
   );
 
   return (
     <div data-tour="findings" className="space-y-6">
+      {!pending && main.length > 0 && (
+        <ProofSummary
+          findings={main}
+          hidden={hidden}
+          onToggle={(s) =>
+            setHidden((prev) => {
+              const next = new Set(prev);
+              if (next.has(s)) next.delete(s);
+              else next.add(s);
+              return next;
+            })
+          }
+          canDecide={canDecide}
+          busy={saving === ACCEPT_ALL}
+          onAcceptAll={() => void acceptAll(main)}
+        />
+      )}
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
-        <section className="sheet h-fit px-4 py-6 sm:px-8" aria-label="Visual proof">
+        <section className="proof-paper h-fit px-4 py-6 sm:px-8" aria-label="Visual proof">
           {header}
           {pending || !page ? (
             <Skeleton className="aspect-[1.9] w-full" />
@@ -125,18 +152,23 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
                 )}
                 {layers.findings &&
                   onPage.map((f) => {
-                    const active = focused === f.id;
+                    const lit = active === f.id;
                     const open = OPEN.has(f.status);
                     return (
                       <button
                         key={f.id}
                         type="button"
                         onClick={() => onFocus(f.id)}
+                        onMouseEnter={() => setHovered(f.id)}
+                        onMouseLeave={() => setHovered(null)}
                         aria-label={`${SEVERITY_STYLE[f.severity].label} finding ${f.rule.id} on the image`}
-                        className={clsx("absolute border-2 transition-[box-shadow]", open ? SEVERITY_STYLE[f.severity].rule : "border-teal", active ? "z-10 shadow-[0_0_0_3px_rgb(var(--sheet))]" : "opacity-80 hover:opacity-100")}
+                        className={clsx("absolute border-2 transition-[box-shadow,opacity] duration-150", open ? SEVERITY_STYLE[f.severity].rule : "border-teal", lit ? "z-10 opacity-100 shadow-[0_0_0_3px_rgb(var(--sheet))]" : active ? "opacity-60" : "opacity-80 hover:opacity-100")}
                         style={box(f.region!)}
                       >
-                        <span className={clsx("absolute -top-[18px] left-[-2px] whitespace-nowrap px-1 font-mono text-[10px] leading-4 text-white", open ? SEVERITY_STYLE[f.severity].dot : "bg-teal")}>{f.rule.id}</span>
+                        <span className={clsx("absolute -top-[20px] left-[-2px] inline-flex items-center gap-1 whitespace-nowrap rounded-sm bg-sheet pr-1 font-mono text-[10px] leading-4 text-ink shadow-sm")}>
+                          <NoteNumber n={numbers[f.id]} severity={f.severity} settled={!open} active={lit} className="h-4 min-w-4 text-[10px]" />
+                          {f.rule.id}
+                        </span>
                       </button>
                     );
                   })}
@@ -149,14 +181,13 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
         </section>
 
         <div aria-label="Margin notes">
-          <p className="label">Margin notes</p>
           {pending ? (
             <div className="space-y-3">
               <Skeleton className="h-24" />
               <Skeleton className="h-24" />
             </div>
           ) : main.length === 0 ? (
-            <p className="border-l-2 border-cleared bg-sheet px-3 py-2 text-sm text-ink">No marks on this visual. Colours, contrast, logo, alt text and the text in the image all passed.</p>
+            <p className="rounded border border-rule border-l-[3px] border-l-cleared bg-sheet px-3 py-2 text-sm text-ink">No marks on this visual. Colours, contrast, logo, alt text and the text in the image all passed.</p>
           ) : (
             <div className="space-y-2">
               {onPage.map(note)}
@@ -227,9 +258,9 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
       )}
 
       {!pending && blocks.length > 0 && (
-        <section className="sheet px-6 py-6 sm:px-10" aria-label="Text read from the image">
+        <section className="proof-paper px-6 py-6 sm:px-10" aria-label="Text read from the image">
           <p className="label mb-4">Text read from the image · checked like any draft</p>
-          <DraftView blocks={blocks} findings={main} focused={focused} onFocus={onFocus} />
+          <DraftView blocks={blocks} findings={shown} numbers={numbers} focused={focused} active={active} onFocus={onFocus} onHover={setHovered} />
         </section>
       )}
       {modal}

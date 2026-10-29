@@ -13,11 +13,28 @@ import { CHECKERS, type StreamState, VISUAL_CHECKERS } from "./useReviewStream";
 
 type RowState = "queued" | "checking" | "done" | "failed";
 
+const chip = "inline-flex h-5 w-5 items-center justify-center rounded-full";
 const GLYPH: Record<RowState, React.ReactNode> = {
-  queued: <Circle className="h-3.5 w-3.5 text-rule" strokeWidth={1.75} aria-hidden="true" />,
-  checking: <Loader2 className="h-3.5 w-3.5 animate-spin text-slate" strokeWidth={1.75} aria-hidden="true" />,
-  done: <Check className="h-3.5 w-3.5 text-cleared" strokeWidth={2} aria-hidden="true" />,
-  failed: <AlertTriangle className="h-3.5 w-3.5 text-amber" strokeWidth={1.75} aria-hidden="true" />,
+  queued: (
+    <span className={clsx(chip, "border border-rule")} aria-hidden="true">
+      <Circle className="h-2 w-2 text-rule" strokeWidth={3} />
+    </span>
+  ),
+  checking: (
+    <span className={clsx(chip, "bg-slate-50 text-slate-700")} aria-hidden="true">
+      <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} />
+    </span>
+  ),
+  done: (
+    <span className={clsx(chip, "animate-tick bg-cleared-50 text-cleared-700")} aria-hidden="true">
+      <Check className="h-3 w-3" strokeWidth={2.5} />
+    </span>
+  ),
+  failed: (
+    <span className={clsx(chip, "bg-amber-50 text-amber-700")} aria-hidden="true">
+      <AlertTriangle className="h-3 w-3" strokeWidth={2} />
+    </span>
+  ),
 };
 
 const STATUS: Record<RowState, string> = { queued: "Queued", checking: "Checking", done: "Done", failed: "Fallback" };
@@ -59,7 +76,7 @@ export function PreflightChecklist({
         const liveClaims = c.name === "claims" ? (pending ? stream.claims : claims.map((cl) => ({ text: cl.text, verdict: cl.verdict }))) : [];
         return (
           <li key={c.name} className="py-1.5">
-            <div className="grid grid-cols-[1.5rem_1.25rem_1fr_auto_auto] items-center gap-2">
+            <div className="grid grid-cols-[1.5rem_1.5rem_1fr_auto_auto] items-center gap-2">
               <span className="font-mono text-[11px] text-graphite">{String(index + 1).padStart(2, "0")}</span>
               {GLYPH[state]}
               <span className={clsx(state === "queued" ? "text-graphite" : "text-ink")}>{c.label}</span>

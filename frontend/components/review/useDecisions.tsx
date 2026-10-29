@@ -12,6 +12,9 @@ import { ErrorState, Modal } from "../ui";
 
 export type DecisionKind = "accept" | "edit" | "dispute" | "escalate" | "reopen";
 
+/** `saving` while "Accept all suggested fixes" runs. */
+export const ACCEPT_ALL = "*";
+
 interface Options {
   ordered: Finding[];
   focused: string | null;
@@ -38,6 +41,27 @@ export function useDecisions({ ordered, focused, onFocus, canDecide, onChanged }
     } catch (e) {
       setError(e instanceof Error ? e.message : "That did not work.");
     } finally {
+      setBusy(false);
+      setSaving(null);
+    }
+  }
+
+  /** Accept every open suggestion, one after another, exactly as pressing each Accept would.
+   * Each request carries its own idempotency key, so a retry or double click applies once. */
+  async function acceptAll(findings: Finding[]) {
+    const targets = findings.filter((f) => f.status === "open" && f.suggestion);
+    if (saving || !targets.length) return;
+    setBusy(true);
+    setSaving(ACCEPT_ALL);
+    setError(null);
+    try {
+      for (const f of targets) {
+        await post(`/api/findings/${f.id}/decisions`, { kind: "accept" }, `accept-all:${f.id}`);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Some fixes were not accepted.");
+    } finally {
+      await onChanged();
       setBusy(false);
       setSaving(null);
     }
@@ -109,5 +133,5 @@ export function useDecisions({ ordered, focused, onFocus, canDecide, onChanged }
     </Modal>
   );
 
-  return { start, saving, error: dialog ? null : error, modal };
+  return { start, acceptAll, saving, error: dialog ? null : error, modal };
 }

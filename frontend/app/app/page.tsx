@@ -42,7 +42,7 @@ export default function Dashboard() {
             ].map(([label, value]) => (
               <div key={label} className="px-4 py-3 first:pl-0">
                 <dt className="label">{label}</dt>
-                <dd className="font-mono text-[28px] leading-none text-ink">{value}</dd>
+                <dd className="display-number mt-1">{value}</dd>
               </div>
             ))}
           </dl>
