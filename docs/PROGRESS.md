@@ -67,11 +67,20 @@ Updated after every commit checkpoint. Build order follows section 13 of the Rou
   trips): database moved to Singapore, fact-update simulation 19 s → 0.5 s. Results in
   `docs/TESTING.md`. Tests: backend 210, e2e 17.
 
+- 9. Documentation and handover (2026-10-29): README rewritten for Round 3 (live link and
+  demo at the top, screenshots, features, architecture, environment variables, clone and run,
+  results, deployment, limitations); TECHNICAL, FEATURES, ROUND3_IMPROVEMENTS (results table and
+  other improvements), TESTING, new ROADMAP, demo script. README instructions followed from a
+  fresh clone: the Docker path needed two fixes (no stylesheet when built in `/app`; sandbox
+  proxy pointed at the container itself), after which 10/10 tests passed against it; the
+  no-Docker path passed as written. Production: axe clean at three widths, Lighthouse
+  accessibility 100 on every page.
+
 ## In progress
-- 9. Documentation and handover
+- None. All nine build steps are complete.
 
 ## Next
-- Nothing after 9.
+- After the competition: see ROADMAP.md.
 
 ## Blockers
 - None.

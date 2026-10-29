@@ -4,112 +4,181 @@
 
 **Content cleared before it goes live.**
 
-**Live demo: https://preflight-eight-smoky.vercel.app** · API: https://preflight-api-nauz.onrender.com ([OpenAPI docs](https://preflight-api-nauz.onrender.com/docs))
+**Live demo: https://preflight-eight-smoky.vercel.app** · API: https://preflight-api-nauz.onrender.com ([OpenAPI docs](https://preflight-api-nauz.onrender.com/docs)) · Repository: https://github.com/Abhijith-Kannan-p/preflight
 
 Content is written by many employees, agencies and AI tools, and off-brand language,
 outdated facts and unsupported claims reach the public before the brand owner sees them.
 Preflight is a review gate placed before publication. It holds the brand book as versioned
-rules, checks every draft against those rules and a registry of approved facts, and returns
-cited, explainable findings with suggestions that keep the author's intent. People approve;
-the AI never does. Every output traces to a rule or an approved fact, and every decision
-traces to a person.
+rules, checks every draft (text, documents, images and HTML emails) against those rules and a
+registry of approved facts, and returns cited, explainable findings with suggestions that
+keep the author's intent. People approve; the AI never does.
 
-Built solo for CodeAxis Round 2 by team **kabhijith447**. All brand data (PayWise) is fictional.
+Built solo for CodeAxis by team **kabhijith447**. **All brand data is fictional: PayWise is
+not a real company.**
 
-## Try it in 60 seconds
+![The review desk: draft, Brand Score, checklist and margin notes](docs/images/review.png)
 
-1. Open the [live demo](https://preflight-eight-smoky.vercel.app) and press **Try the live demo**.
-   No sign-up: you are abhi1, a content creator at PayWise. (If the server was asleep you will
-   see "Waking up the engine…" for up to a minute.)
-2. Pick **LinkedIn post (off-brand)** and press **Run Preflight**. Watch the checkers tick.
-3. See the critical **CLM-04** finding ("100% secure", brand_book.pdf p14), the outdated
-   settlement time (F-086 superseded by F-087), and the green rows in the **Claim Ledger**.
-4. Press **Accept** on the suggestions, then **Re-check**. The Brand Score rises (24 → 97).
+## Try it in two minutes
+
+Every visitor gets a **private copy** of the PayWise workspace, so nothing you do affects
+anyone else. If the free server was asleep you will see "Waking up the engine…" for up to a
+minute.
+
+1. Open the [live demo](https://preflight-eight-smoky.vercel.app) and press **Open the demo
+   desk**. You are abhi1, a content creator.
+2. Pick **LinkedIn post (off-brand)** and press **Run Preflight**. The checklist ticks as each
+   checker finishes.
+3. Read the margin notes: **CLM-04** "100% secure" (critical, brand book p14), a misspelt
+   product name, and an **outdated** settlement time (fact F-086 superseded by F-087).
+4. **Accept** the suggestions, then **Re-check**: the Brand Score goes from 24 to 97.
 5. **Submit for approval**, switch to **abhi4 (Approver)** in the top-right role switcher,
-   press **Approve**, then **View Review Receipt**: "Audit chain verified".
+   **Approve**, and open the **Clearance Certificate**: "Audit chain verified".
 
-Then look around: **Rulebook** (switch to abhi3, Brand Manager, to edit), **Insights**,
-**Evaluation** (live precision/recall on 150 labelled claims) and **Settings** (abhi5, Admin:
-API keys, webhooks, masking, reset).
+Then try the three Round 3 improvements:
+
+- **Visual review:** New review → **Festive banner (image)**. Text in the image is read and
+  checked, off-palette colours, weak contrast and the logo are marked on the image.
+- **Governance:** switch to **abhi3 (Brand Manager)** → **Governance**: an ambiguous rule with
+  grouped writer complaints and an LLM rewording; **Stale-Content Radar** → "Simulate fact
+  update on F-087"; the **Creator Coach**.
+- **Brand Autopilot:** as abhi3, **Rulebook → Compiler → Compile the sample brand book**, accept
+  rules into the rulebook; **Rulebook → Voice** to adopt the voice learned from approved posts.
 
 | Demo user | Role | Can |
 |---|---|---|
 | abhi1 | Creator | Submit and revise content, decide on findings |
 | abhi2 | Reviewer | Comment, escalate, view insights |
-| abhi3 | Brand Manager | Everything a creator can, plus edit rules and facts, approve |
+| abhi3 | Brand Manager | Everything a creator can, plus edit rules and facts, compile brand books, adopt the voice, approve |
 | abhi4 | Approver | Approve or request changes, view insights |
 | abhi5 | Admin | API keys, webhooks, AI and privacy settings, demo reset |
 
+## Screens
+
+| | |
+|---|---|
+| ![Proof sheet with margin notes](docs/images/proof-sheet.png) | ![Visual review: findings drawn on the banner](docs/images/visual-review.png) |
+| **Proof sheet**: each finding is a margin note tied to the exact words, with its rule, source page and a suggestion | **Visual review**: OCR text, palette, contrast and claims drawn on the image |
+| ![Guideline Health](docs/images/guideline-health.png) | ![Clearance Certificate](docs/images/certificate.png) |
+| **Guideline Health**: rules writers push back on, with grouped reasons and the effect of rewording | **Clearance Certificate**: who cleared what, when, against which rules, with a verifiable audit hash |
+| ![Rulebook Compiler review queue](docs/images/compiler.png) | ![Voice Fingerprint](docs/images/voice-fingerprint.png) |
+| **Rulebook Compiler**: rules drafted from a brand book, each beside the sentence it came from | **Voice Fingerprint**: the voice learned from approved content against the hand-set targets |
+
 ## Features
 
-- **Brand Knowledge Base:** versioned rules with source pages, approved facts with validity
-  dates and supersession, terminology, channel profiles, confidential terms; CRUD and CSV
-  import/export.
-- **Multi-format intake:** paste text or Markdown, upload DOCX or PDF; normalised into text
-  blocks with exact character offsets for highlighting.
-- **Deterministic checks:** product names (case-sensitive, fuzzy near-misses), banned and
-  discouraged words, required disclaimers, channel limits, readability, punctuation.
-- **Claim Ledger (signature feature):** claims are detected, matched to approved facts by
-  hybrid retrieval (dense + BM25 + reciprocal rank fusion), verified by a local NLI model plus
-  exact number comparison and a verbatim quote check, and given one of five verdicts. The LLM
-  never decides truth.
-- **Tone check** against the five-trait PayWise voice profile, with an offline fallback.
-- **Explainable findings** (rule, source, evidence, severity, confidence) and
-  **intent-preserving suggestions** with a semantic-drift score. Never auto-applied.
-- **Workflow:** five roles, a state machine, Accept / Edit / Dispute / Escalate, comments,
-  revisions with word diff, critical findings block approval (override needs a written
-  reason), notifications, and a **hash-chained audit log** with public verification.
-- **Review Receipt** page and PDF. **Brand Score** gauge. **Governance insights.**
-- **Integrations:** public REST API with API keys and rate limiting, signed outgoing webhooks
-  (Slack format), CSV, DOCX, PDF; `examples/cms_hook.py` shows a CMS pre-publish hook.
-- **Privacy and AI transparency:** confidential terms, emails, phones and ₹ amounts masked
-  before any LLM call; an "AI used in this review" panel on every review and receipt.
-- **Evaluation page** with precision, recall, F1, a confusion matrix and every failure case.
-- **Zero-setup demo** with sample drafts, generated history, role switcher and guided tour.
+Full list with where to find each: [docs/FEATURES.md](docs/FEATURES.md).
 
-Full checklist mapped to the Round 1 plan: [docs/FEATURES.md](docs/FEATURES.md).
+**Review engine**
+- Paste text or Markdown, or upload DOCX, PDF (including scans), images or HTML emails.
+- Deterministic checks: product names (case-sensitive, near-misses), banned and discouraged
+  words, required disclaimers, channel limits, readability, punctuation and capitals.
+- **Claim Ledger:** claims are matched to approved facts by hybrid retrieval (BM25 + embeddings
+  + reciprocal rank fusion), verified by a local NLI model, exact number comparison and a
+  verbatim quote check, and given one of five verdicts (supported, outdated, contradicted,
+  unsupported, needs a human look). The LLM never decides truth.
+- Tone against the PayWise voice; suggestions that keep the author's intent, with a drift
+  score; never applied without a person.
+- **Visual and accessibility review:** OCR, brand palette (CIEDE2000), WCAG 2.2 contrast, logo
+  distortion and clear space, alt text.
+
+**Workflow and trust**
+- Five roles, a state machine, Accept / Edit / Dispute / Escalate, revisions with diffs;
+  critical findings block approval (an override needs a written reason).
+- Hash-chained audit log, Clearance Certificate (page, PDF, QR) and public verification.
+- Private demo workspace per visitor, reset that touches only yours, idle copies deleted after
+  24 h; double actions are safe (idempotency keys); reviews are server-side jobs that survive a
+  refresh; live progress over SSE with reconnect.
+
+**Governance intelligence**
+- Guideline Health (ambiguity score, grouped dispute reasons, LLM rewording published as a new
+  rule version, before/after per version), Stale-Content Radar (every cleared item indexed by
+  the facts it relied on; notifications when a fact changes), Creator Coach.
+
+**Brand Autopilot**
+- Rulebook Compiler (brand book in, typed rule candidates with page and sentence out, reviewed
+  by a person) and Voice Fingerprint (adopted as a new voice-profile version).
+
+**Integrations and transparency**
+- Public REST API with keys and rate limits; signed webhooks for approval, publication and
+  critical findings, retried with backoff, with a delivery log and Resend; Slack format.
+- Confidential terms, emails, phone numbers and ₹ amounts masked before any LLM call; an
+  "AI used in this review" panel on every review and certificate.
+- Evaluation page with live numbers for claims, full drafts, visuals and the compiler.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  Browser["Next.js 15 on Vercel\n(paper UI, SSE progress)"] -->|REST + SSE| API["FastAPI on Render"]
+  Browser["Next.js 15 on Vercel\nProof Desk UI · SSE progress"] -->|"REST + SSE\n(sandbox cookie via /api/sandbox proxy)"| API["FastAPI on Render\n512 MB · job queue"]
   CMS["CMS / pipeline"] -->|"POST /api/v1/preflight\nX-API-Key"| API
-  API --> Engine["Review engine\n(checkers run concurrently)"]
+  API --> Engine["Review engine\ncheckers run concurrently"]
   Engine --> Det["Terminology · Disclaimers · Channel\nReadability · Style"]
-  Engine --> Ledger["Claim Ledger\nBM25 + bge-small + RRF\nNLI DeBERTa-v3-xsmall int8 ONNX\nnumbers + quote check"]
+  Engine --> Ledger["Claim Ledger\nBM25 + bge-small + RRF\nDeBERTa NLI int8 ONNX\nnumbers + quote check"]
+  Engine --> Visual["Visual review\nRapidOCR · palette ΔE00\ncontrast · logo"]
   Engine --> Gateway["AI gateway\nmask → Gemini → validate → unmask\ntimeout · retry · circuit breaker"]
-  API --> DB[("Postgres + pgvector\n(Neon)")]
-  API -->|"HMAC-signed"| Hooks["Webhooks / Slack"]
+  API --> Gov["Governance\nhealth · radar · coach"]
+  API --> Compiler["Rulebook Compiler\n+ Voice Fingerprint"]
+  API --> DB[("Postgres + pgvector\nNeon, Singapore")]
+  API -->|"HMAC-signed, retried"| Hooks["Webhooks / Slack"]
 ```
 
-Details, data flow and design decisions: [docs/TECHNICAL.md](docs/TECHNICAL.md).
+Data flow, the Claim Ledger, the visual pipeline, governance, the compiler, sandboxes,
+reliability and the memory budget: [docs/TECHNICAL.md](docs/TECHNICAL.md).
 
-## Tech stack
+## Run it locally
 
-Frontend: Next.js 15, React 19, TypeScript, Tailwind, framer-motion, SWR, Recharts, jsdiff.
-Backend: Python 3.11, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic, PostgreSQL + pgvector,
-ONNX Runtime with int8 models (BAAI/bge-small-en-v1.5 embeddings,
-cross-encoder/nli-deberta-v3-xsmall NLI), SentencePiece, rank-bm25, rapidfuzz, textstat, PyMuPDF, python-docx,
-reportlab, httpx. LLM: Google Gemini `gemini-3.5-flash-lite` (Groq also supported, or none).
-Hosting: Vercel (frontend), Render free plan (backend, 512 MB, `render.yaml`), Neon (Postgres).
-A Hugging Face Docker Space package is kept in `deploy/hf-space/` as an alternative.
+### With Docker (recommended)
 
-## Local setup
+Needs Docker with Compose v2.
 
 ```bash
-cp .env.example .env          # optional: add LLM_API_KEY; runs fully offline without it
-docker compose up --build     # Postgres + pgvector, backend, frontend
+git clone https://github.com/Abhijith-Kannan-p/preflight.git
+cd preflight
+cp .env.example .env          # optional: add LLM_API_KEY; without it everything runs offline
+docker compose up --build
 ```
 
-Frontend http://localhost:3000 · API http://localhost:8000 · docs http://localhost:8000/docs.
-The database migrates and seeds itself on first boot. Every variable is documented in
-[.env.example](.env.example).
+Open http://localhost:3000 (API http://localhost:8000, docs http://localhost:8000/docs). The
+first start builds both images, downloads the two ONNX models (about 120 MB) and migrates and
+seeds the database by itself; the demo history is generated in the background a minute later.
+`docker compose down -v` removes everything.
 
-Without Docker: `docker compose up -d db`, then in `backend/` create a virtualenv,
-`pip install -r requirements-dev.txt`, `pip install --no-deps -r requirements-ocr.txt`
-(on Python 3.13 add `--ignore-requires-python`), `python scripts/fetch_models.py`, `alembic upgrade head`,
-`python -m app.seed`, `uvicorn app.main:app`; in `frontend/` run `npm ci && npm run dev`.
+### Without Docker
+
+Needs Python 3.11+, Node 20+ and a Postgres 16 with pgvector (`docker compose up -d db` gives
+you one).
+
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+pip install --no-deps -r requirements-ocr.txt          # on Python 3.13 add --ignore-requires-python
+python scripts/fetch_models.py
+alembic upgrade head && python -m app.seed
+uvicorn app.main:app --port 8000
+
+cd ../frontend
+npm ci && npm run dev                                  # http://localhost:3000
+```
+
+### Environment variables
+
+All are optional locally; `.env.example` has the full list with comments.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `DATABASE_URL` | local Postgres | Postgres with pgvector (`postgresql+psycopg://…`; Neon needs `?sslmode=require`) |
+| `JWT_SECRET` | dev value | Signs demo-user tokens; any long random string in production |
+| `LLM_PROVIDER` / `LLM_MODEL` / `LLM_API_KEY` | `none` | `gemini` or `groq`; without a key the product runs fully offline (deterministic mode) |
+| `LLM_TIMEOUT_SECONDS` | 8 | Per call; one retry, then the offline fallback |
+| `MASKING_ENABLED` | true | Mask confidential data before any LLM call |
+| `MODEL_LOADING` | eager | `lazy` loads the models on the first review (small hosts) |
+| `NLI_BATCH_SIZE` | 16 | Pairs per NLI pass; 2 on a 512 MB host |
+| `EVAL_AT_BOOT` | run | `precomputed` loads the shipped claim evaluation instead of running it |
+| `REVIEW_WORKERS` / `REVIEW_TIMEOUT_SECONDS` | 2 / 120 | Review job queue |
+| `OCR_THREADS` / `OCR_EXCLUSIVE` | all / false | OCR threads; `true` releases the NLI model while an image is read (512 MB hosts) |
+| `CORS_ORIGINS` / `PUBLIC_APP_URL` | localhost:3000 | Frontend origin(s) and the URL used in certificate and webhook links |
+| `SANDBOX_COOKIE_SECURE` | true | Secure flag on the demo-workspace cookie |
+| `NEXT_PUBLIC_API_URL` | localhost:8000 | Where the frontend calls the API (also the target of its sandbox proxy) |
 
 ## API example
 
@@ -120,41 +189,71 @@ curl -X POST https://preflight-api-nauz.onrender.com/api/v1/preflight \
 ```
 
 Returns the findings, the Claim Ledger, the Brand Score and `blocking: true` when a critical
-finding is open. Create a key in **Settings → API keys** (as abhi5).
+finding is open. Create a key in **Settings → API keys** (as abhi5). `examples/cms_hook.py`
+shows a CMS pre-publish hook.
 
 ## Testing and evaluation
 
-- **Backend:** 108 pytest tests (every checker, Claim Ledger verdicts, masking round trip,
-  gateway retries and circuit breaker, state machine and permissions, approval gate and
-  overrides, audit hash chain including tamper detection, API keys, rate limits, webhook
-  signatures, CSV import, receipts, schema validation rejecting fabricated rule and fact IDs).
-  `cd backend && pytest`
-- **End to end:** Playwright golden path (landing → sample → CLM-04 → accept → re-check →
-  submit → approve as abhi4 → receipt with verified audit chain) plus landing, rulebook,
-  insights, evaluation and settings tests. `cd e2e && E2E_BASE_URL=... npx playwright test`
-- **CI:** ruff, mypy --strict, pytest, eslint, tsc and a production build on every push.
-- **Claim Ledger evaluation** (`python -m app.eval.run`, 150 labelled claims, live on the
-  Evaluation page): accuracy **0.96**, macro recall **0.96** (target ≥ 0.85), problem-claim
-  recall **1.00**, `unsupported` precision **0.94** (target 0.90) on the set the rules were
-  tuned on, and **0.67** on 27 held-out claims written afterwards; failure cases are listed
-  openly.
-- **Full-draft evaluation** (`python -m app.eval.drafts`, 20 labelled drafts): precision
-  **0.92**, recall **0.89**, 15 of 20 drafts exactly right, 7 of 7 clean drafts pass. Models run as int8 ONNX; the whole backend peaks at 362 MiB under a
-  512 MiB cap.
+Full report with every number, the bugs testing found and what remains:
+[docs/TESTING.md](docs/TESTING.md).
+
+| What | Result |
+|---|---|
+| Backend (`cd backend && pytest`) | 210 tests passing; CI runs ruff, mypy, pytest, eslint, tsc and a production build on every push |
+| End to end (`cd e2e && npx playwright test`; `E2E_BASE_URL` / `E2E_API_URL` for production) | J1–J6 journeys plus page and accessibility specs: 17/17 locally; every journey passed against production |
+| Accessibility | axe on 12 pages at 375, 768 and 1440 px: no violations; Lighthouse accessibility 100 on every page, locally and in production |
+| Load | Five visitors reviewing at once all complete (34–114 s in production on one worker) |
+| Memory (512 MB, 0.1 CPU) | Container peak 385 MiB; server process peak 445 MiB for any review, 474 MiB with five visitors at once (includes ~96 MiB of shared libraries) |
+| Claim Ledger (`python -m app.eval.run`) | 150 labelled claims: accuracy 0.96, problem-claim recall 1.00, `unsupported` precision 0.94; on 27 held-out claims written afterwards: 0.67 |
+| Full drafts (`python -m app.eval.drafts`) | 20 labelled drafts: precision 0.92, recall 0.89, 15/20 exactly right, 7/7 clean drafts pass |
+| Visual review (`python -m app.eval.visual`) | 100 labelled assets: precision 1.00, recall 0.99, OCR words read 98.3% |
+| Rulebook Compiler (`python -m app.eval.compiler`) | 51 labelled rules: recall 94%, precision 100%, 100% acceptable without edits (with Gemini) |
+
+## Deployment
+
+- **Frontend:** Vercel, root `frontend/`, `NEXT_PUBLIC_API_URL` set to the API URL. A rewrite
+  sends `/api/sandbox/*` to the API so the demo-workspace cookie is first-party.
+- **Backend:** Render free plan from `render.yaml` (Singapore, 512 MB, 0.1 CPU). Models are
+  downloaded at build time; migrations and seeding run on start (`backend/start.sh`).
+  Secrets set in the dashboard: `DATABASE_URL`, `JWT_SECRET`, `LLM_API_KEY`.
+- **Database:** Neon Postgres with pgvector, in the same region as the API (a different
+  region made every query cost about 0.4 s).
+- **Keep-warm:** `.github/workflows/keep-warm.yml` pings `/health` on a 10-minute schedule;
+  GitHub runs scheduled workflows late on the free tier, so a cold start is still possible.
+- `bash deploy/render-sim.sh` reproduces the free plan's limits in Docker and reports time and
+  memory per stage.
+
+## Limitations
+
+- Demo sign-in is a role switcher with signed tokens, not real accounts.
+- On Render's 0.1 CPU an off-brand text review takes about 28 s and a visual review 22–44 s;
+  deterministic findings appear first. Five reviews at once are handled one after another.
+- The Claim Ledger's Round 3 rules were tuned on the 150-claim set; on held-out claims
+  `unsupported` precision is 0.67 and one claim was wrongly judged supported.
+- The visual evaluation set and the sample brand book were made by us; real photographs and
+  real brand books will score lower.
+- Gemini's free tier rate-limits under heavy use; tone and wording then use offline fallbacks.
+- Checks, models and evaluations are built for English; Hindi text is accepted and reviewed,
+  but its claims and tone are not checked reliably.
+- Webhook URLs are not checked against private network addresses.
+
+More in [docs/FEATURES.md](docs/FEATURES.md#known-limitations) and
+[docs/TESTING.md](docs/TESTING.md#known-remaining-issues).
+
+## Documents
+
+[Features](docs/FEATURES.md) · [Technical](docs/TECHNICAL.md) ·
+[Round 3 improvements](docs/ROUND3_IMPROVEMENTS.md) · [Testing](docs/TESTING.md) ·
+[Roadmap](docs/ROADMAP.md) · [Changes from the plan](docs/CHANGES_FROM_PLAN.md) ·
+[AI and libraries](docs/AI_AND_LIBRARIES.md) · [Demo script](docs/DEMO_SCRIPT.md) ·
+[User testing](docs/USER_TESTING.md)
 
 ## AI and library disclosure
 
 Every model, API, library and dataset is listed in
 [docs/AI_AND_LIBRARIES.md](docs/AI_AND_LIBRARIES.md). AI coding assistance (Claude Code) was
-used during development; all commits were reviewed and made by the author.
-
-## Documents
-
-[Features](docs/FEATURES.md) · [Technical](docs/TECHNICAL.md) ·
-[Changes from the plan](docs/CHANGES_FROM_PLAN.md) ·
-[Round 3 improvements](docs/ROUND3_IMPROVEMENTS.md) · [Demo script](docs/DEMO_SCRIPT.md) ·
-[User testing](docs/USER_TESTING.md)
+used during development; every commit was reviewed and made by the author.
 
 ## License
 
-MIT
+MIT, see [LICENSE](LICENSE).

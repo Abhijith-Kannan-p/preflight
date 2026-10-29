@@ -11,8 +11,9 @@ no swap, 0.1 CPU; `deploy/render-sim.sh`); "production" is the live Vercel and R
 |---|---|---|
 | Unit and integration | pytest, 210 tests, real Postgres with a rollback per test | 210 passed |
 | Main journeys J1 to J6 | Playwright, one spec per journey, local and production | 17/17 locally; 14/14 journey and page tests on production |
-| Accessibility | axe (WCAG 2.0/2.1/2.2 A and AA) on 12 pages at 375, 768 and 1440 px | 0 violations of any impact in 36 page checks |
-| Lighthouse accessibility | 9 pages, Lighthouse 12.2.1 mobile defaults | 100 on every page (target ≥ 95) |
+| Accessibility | axe (WCAG 2.0/2.1/2.2 A and AA) on 12 pages at 375, 768 and 1440 px | 0 violations of any impact in 36 page checks, locally and in production |
+| Lighthouse accessibility | 9 pages, Lighthouse 12.2.1 mobile defaults, local build and production | 100 on every page in both (target ≥ 95) |
+| Clone and run | README steps from a fresh clone of the GitHub repository | Docker path works after two fixes (below); 10/10 journey and page tests against it |
 | Layout | horizontal overflow on the same 12 pages × 3 widths | none |
 | Concurrency | five visitors (five sandboxes) start reviews together | all five complete: 7–18 s locally, 34–114 s on production (one worker) |
 | Manual checklist | scripted browser pass with a screenshot per step, production, 375 and 1440 px | 36/36 checks |
@@ -126,6 +127,21 @@ production build; the 404 page is excluded because Lighthouse does not audit a 4
 
 Performance is Lighthouse's simulated slow 4G on a mid-range phone; app pages wait for the
 API to create a private demo workspace before they draw.
+
+Production (`https://preflight-eight-smoky.vercel.app`, after the accessibility fixes were
+deployed; the axe spec also passed there at all three widths):
+
+| Page | Accessibility | Best practices | Performance | LCP |
+|---|---|---|---|---|
+| `/` | 100 | 100 | 94 | 2.8 s |
+| `/app` | 100 | 100 | 77 | 4.8 s |
+| `/app/review/new` | 100 | 100 | 60 | 4.6 s |
+| `/app/queue` | 100 | 100 | 80 | 4.4 s |
+| `/app/rulebook` | 100 | 100 | 79 | 4.6 s |
+| `/app/governance` | 100 | 100 | 81 | 4.6 s |
+| `/app/insights` | 100 | 100 | 80 | 4.6 s |
+| `/app/evaluation` | 100 | 100 | 83 | 4.4 s |
+| `/app/settings` | 100 | 100 | 78 | 4.4 s |
 
 A first local run scored 100 on accessibility too, but every app page was stuck on "Waking up
 the engine": the API refused the port by CORS. The script now reports console errors per page
@@ -248,6 +264,33 @@ Observations from the screenshots:
 - During the heavy test runs Gemini's free tier rate-limited the app; the page showed "AI
   checks temporarily limited" and the offline fallbacks took over, as designed.
 
+## Clone and run from scratch
+
+The README's instructions were followed from a fresh `git clone` of the GitHub repository in
+an empty directory, with nothing reused from the development machine.
+
+**Docker path** (`cp .env.example .env && docker compose up --build`): the stack built and
+started, migrated and seeded itself and generated the demo history, but the app was unusable,
+for two reasons the hosted deploys do not have:
+
+1. The pages had no styling. Next.js keys its CSS manifest by file path; built in a container
+   directory named `/app`, with the App Router's `app/` folder and an `app` route inside it,
+   the root layout's stylesheet was dropped. The same source builds correctly on Windows and on
+   Vercel (`/vercel/path0`). Fixed by building in `/srv/web`.
+2. Demo sign-in failed: the frontend server forwards `/api/sandbox/*` to `NEXT_PUBLIC_API_URL`,
+   `http://localhost:8000`, which inside the frontend container is the container itself.
+   Fixed with `API_INTERNAL_URL` (`http://backend:8000` in Compose), falling back to the public
+   URL everywhere else.
+
+After the fixes, J1, J2, the J6 robustness checks and the page tests ran against that stack:
+10/10 passed.
+
+**Without Docker** (Python 3.13 on Windows, Postgres from `docker compose up -d db`, a new
+empty database): virtualenv, `pip install -r requirements-dev.txt`, the OCR requirements with
+`--ignore-requires-python`, `python scripts/fetch_models.py`, `alembic upgrade head`,
+`python -m app.seed`, `uvicorn`, then `npm ci && npm run dev`, exactly as written. Everything
+installed and started; J1 and the two-browser sandbox test passed against it (2/2).
+
 ## Bugs found by testing and fixed
 
 Found by the tests, evaluations or checks above and fixed (Round 3):
@@ -268,6 +311,8 @@ Found by the tests, evaluations or checks above and fixed (Round 3):
 | Concurrency test | Five identical drafts came from the review cache in 1–2 s | Each visitor's text is unique |
 | Production timings | Every database round trip cost about 0.4 s (server in Singapore, database in another region) | Database moved to Neon in Singapore: 19 s → 0.5 s for the fact-update simulation |
 | Exploratory screenshots | Mobile navigation cut off with no sign of more items | Right-edge fade, end spacing, current page marked |
+| Fresh clone (Docker) | No stylesheet when built in a directory named `/app` | Frontend image builds in `/srv/web` |
+| Fresh clone (Docker) | Demo sign-in proxied to `localhost` inside the frontend container | `API_INTERNAL_URL` build argument |
 | Earlier phases | Offline tone heuristic flagged two-thirds of on-brand drafts; a role switch during the first session load was dropped; OCR beside NLI peaked at 504 MiB in 512 MB | Heuristic tone findings wait for a person; queued session switches; NLI released during OCR |
 
 ## Known remaining issues

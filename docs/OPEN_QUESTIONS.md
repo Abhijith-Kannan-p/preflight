@@ -21,3 +21,7 @@ Non-blocking. Work continues with the default shown; change it any time.
 5. **Held-out claim precision (0.67).** The 0.90 target is met on the tuning set (0.94) but
    not on claims written afterwards. Default: report both and stop tuning, so the held-out set
    stays honest. Further work would need a fresh held-out set.
+6. **Keep-warm.** The GitHub Actions schedule (every 10 minutes) has actually run every 3 to 6
+   hours, so visitors can still meet a sleeping backend. Default: keep the workflow and declare
+   it. Optional, no code change: add a free external monitor (for example UptimeRobot or
+   cron-job.org) that requests `https://preflight-api-nauz.onrender.com/health` every 10 minutes.

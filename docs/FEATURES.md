@@ -36,10 +36,15 @@ abhi5 Admin).
 - **Result caching** by content hash and a fingerprint of the rulebook, facts, channel and date.
 - **Admin "Reset demo data"**, which also regenerates the fictional review history.
 
-## Added in Round 3 (so far)
+## Added in Round 3
+
+The three major improvements first, then everything else built since Round 2.
 
 | Feature | Where to see it |
 |---|---|
+| **Improvement 1: Visual and accessibility review**: images, scanned PDFs and HTML emails; OCR text checked like any draft; brand palette (CIEDE2000), WCAG 2.2 contrast, logo distortion and clear space, alt text; overlay boxes, palette strip, contrast table; upload a corrected version | New review → the five visual samples; Rulebook → Palette; Evaluation → Visual review (precision 1.00 on 100 labelled assets) |
+| **Improvement 2: Governance intelligence**: Guideline Health (ambiguity score, grouped dispute reasons, LLM rewording published as a new rule version, before/after per version), Stale-Content Radar (fact-dependency index, notifications on every fact change, "Simulate fact update on F-087", Re-check now), Creator Coach (repeat-mistake rate, trend, tips on New review) | Governance (top menu) as abhi3; New review shows your coach |
+| **Improvement 3: Brand Autopilot**: Rulebook Compiler (PDF or DOCX brand book → typed rule candidates with page and excerpt, compared with the rulebook as new / update / already there; accept, edit or reject; accepted rules become cited rule versions, audit-logged) and Voice Fingerprint (tone learned from approved items, radar and table against hand-set targets, adopt as a new voice-profile version, tone-dispute rate per version) | Rulebook → Compiler and Voice as abhi3; Evaluation → Rulebook Compiler |
 | **Proof Desk design**: the draft as a proof sheet with proof marks and margin notes joined by leader lines (inline below 1024 px); rule and fact tags open their source; preflight checklist with live claims; instrument Brand Score dial; "Next step" hint | Any review |
 | **Clearance stamp and certificate**: "CLEARED FOR PUBLICATION" (approver, time, audit hash) and "OVERRIDE NOTED"; boarding-pass certificate with QR code, A4 print and matching PDF | Approve a review, then View Review Receipt |
 | **Private demo workspace per visitor**: each browser gets its own copy of PayWise (rules, facts, personas, history, audit chain), kept in an httpOnly cookie; reset touches only that copy; idle copies are deleted after 24 h | Role switcher → "Reset my demo workspace"; open the app in two browsers |
@@ -47,12 +52,9 @@ abhi5 Admin).
 | **No endless spinners**: every request gives up after 45 s with a clear message; a review is stopped after 2 minutes with a "Re-check" prompt; a stalled live stream is reported after 60 s | Review page |
 | **Double actions are safe**: `Idempotency-Key` on every write; repeated accepts, approvals or Run presses apply once | API docs; double-click anything |
 | **Clear errors**: empty, oversized, corrupt, password-protected, renamed-binary and unsupported uploads each get a specific message; styled 404 and error pages; wrong-role actions explain which role can do it | Try a 0-byte .pdf; open a review link from another browser |
-| **Keep-warm**: a scheduled GitHub Action pings `/health` every 10 minutes so visitors do not meet a sleeping backend | `.github/workflows/keep-warm.yml` |
-| **Improvement 2: Governance intelligence**: Guideline Health (ambiguity score, grouped dispute reasons, LLM rewording published as a new rule version, before/after per version), Stale-Content Radar (fact-dependency index, notifications on every fact change, "Simulate fact update on F-087", Re-check now), Creator Coach (repeat-mistake rate, trend, tips on New review) | Governance (top menu) as abhi3; New review shows your coach |
-| **Accessibility and layout checked**: axe on every main page at 375, 768 and 1440 px with no violations, Lighthouse accessibility 100, keyboard-reachable scroll areas, contrast-safe buttons and stamps, mobile navigation that shows it scrolls | Any page; `docs/TESTING.md` |
 | **Round 2 gaps closed**: webhook events `review.published` and `finding.critical`, 3 attempts with exponential backoff, attempt log and Resend; notifications pushed live over SSE; 20 labelled full drafts evaluated end to end; Claim Ledger `unsupported` precision 0.94 with a held-out check | Settings → Webhooks; the bell updates without a reload; Evaluation → Full drafts and the held-out note under Claim Ledger |
-| **Improvement 3: Brand Autopilot**: Rulebook Compiler (PDF or DOCX brand book → typed rule candidates with page and excerpt, compared with the rulebook as new / update / already there; accept, edit or reject; accepted rules become cited rule versions, audit-logged) and Voice Fingerprint (tone learned from approved items, radar and table against hand-set targets, adopt as a new voice-profile version, tone-dispute rate per version) | Rulebook → Compiler and Voice as abhi3; Evaluation → Rulebook Compiler |
-| **Improvement 1: Visual and accessibility review**: images, scanned PDFs and HTML emails; OCR text checked like any draft; brand palette (CIEDE2000), WCAG 2.2 contrast, logo distortion and clear space, alt text; overlay boxes, palette strip, contrast table; upload a corrected version | New review → the five visual samples; Rulebook → Palette; Evaluation → Visual review (precision 1.00 on 100 labelled assets) |
+| **Accessibility and layout checked**: axe on every main page at 375, 768 and 1440 px with no violations, Lighthouse accessibility 100, keyboard-reachable scroll areas, contrast-safe buttons and stamps, mobile navigation that shows it scrolls | Any page; `docs/TESTING.md` |
+| **Keep-warm**: a scheduled GitHub Action pings `/health` (every 10 minutes on paper; GitHub has run it every 3 to 6 hours, so a cold start is still possible) | `.github/workflows/keep-warm.yml` |
 
 ## Known limitations
 
@@ -64,8 +66,8 @@ abhi5 Admin).
 - On the 20 full drafts, compound sentences ("Founded in 2017 in Bengaluru, we now serve…")
   hide a contradicted year, and a fee-free first-month offer goes to a person instead of
   being called unsupported (recall 0.89).
-- Visual review on Render's 0.1 CPU: OCR takes about 7 s per image (11 s per scanned page) and a
-  whole visual review 25–30 s; under 2 s on a normal CPU. The visual evaluation set is
+- Visual review on Render's 0.1 CPU: OCR takes 6–9 s per image; under 2 s for a whole visual
+  review on a normal CPU. The visual evaluation set is
   synthetic, so real photographs and unusual fonts will score lower than its 1.00 precision.
 - The Rulebook Compiler is evaluated on one brand book that we wrote and labelled ourselves;
   real brand books with complex layouts (multi-column pages, images of tables) will do worse.
@@ -74,7 +76,15 @@ abhi5 Admin).
   shown on first open is an estimate (labelled in the app). Tone-dispute rate after adoption
   fills in only as new drafts are reviewed.
 - Demo authentication is a role switcher with signed tokens, not real accounts.
-- On Render's free plan the backend sleeps after 15 idle minutes. The keep-warm workflow pings
-  it every 10 minutes; GitHub can delay scheduled runs, so a cold start is still possible. Then
-  the first visit takes about a minute, and the first review loads the models (10–20 s extra). With 0.1
-  CPU a full review takes roughly 30–40 s; deterministic findings still appear first.
+- On Render's free plan the backend sleeps after 15 idle minutes. The keep-warm workflow is
+  scheduled every 10 minutes, but GitHub has run it only every 3 to 6 hours, so a cold start
+  is possible: the first visit then takes about a minute and the first review loads the models.
+  Warm, on 0.1 CPU, an off-brand text review takes about 28 s and a visual review 22–44 s
+  (target 20 s); deterministic findings appear first. Five reviews at once run one after
+  another.
+- Memory: by the container's accounting the peak is 385 MiB; the server process's own peak is
+  445 MiB for any review and 474 MiB with five visitors arriving together (it includes about
+  96 MiB of shared libraries). See TESTING.md.
+- Gemini's free tier rate-limits under heavy use; tone and wording then use offline fallbacks.
+- Checks and evaluations are built for English; Hindi text is accepted but its claims and tone
+  are not checked reliably. Webhook URLs are not checked against private network addresses.

@@ -3,6 +3,20 @@
 Each builds directly on the Round 2 engine: the typed Finding contract, the Brand Knowledge
 Base, the Claim Ledger, the AI gateway with masking, and the workflow with its audit log.
 
+## Results at a glance
+
+| Improvement | Measure | Target | Result |
+|---|---|---|---|
+| 1. Visual and accessibility review | Precision on 100 labelled assets | ≥ 0.90 | **1.00** (recall 0.99) |
+| | OCR words read correctly | WER < 5% | **98.3%** |
+| | Time per image | < 6 s | **1.3 s** on a normal CPU; **6–9 s** OCR on Render's 0.1 CPU (missed there) |
+| | Peak memory, 512 MB host | < 450 MiB | **385 MiB** container peak; 445 MiB server process peak (see TESTING.md) |
+| 2. Governance intelligence | Disputes after rewording | 30% fewer | **−100%** on DSC-01 (80% → 0%, small sample) |
+| | Affected items listed after a fact change | 100% within a minute | **100%**; the fact update that lists them takes 0.5 s in production |
+| | Repeat mistakes per author | 25% fewer | baseline measured; needs writers using the Coach |
+| 3. Brand Autopilot | Compiled rules accepted without edits | ≥ 80% | **100%** (recall 94%, right page 100%) |
+| | Tone disputes with the learned voice | 30% fewer | measured per version; projection: tone flags 24 → 9 of 36 drafts, 6 of 6 disputed drafts cleared |
+
 ## 1. Visual and accessibility review (delivered)
 
 **What it is.** Images (PNG, JPG, WebP), scanned PDFs and HTML emails are reviewed like any
@@ -165,3 +179,20 @@ Run: `python -m app.eval.compiler --export ../data/eval/compiler_run.json`.
 The fingerprint on the demo is learned from heuristic tone scores (labelled). Means were chosen
 over medians after comparing both: technical scores are bimodal, and medians left 18 of 36
 drafts flagged against 9 with means.
+
+## Other improvements since Round 2
+
+Built alongside the three improvements (Round 3 spec sections 4 and 5), each in
+[FEATURES.md](FEATURES.md#added-in-round-3) with where to find it:
+
+| Area | What changed | Measured |
+|---|---|---|
+| Design | "Proof Desk" system: the draft as a proof sheet with margin notes and leader lines, preflight checklist, instrument Brand Score dial, clearance stamp, boarding-pass certificate with QR and matching PDF; landing rebuilt around a live-looking proof | axe: no violations on 12 pages × 3 widths; Lighthouse accessibility 100 |
+| Per-visitor sandboxes | Each browser gets a private copy of PayWise (rules, facts, personas, history, audit chain); reset affects only that copy; idle copies deleted after 24 h | Two-browser isolation test passes locally and in production |
+| Robustness | Review job queue with positions and reattach after refresh; idempotency keys on every write; 45 s client timeouts; SSE reconnect and stall states; specific messages for every bad file; styled 404 and error pages; wrong-role explanations | J6 passes in production; 36/36 exploratory checks |
+| Claim Ledger | Scope check (payment method, app store), hedged wording to a person, "we" read as PayWise; evaluation runs replaced when the logic changes | `unsupported` precision 0.84 → 0.94 (0.67 held out) |
+| Evaluations | 20 labelled full drafts; 27 held-out claims; 100 visual assets; brand-book labels | Full drafts: precision 0.92, recall 0.89 |
+| Webhooks | `review.published` and `finding.critical` events, 3 attempts with backoff, per-attempt log, Resend, per-webhook event choice | Tested with a 405 target (final at once) and a refused port (3/3, then failed) |
+| Notifications | Pushed over SSE when their transaction commits; polling only while the stream is down | Verified locally: a submit reached the approver's stream at once; unit-tested on commit and rollback |
+| Performance | Database moved next to the API (Singapore); sandbox clones serialised; models released and memory trimmed around OCR | Fact-update simulation 19 s → 0.5 s; `/health` 1.05 s → 0.24 s |
+| Testing | J1–J6 Playwright specs runnable against production, axe at three widths, Lighthouse script, Render simulation, exploratory checklist with screenshots | See [TESTING.md](TESTING.md) |

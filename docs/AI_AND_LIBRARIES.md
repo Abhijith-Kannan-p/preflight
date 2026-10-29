@@ -84,7 +84,9 @@ Pillow's bundled font. CIEDE2000 and the WCAG contrast formula are implemented i
 | Recharts | Insights and evaluation charts | MIT |
 | clsx | Class name composition | MIT |
 | qrcode (node-qrcode) | QR code on the Clearance Certificate | MIT |
-| Playwright | Golden-path end-to-end test | Apache-2.0 |
+| Playwright | End-to-end journeys J1–J6, layout checks, exploratory checklist and screenshots | Apache-2.0 |
+| axe-core via @axe-core/playwright | Accessibility checks (WCAG 2.0/2.1/2.2 A and AA) in the e2e suite | MPL-2.0 |
+| Lighthouse (run with `npx`, not a dependency) | Accessibility, best-practice and performance scores | Apache-2.0 |
 
 ## Templates and design inspiration
 

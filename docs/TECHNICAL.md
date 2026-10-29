@@ -3,20 +3,34 @@
 ## Architecture
 
 ```
-frontend/   Next.js 15 (App Router), React 19, TypeScript, Tailwind, SWR, framer-motion, Recharts
+frontend/   Next.js 15 (App Router), React 19, TypeScript, Tailwind ("Proof Desk" tokens), SWR,
+            framer-motion, Recharts
 backend/    Python 3.11, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic
-  app/engine/        normaliser, checkers, Claim Ledger, merger, drift, Brand Score, validator
+  app/engine/        normaliser, checkers, Claim Ledger (detect, retrieve, scope, quantities,
+                     quote), merger, drift, Brand Score, validator
+  app/visual/        intake (images, scans, HTML), OCR, palette, contrast, logo, alt text
+  app/governance/    Guideline Health, rewording, Stale-Content Radar, Creator Coach, Voice Fingerprint
+  app/compiler/      brand-book reader, structured and LLM extraction, typed schema, matcher, apply
   app/ai/            masking, provider gateway (Gemini / Groq / none), tone, claim extraction, suggestions
-  app/api/           REST endpoints (reviews, rulebook, receipts, insights, evaluation, settings, public v1)
-  app/services/      review runner, SSE event bus, webhooks, rate limiter, demo history, receipt PDF
-  app/eval/          labelled-set runner and metrics
-data/seed/  fictional PayWise brand: rules, facts, terms, channels, confidential terms, samples, history
-data/eval/  150 labelled claims
-e2e/        Playwright tests
+  app/ml/            ONNX embedder and NLI, lazy loading, memory trimming
+  app/api/           REST endpoints (reviews, rulebook, governance, compiler, receipts, insights,
+                     evaluation, settings, sandbox, public v1)
+  app/services/      review job queue and runner, SSE event bus, sandboxes, webhooks, notifications,
+                     rate limiter, demo history, receipt PDF
+  app/eval/          claims, full drafts, visual and compiler evaluations
+data/seed/     fictional PayWise brand: rules, facts, terms, channels, confidential terms,
+               samples, six-week review history
+data/samples/  the fictional 20-page PayWise Brand Book (PDF)
+data/eval/     150 + 27 held-out claims, 20 full drafts, 100 visual assets, brand-book labels,
+               and the precomputed runs
+e2e/           Playwright: J1-J6 journeys, accessibility and layout; scripts for Lighthouse,
+               load, timing and the exploratory checklist
+deploy/        Render simulation (render-sim.sh), Hugging Face Space package
 ```
 
-Hosting: frontend on **Vercel**; backend on **Render's free plan** (512 MB RAM, 0.1 CPU) from
-`render.yaml`; Postgres with pgvector on **Neon**. `deploy/hf-space/` holds an equivalent Hugging
+Hosting: frontend on **Vercel**; backend on **Render's free plan** (512 MB RAM, 0.1 CPU,
+Singapore) from `render.yaml`; Postgres with pgvector on **Neon** in the same region (an
+earlier database in another region cost about 0.4 s per query round trip). `deploy/hf-space/` holds an equivalent Hugging
 Face Docker Space package.
 
 ## Data flow for one review
@@ -88,10 +102,16 @@ embedding model is unavailable.
    compared as percentages.
 4. **Quote check.** A `supported` verdict must cite a run of at least three words found
    verbatim in the fact; otherwise it is downgraded to `needs_review`.
-5. **Decide.** Entailment ≥ 0.7 with a current fact and a valid quote → supported. Matches a
+5. **Scope.** Before any fact may judge a claim, facts about a different payment method
+   (UPI, card, net banking, wallet) or app store (Google Play, Apple) than the claim names are
+   set aside: "10% cashback on UPI" is not contradicted by the card's 1% cashback. Products are
+   not a scope group, because they overlap (a Business merchant pays Card fees). Claims
+   written as "we" or "our" are read as PayWise for retrieval and NLI.
+6. **Decide.** Entailment ≥ 0.7 with a current fact and a valid quote → supported. Matches a
    superseded fact whose successor differs → outdated (with the current fact). Contradiction
    ≥ 0.6 with a clearly on-topic current fact (similarity ≥ 0.74 for numbers, ≥ 0.75 for NLI
-   alone) → contradicted. Ambiguous 0.4–0.6 → needs_review. Otherwise unsupported.
+   alone) → contradicted. Ambiguous 0.4–0.6 → needs_review. Hedged wording with no number to check
+   ("trusted by millions", "cheaper than most") → needs_review. Otherwise unsupported.
    Because the small NLI model rejects true paraphrases that add harmless detail, a
    deterministic support path also accepts a claim when the numbers match exactly (or a
    verbatim quote covers most of it) on an on-topic fact with no contradiction, at
@@ -124,7 +144,11 @@ dates, `superseded_by`, `embedding vector(384)`), `Term`, `ChannelProfile`,
 `ConfidentialTerm`, `SampleDraft`, `Submission` (state), `Revision` (normalised document,
 content hash, report), `Finding`, `Claim` (ledger row with steps), `Decision`, `Comment`,
 `Notification`, `AuditEvent`, `AiCall`, `ApiKey` (SHA-256 hash only), `Webhook`,
-`WebhookDelivery`, `EvalRun`. Migrations: Alembic.
+`WebhookDelivery` (status, attempts and every attempt, the payload for resending),
+`EvalRun` (with the ledger version that produced it), `IdempotencyKey`, `RevisionAsset`
+(images and page renders), `CompileJob` and `RuleCandidate` (the compiler's review queue).
+Workspaces have a kind (`template` or `sandbox`), a voice profile with version history and
+rulebook and factbook versions. Migrations: Alembic, run on every start.
 
 **Audit log**: append-only `(id, entity, entity_id, action, actor_id, payload_json, ts,
 prev_hash, hash)` with `hash = sha256(prev_hash + canonical_json(event))`. Appends take a
@@ -140,11 +164,87 @@ approver); approving requires every remaining critical to be overridden with a w
 reason, which is highlighted on the receipt. Permissions follow the Round 1 table and are
 enforced in the backend (`app/auth.py`); demo sign-in issues a signed JWT per seeded user.
 
+## Per-visitor sandboxes
+
+The seeded PayWise workspace is a **template**. The first request of a new browser (through
+the frontend's `/api/sandbox/*` rewrite, so the httpOnly cookie is first-party) clones it in
+the database: rules, facts with embeddings, terms, channels, palette, samples, the review
+history with findings, claims and decisions, and the five personas with suffixed ids
+(`usr_abhi1_3f2a…`). The audit chain is re-chained for the copy. Everything is scoped by
+`user.workspace_id`, so a visitor never sees another's data; "Reset my demo workspace" clears
+and re-clones only theirs (fresh persona ids, versions moved forward so no cached result is
+reused). A sweeper deletes sandboxes idle for 24 hours. Clones run one at a time (each holds
+the template's audit chain in memory). Cloning takes about 0.1 s locally. Reviews are cached by a context fingerprint (content, channel, rulebook and
+factbook content), so identical sandboxes share results safely; a cached review is labelled.
+
+## Visual review
+
+Images (PNG, JPG, WebP up to 5 MB, 40 MP decompression guard), scanned PDFs (pages with
+little text layer are rendered at 150 dpi, at most 5) and HTML emails go through
+`app/visual/`:
+
+1. **OCR**: RapidOCR (PP-OCRv4 detection and recognition on ONNX Runtime) on a copy reduced
+   to 736 px (960 px for scans); lines grouped into paragraph blocks with a per-line layout,
+   so every text finding is also drawn on the image. The logo's own letters are removed.
+2. **Text checks**: the OCR text becomes the document and every text checker runs on it.
+3. **VIS-01 palette**: k-means (k = 6) on a thumbnail; colours over 8% of the image more than
+   ΔE00 10 (CIEDE2000, our numpy implementation tested against the published reference pairs)
+   from every brand colour.
+4. **ACC-01 contrast**: per OCR line, the WCAG 2.2 ratio of text pixels to the box's edge
+   colour; 4.5:1, or 3:1 for large text.
+5. **VIS-02 / VIS-03 logo**: OpenCV template matching confirmed by the brand teal; the tile's
+   aspect ratio (over 5% off is distortion) and a clear-space ring of a quarter of the logo
+   height.
+6. **ACC-02 / ACC-03 alt text**: missing, empty, file-name or "image of…" alt text.
+
+On a 512 MB host (`OCR_EXCLUSIVE=true`) the NLI model is released while an image is read, so
+the two models never share memory.
+
+## Governance intelligence
+
+All three views are computed from data the workflow already records, nothing extra is
+stored:
+- **Guideline Health**: per rule and per rule version (by the time each version was active),
+  findings raised once per review, dispute, override and acceptance rates,
+  `ambiguity = 0.6 × dispute rate + 0.4 × override rate` (from 4 findings, flagged at 30%),
+  dispute reasons grouped by word-stem overlap; the LLM rewording is published as a new rule
+  version through the normal rulebook endpoint.
+- **Stale-Content Radar**: an index from cleared items → cleared revision → claims → the
+  facts their evidence cited, with the fact's wording at review time. Every fact update,
+  supersession or retirement looks up the index in the same transaction and notifies the
+  authors and brand managers; "Re-check now" opens the cleared text as a new review.
+- **Creator Coach**: per author, first-draft findings in time order; a repeat mistake is a
+  rule that already flagged one of their earlier first drafts. Tips come from the rule's
+  guidance, its approved wording and the author's own last fix.
+
+## Rulebook Compiler and Voice Fingerprint
+
+The compiler (`app/compiler/`) runs as a background job with five stages streamed over SSE:
+read the document with page numbers (PyMuPDF, tables with `find_tables`; DOCX by heading);
+structured extraction (tables, word lists, colours, numeric limits, quoted phrases under claim
+headings, "must include" disclaimers); one masked LLM call for prose rules; a typed schema
+(term, word, pattern, disclaimer, colour, channel, threshold, voice, guidance), each item
+validated on its own; and a comparison with the workspace's rulebook (same term, pattern or
+limit; ΔE00 < 3 for colours; embedding similarity ≥ 0.82 for prose guidance). Candidates wait
+in `rule_candidates`; accepting one writes a new rule version (or term, colour, channel limit,
+voice profile) cited to the brand book and page, bumps the rulebook version and is
+audit-logged. Without the LLM the structured stage still runs and the page says what is
+missing.
+
+The Voice Fingerprint (`app/governance/voice.py`) averages the tone scores stored with every
+approved item's latest review and adds lexical habits per 100 words. Adopting it writes a new
+voice-profile version (the old one kept, audit-logged); the tone checker reads the profile in
+force when a review starts. Its effect is measured as the tone-dispute rate per profile
+version, plus a replay of stored scores against the learned targets.
+
 ## Reliability
 
-- Reviews run in worker threads with their own event loop, so CPU-bound NLI never blocks
-  the API. Progress streams over SSE with replay for late subscribers, plus polling as a
-  fallback.
+- Reviews are jobs on a small worker pool (`REVIEW_WORKERS`) with queue positions, a
+  120 s budget and re-queueing after a restart, so a reloaded page reattaches. Progress
+  streams over SSE with replay for late subscribers, reconnection with backoff, a stall state
+  after 60 s and polling as a fallback. Every request gives up after 45 s with a message.
+- Every write accepts an `Idempotency-Key`; repeated decisions on a finding are no-ops, so
+  double clicks never duplicate anything.
 - Models load once in a background thread at boot; `/health` reports `models_ready` and the
   frontend shows "Waking up the engine…" until then. The Docker image bakes both models in
   and runs with `HF_HUB_OFFLINE=1`, so start-up never depends on huggingface.co.
@@ -194,28 +294,32 @@ pass.
 
 ## Running in 512 MB
 
-Both models are int8 ONNX files run by ONNX Runtime (no PyTorch). Each was measured inside a
-container capped at 512 MiB and 0.1 CPU, Render's free plan:
+Both text models are int8 ONNX files run by ONNX Runtime (no PyTorch); OCR uses ONNX models
+too. What makes it fit (`app/ml/`): graph optimisation off (it expanded the int8 weights to
+408 MiB at load), no memory arena, one thread; SentencePiece instead of `tokenizers` for the
+128k DeBERTa vocabulary (56 vs 106 MiB); `NLI_BATCH_SIZE=2`; `MODEL_LOADING=lazy`; the NLI
+model released while OCR runs (`OCR_EXCLUSIVE`); `malloc_trim` after each review and
+`MALLOC_ARENA_MAX=2`; sandbox clones one at a time; and the evaluation loaded from
+`data/eval/precomputed_run.json`. Models are downloaded during the build and used with
+`HF_HUB_OFFLINE=1`. If a model fails to load, the Claim Ledger falls back to numeric and
+lexical checks and every deterministic checker still runs.
 
-| Stage | Resident memory |
-|---|---|
-| App imported | 108 MiB |
-| + bge-small int8 embedder | 223 MiB |
-| + NLI int8 session and SentencePiece | 345 MiB |
-| Full boot + demo history + a LinkedIn review | **362 MiB peak**, no OOM |
+`bash deploy/render-sim.sh` runs the production image with 512 MB, no swap and 0.1 CPU:
 
-What made it fit (`app/ml/onnx.py`, `app/ml/nli.py`): graph optimisation off (it expanded the
-int8 weights to 408 MiB at load; identical outputs without it), no memory arena, one thread;
-SentencePiece instead of `tokenizers` for the 128k DeBERTa vocabulary (56 vs 106 MiB, identical
-ids); `NLI_BATCH_SIZE=2` because DeBERTa's relative attention needs about 20 MiB per pair in
-flight; one inference at a time; `MODEL_LOADING=lazy`; and the evaluation loaded from
-`data/eval/precomputed_run.json` (`EVAL_AT_BOOT=precomputed`). Models are downloaded during
-the build (`backend/scripts/fetch_models.py`) and used with `HF_HUB_OFFLINE=1`. If a model
-fails to load, the Claim Ledger falls back to numeric and lexical checks and every
-deterministic checker still runs.
+| Stage | Server process peak | Container (cgroup) peak |
+|---|---|---|
+| Server up, demo history generated | 252 MiB | 198 MiB |
+| First text review (models load) | 445 MiB | 385 MiB |
+| Visual review, compiler, fingerprint | 445 MiB | 385 MiB |
+| Five visitors at once | 474 MiB | 385 MiB |
+
+No out-of-memory kill or restart. The container figure is what the 512 MB limit counts; the
+process figure also includes about 96 MiB of shared-library pages the container is not charged
+for. Details: [TESTING.md](TESTING.md#memory).
 
 ## Testing
 
-112 backend tests (pytest, a real Postgres per test with rollback), Playwright end-to-end
-tests for the golden path and every page, and CI (ruff, mypy --strict, pytest, eslint, tsc,
-production build) on every push.
+210 backend tests (pytest, a real Postgres with a rollback per test), Playwright specs for the
+six main journeys plus accessibility and layout at three widths, run locally and against
+production, and CI (ruff, mypy, pytest, eslint, tsc, production build) on every push. Every
+result is in [TESTING.md](TESTING.md).
