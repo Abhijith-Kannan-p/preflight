@@ -52,5 +52,10 @@ test("insights and evaluation show real numbers", async ({ page }) => {
   await page.goto("/app/evaluation");
   await expect(page.getByText("Confusion matrix")).toBeVisible({ timeout: 120_000 });
   await expect(page.getByText("Macro recall")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Held-out check/ })).toBeVisible();
   await shot(page, "14-evaluation");
+  await page.getByRole("tab", { name: "Full drafts" }).click();
+  await expect(page.getByRole("heading", { name: "Per draft" })).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText("Settlement speed").first()).toBeVisible();
+  await shot(page, "15-full-drafts");
 });

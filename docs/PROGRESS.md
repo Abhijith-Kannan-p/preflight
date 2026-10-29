@@ -59,11 +59,19 @@ Updated after every commit checkpoint. Build order follows section 13 of the Rou
   were not read as PayWise; production would have kept showing the old evaluation run.
   Tests: backend 210, e2e 11.
 
+- 8. Hardening and testing (2026-10-29): J1–J6 as separate Playwright specs (local 17/17;
+  production 14/14 after fixing four test issues); axe on 12 pages × 3 widths (33 serious
+  findings fixed, now 0 of any impact); Lighthouse accessibility 100 and best practices 100 on
+  9 pages; exploratory checklist on production 36/36 with screenshots; Render simulation script
+  with memory per stage; production found to cross continents for every query (0.4 s round
+  trips): database moved to Singapore, fact-update simulation 19 s → 0.5 s. Results in
+  `docs/TESTING.md`. Tests: backend 210, e2e 17.
+
 ## In progress
-- 8. Hardening and testing
+- 9. Documentation and handover
 
 ## Next
-- 9. Documentation and handover
+- Nothing after 9.
 
 ## Blockers
 - None.
