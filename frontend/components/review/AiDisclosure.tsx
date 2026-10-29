@@ -24,7 +24,7 @@ export function AiDisclosure({ ai, tone }: { ai?: AiSummary; tone?: ToneProfile 
           <span>
             <strong>AI used: </strong>
             {hosted ? `${list(ai.purposes)} via ${ai.provider}/${ai.model}.` : "no hosted LLM for this review (deterministic mode)."}
-            {ai.failed_purposes.length > 0 && <span className="text-amber-700"> {list(ai.failed_purposes)} fell back to deterministic logic after a timeout.</span>}
+            {ai.failed_purposes.length > 0 && <span className="text-ink"> {list(ai.failed_purposes)} fell back to deterministic logic after a timeout.</span>}
           </span>
         </p>
         <p className="flex items-start gap-2">
@@ -53,7 +53,7 @@ export function AiDisclosure({ ai, tone }: { ai?: AiSummary; tone?: ToneProfile 
                 <li key={trait} className="grid grid-cols-[90px_1fr_80px] items-center gap-3 text-xs">
                   <span className="font-medium capitalize">{trait}</span>
                   <span className="relative h-2 rounded-none bg-paper-100">
-                    <span className={`absolute inset-y-0 left-0 rounded-none ${off ? "bg-amber" : "bg-teal"}`} style={{ width: `${score * 100}%` }} />
+                    <span className={`absolute inset-y-0 left-0 rounded-none ${off ? "bg-graphite" : "bg-teal"}`} style={{ width: `${score * 100}%` }} />
                     <span className="absolute -top-1 h-4 w-0.5 bg-navy" style={{ left: `${target * 100}%` }} title={`Target ${target}`} />
                   </span>
                   <span className="text-right font-mono text-navy-500">

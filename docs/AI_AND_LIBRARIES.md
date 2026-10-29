@@ -77,7 +77,7 @@ Pillow's bundled font. CIEDE2000 and the WCAG contrast formula are implemented i
 | Next.js 15, React 19 | Web app | MIT |
 | Tailwind CSS 3 | Styling | MIT |
 | Newsreader, IBM Plex Sans, IBM Plex Mono (Google Fonts via next/font) | Proof Desk typefaces: serif, sans and mono | OFL |
-| framer-motion | The landing intro (scroll-linked perspective tunnel, spring parallax) and the tour | MIT |
+| framer-motion | The guided tour and the engine wake-up screen (the landing hero is plain canvas, no library) | MIT |
 | lucide-react | Icons | ISC |
 | SWR | Data fetching and cache revalidation | MIT |
 | jsdiff (`diff`) | Word-level revision diff | BSD-3 |
@@ -92,6 +92,9 @@ Pillow's bundled font. CIEDE2000 and the WCAG contrast formula are implemented i
 
 - Round 2's landing hero adapted a "Perspective Tunnel Hero" framer-motion snippet shared
   by the author. Round 3 removed it: the landing now shows a live Proof Sheet specimen.
+- The landing hero's murmuration follows a `MurmurationWordmark` concept from the author's brief
+  (presets, reeds, hawk pointer); the component itself was written for this project in plain
+  canvas 2D, since the original was not supplied.
 - The Round 3 "Proof Desk" visual language (proof marks, margin notes, clearance stamp,
   boarding-pass certificate) follows the author's design brief; it is not taken from a kit.
 - No UI kit or page template was copied; components are hand-written with Tailwind.

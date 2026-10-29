@@ -23,6 +23,8 @@ test("J2 visual: festive banner to an approved corrected design", async ({ page 
   await expect(page.getByRole("img", { name: "The reviewed visual" })).toBeVisible();
   await expect(page.getByText("off-palette").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Major finding VIS-01 on the image" })).toBeVisible();
+  // Each box on the image is joined to its note.
+  await expect.poll(async () => page.locator("[data-connector]").count()).toBe(await page.locator("[data-box]").count());
   await shot(page, "20-visual-review");
 
   await page.locator('input[type="file"]').setInputFiles(FIXED);

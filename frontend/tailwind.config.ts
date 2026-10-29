@@ -5,7 +5,7 @@ import type { Config } from "tailwindcss";
 const v = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
 
 export default {
-  // `dark:` variants follow the Night Desk theme attribute, not the media query.
+  // `dark:` variants follow the Warm Night Desk theme attribute, not the media query.
   darkMode: ["selector", '[data-theme="dark"]'],
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   theme: {
@@ -28,6 +28,9 @@ export default {
         raised: v("raised"),
         action: { DEFAULT: v("action"), hover: v("action-hover") },
         "on-action": v("on-action"),
+        "on-signal": v("on-signal"),
+        "hero-action": { DEFAULT: v("hero-action"), on: v("on-hero-action") },
+        oxblood: v("oxblood"),
         ink: { DEFAULT: v("ink"), soft: v("ink-soft") },
         graphite: v("graphite"),
         rule: v("rule"),

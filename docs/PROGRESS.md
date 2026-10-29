@@ -133,6 +133,40 @@ Visual and interaction design only; all functionality unchanged.
   themes) in `docs/images/` from `e2e/scripts/readme-shots.mjs`; README, TESTING ("UI
   refresh"), FEATURES, CHANGES_FROM_PLAN, DEMO_SCRIPT updated.
 
+### UI refresh 2 (murmuration hero, connected notes, Warm Night Desk)
+
+- W1. Warm Night Desk (2026-10-30): the dark theme moves to warm near-black (#1C1816 desk,
+  #241F1C cards, #2B2522 raised, #3A332E hairlines, ivory #EDE6DC text). Teal #2BA89A is the one
+  accent: primary actions (dark text #10201E), links, focus rings, active tabs and the section
+  line; per-section colours are gone. Red, amber and blue now appear only for severities (plus
+  red for Delete, blocked and failed states): read-only notices, the AI-fallback chip, review
+  states, the notification badge, diff deletions and evaluation tags became teal or neutral.
+  Oxblood #9B1C1C logo mark and favicon. The proof sheet and certificate stay lit paper, with a
+  faint warm desk-lamp glow and paper grain in the dark theme. axe clean in both themes at 375 /
+  768 / 1440 px; J1–J6, pages and landing 15/15.
+- W2. Murmuration hero (2026-10-30): the scroll tunnel intro, its session memory and "Replay
+  intro" are gone. The landing page opens on a full-height sky where about 3,000 starlings (fewer
+  on small screens, by area) fold, converge into PREFLIGHT, hold it and scatter; the pointer or a
+  finger is a hawk they flee. Letters sampled from Newsreader at 800. Dusk preset (near-black
+  birds and reeds against a warm horizon) on the Warm Night Desk, paper preset on Paper Desk,
+  switching live with the theme. Kicker, "Every claim earns its place." and the two actions are
+  server-rendered over a soft scrim; the canvas starts after hydration, pauses off-screen and in
+  hidden tabs, and with reduced motion draws the formed word once. Landing Lighthouse 95
+  (was 91), first-load JS 133 kB; full suite 25/25 with a new hero spec.
+- W3. Connected margin notes (2026-10-30): every visible note is joined to its mark by an
+  orthogonal elbow: down from the numbered marker into the line spacing, right to its own lane
+  in a widened gutter, along the lane to the note's level, into the number badge. Lanes follow
+  reading order so connectors never cross one another's verticals or pass over a note. Lines
+  are 1 px at 35% in the severity colour (teal once settled); the active note's is 2 px at full
+  strength. Redrawn on resize, font load, expand and collapse (following the notes' slide frame
+  by frame), filtering, re-check and scroll (the text is sticky). Same on the landing specimen
+  and visual reviews (from each box). Inline notes without lines below 1024 px.
+- W4. Tests, screenshots, docs (2026-10-30): connectors spec plus checks in J1 and J2; full suite
+  26/26, axe clean in both themes at three widths, Lighthouse accessibility 100 on 9 pages,
+  exploratory 54/54. Primary buttons, the avatar and tooltips no longer ivory on the dark desk.
+  Eighteen screenshots regenerated (hero replaces intro); README, TESTING ("UI refresh 2"),
+  FEATURES, DEMO_SCRIPT, AI_AND_LIBRARIES, CHANGES_FROM_PLAN updated.
+
 ## Blockers
 - None.
 

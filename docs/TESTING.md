@@ -369,3 +369,50 @@ Not automated: touch drag on a real phone. Headless Chrome's synthetic touch ges
 scroll even a plain page, so the intro test checks that nothing blocks touch (no
 `touch-action: none`, no touch handlers) and drives the scroll with the default gesture. The
 intro uses the page's own scrolling, so touch behaves as on any page; check it once on a phone.
+
+## UI refresh 2 (murmuration hero, connected notes, Warm Night Desk)
+
+Visual and interaction changes only. Tested on a local production build with the local API
+after each step, and again on the final build.
+
+| What | How | Result |
+|---|---|---|
+| Journeys and pages | Playwright, all specs | 26/26 on the final build (also 15/15 after step 1, 25/25 after step 2, 26/26 after step 3) |
+| New and changed tests | `hero.spec`: headline and buttons in the server HTML, canvas `aria-hidden`, word in an sr-only span, the canvas animates, pointer sweeps cause no errors, the theme toggle repaints the sky live, "See how it works" scrolls and moves focus, the loop stops off-screen; reduced motion draws the formed word and stays still; phone: buttons stack, no sideways scroll, no `touch-action: none`. `connectors.spec`: one connector per visible note, each ending on its badge (within 1.5 px) after expanding a note, filtering a severity and resizing; the active one at full strength and 2 px; none below 1024 px. J1 checks connectors after the re-check; J2 checks one per box on the visual review | all pass |
+| Accessibility | axe on 12 pages × 375 / 768 / 1440 px × both themes | 0 violations |
+| Lighthouse | 9 pages, mobile defaults | accessibility 100 and best practices 100 everywhere; landing performance 95 (91 before), LCP 2.7 s |
+| Manual checklist | `scripts/exploratory.mjs` at 375, 768 and 1440 px | 54/54 |
+| Hero, by eye | Frames at 1.2 s, 5.2 s and 8 s on desktop (1440 × 900), laptop (1280 × 720) and phone (390 × 844) in both themes, plus reduced motion | the word forms and reads at every size; text over the scrim is legible in dusk and paper |
+| Connectors, by eye | Text review (resting, hover, a note opened, scrolled), visual review, landing specimen, both themes | lanes separate, no line over a note |
+
+Lighthouse on the final build:
+
+| Page | Accessibility | Best practices | Performance | LCP |
+|---|---|---|---|---|
+| `/` | 100 | 100 | 95 | 2.7 s |
+| `/app` | 100 | 100 | 85 | 3.6 s |
+| `/app/review/new` | 100 | 100 | 67 (77 on a rerun) | 3.8 s |
+| `/app/queue` | 100 | 100 | 91 | 3.4 s |
+| `/app/rulebook` | 100 | 100 | 84 | 4.4 s |
+| `/app/governance` | 100 | 100 | 84 | 3.7 s |
+| `/app/insights` | 100 | 100 | 85 | 4.2 s |
+| `/app/evaluation` | 100 | 100 | 90 | 3.5 s |
+| `/app/settings` | 100 | 100 | 89 | 3.7 s |
+
+`/app/review/new` varies between runs (67–77): its LCP waits for the demo session to be created
+by the API, and the footer shifts once that content arrives (CLS 0.12), as before this round.
+
+Found and fixed:
+
+| Found by | Problem | Fix |
+|---|---|---|
+| Contrast check before writing tokens | On the warm desk, card-coloured text on the red Delete button is 4.17:1, and the tertiary #8C8177 is 4.29:1 on cards | Delete buttons use near-black text; small text stays on the secondary colour |
+| hero.spec | The animation kept running after "See how it works": an IntersectionObserver counts an element that only touches the viewport edge as intersecting, and moving from partly visible to touching crosses no threshold | Observe with a 1 px inset root margin |
+| connectors.spec | After a note was expanded, the lines of the notes below pointed 88 px too high: they were drawn once, at the start of the notes' 200 ms slide | Redraw every frame while notes slide (until a deadline, since a note removed mid-slide never reports the end), and once more at the end |
+| Screenshots | In the dark theme, `btn-primary` buttons (Download PDF and 15 others), the avatar and tooltips were ivory blocks, against the rule that ivory is for text and the hero's main button | Primary buttons take the teal action on the dark desk; the avatar and tooltips the raised surface |
+| Test environment | The old `next start` process outlived its stopped task and kept serving the previous build on port 3100 | Killed the process on the port before each restart |
+
+Not automated: touch drag on a real phone (headless Chrome's synthetic touches do not move the
+hawk or scroll the page); the test checks nothing blocks touch, and the hero listens to touch
+with passive listeners. Check once on a phone.
+

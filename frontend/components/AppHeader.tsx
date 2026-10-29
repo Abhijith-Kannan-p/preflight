@@ -1,7 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
-import { Bell, ChevronDown, HelpCircle, Menu, Moon, Sun, X } from "lucide-react";
+import { Bell, ChevronDown, HelpCircle, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -10,10 +10,10 @@ import useSWR from "swr";
 import { API_URL, fetcher, getToken, post } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import { ROLE_LABEL, useSession } from "@/lib/session";
-import { useTheme } from "@/lib/theme";
 import type { Health, Notification, UserRef } from "@/lib/types";
 
 import { Logo } from "./Logo";
+import { ThemeToggle } from "./ThemeToggle";
 import { Tip } from "./ui";
 
 interface NavItem {
@@ -26,8 +26,6 @@ interface NavItem {
 }
 
 interface NavGroup extends NavItem {
-  /** Section colour: a thin accent line and the icon tint on its pages. */
-  accent: string;
   /** Sub-pages, shown as a second row while the section is open. */
   children?: NavItem[];
 }
@@ -38,19 +36,17 @@ export const NAV: NavGroup[] = [
     label: "Review",
     match: ["/app/review"],
     exact: true,
-    accent: "teal",
     children: [
       { href: "/app", label: "Dashboard", exact: true },
       { href: "/app/review/new", label: "New review" },
     ],
   },
-  { href: "/app/queue", label: "Queue", permission: "approve", accent: "ink" },
-  { href: "/app/rulebook", label: "Rulebook", accent: "amber" },
+  { href: "/app/queue", label: "Queue", permission: "approve" },
+  { href: "/app/rulebook", label: "Rulebook" },
   {
     href: "/app/governance",
     label: "Governance",
     match: ["/app/insights"],
-    accent: "slate",
     children: [
       { href: "/app/governance?tab=guideline", label: "Guideline Health", match: ["/app/governance"] },
       { href: "/app/governance?tab=stale", label: "Stale-Content Radar" },
@@ -58,8 +54,8 @@ export const NAV: NavGroup[] = [
       { href: "/app/insights", label: "Insights", permission: "view_insights" },
     ],
   },
-  { href: "/app/evaluation", label: "Evaluation", accent: "cleared" },
-  { href: "/app/settings", label: "Settings", accent: "graphite" },
+  { href: "/app/evaluation", label: "Evaluation" },
+  { href: "/app/settings", label: "Settings" },
 ];
 
 function inGroup(group: NavGroup, pathname: string): boolean {
@@ -91,17 +87,6 @@ function StatusPill({ className }: { className?: string }) {
         Demo · AI {hosted === null ? "…" : hosted ? "on" : "off"}
       </span>
     </Tip>
-  );
-}
-
-function ThemeToggle({ withLabel = false }: { withLabel?: boolean }) {
-  const { theme, toggle } = useTheme();
-  const next = theme === "dark" ? "Paper Desk (light)" : "Night Desk (dark)";
-  return (
-    <button type="button" onClick={toggle} aria-label={`Switch to ${next}`} title={`Switch to ${next}`} className={clsx("inline-flex items-center gap-2 rounded p-2 text-graphite transition-colors duration-150 hover:bg-raised hover:text-ink", withLabel && "w-full px-3 text-sm")}>
-      {theme === "dark" ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
-      {withLabel && <span>Switch to {next}</span>}
-    </button>
   );
 }
 
@@ -166,7 +151,7 @@ function Notifications() {
         className="relative rounded p-2 text-graphite transition-colors duration-150 hover:bg-raised hover:text-ink"
       >
         <Bell className="h-4 w-4" />
-        {unread > 0 && <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-signal-700 px-1 font-mono text-[10px] text-sheet dark:bg-signal dark:text-paper">{unread}</span>}
+        {unread > 0 && <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-action px-1 font-mono text-[10px] text-on-action">{unread}</span>}
       </button>
       {open && (
         <div className="absolute right-0 z-50 mt-2 w-80 rounded-lg border border-rule bg-raised p-2 shadow-lift">
@@ -211,7 +196,7 @@ function RoleSwitcher() {
         aria-expanded={open}
         className="flex items-center gap-2 rounded border border-rule bg-sheet py-1 pl-1 pr-2 text-left text-sm transition-colors duration-150 hover:bg-raised"
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-ink font-mono text-[11px] font-medium text-sheet">{user ? initials(user.name) : "…"}</span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-ink font-mono text-[11px] font-medium text-sheet dark:border dark:border-rule dark:bg-raised dark:text-ink">{user ? initials(user.name) : "…"}</span>
         <span className="hidden leading-tight sm:block lg:hidden xl:block">
           <span className="block text-xs font-semibold">{user?.name ?? "Signing in…"}</span>
           <span className="block text-[11px] text-navy-500">{user ? ROLE_LABEL[user.role] : ""}</span>
@@ -299,7 +284,7 @@ function MenuDrawer({ open, onClose, onHelp, groups, pathname }: { open: boolean
               return (
                 <li key={g.href}>
                   <Link href={g.href} onClick={onClose} aria-current={active ? "page" : undefined} className={clsx("flex items-center gap-2 rounded px-3 py-2 text-[15px] transition-colors duration-150", active ? "bg-sheet font-medium text-ink" : "text-graphite hover:bg-sheet hover:text-ink")}>
-                    <span className={clsx("h-4 w-0.5 rounded-full", active ? ACCENT[g.accent] : "bg-transparent")} aria-hidden="true" />
+                    <span className={clsx("h-4 w-0.5 rounded-full", active ? "bg-teal" : "bg-transparent")} aria-hidden="true" />
                     {g.label}
                   </Link>
                   {g.children && (
@@ -329,16 +314,6 @@ function MenuDrawer({ open, onClose, onHelp, groups, pathname }: { open: boolean
   );
 }
 
-/** Background class for a section's accent line. */
-export const ACCENT: Record<string, string> = {
-  teal: "bg-teal",
-  ink: "bg-ink",
-  amber: "bg-amber",
-  slate: "bg-slate",
-  cleared: "bg-cleared",
-  graphite: "bg-graphite",
-};
-
 function SubNavRow({ group, pathname, tab }: { group: NavGroup; pathname: string; tab: string | null }) {
   const { can } = useSession();
   const items = (group.children ?? []).filter((c) => !c.permission || can(c.permission));
@@ -357,7 +332,7 @@ function SubNavRow({ group, pathname, tab }: { group: NavGroup; pathname: string
         {items.map((c) => {
           const active = isActive(c);
           return (
-            <Link key={c.href} href={c.href} aria-current={active ? "page" : undefined} className={clsx("-mb-px whitespace-nowrap border-b-2 px-2.5 py-2 text-sm transition-colors duration-150", active ? "border-ink font-medium text-ink" : "border-transparent text-graphite hover:text-ink")}>
+            <Link key={c.href} href={c.href} aria-current={active ? "page" : undefined} className={clsx("-mb-px whitespace-nowrap border-b-2 px-2.5 py-2 text-sm transition-colors duration-150", active ? "border-teal font-medium text-ink" : "border-transparent text-graphite hover:text-ink")}>
               {c.label}
             </Link>
           );
@@ -391,7 +366,7 @@ export function AppHeader({ onHelp }: { onHelp: () => void }) {
   useEffect(() => setMenu(false), [pathname]);
   return (
     <header className="sticky top-0 z-40 border-b border-rule bg-paper/95 backdrop-blur supports-[backdrop-filter]:bg-paper/85">
-      <div className={clsx("h-0.5", current ? ACCENT[current.accent] : "bg-transparent")} aria-hidden="true" />
+      <div className={clsx("h-0.5", current ? "bg-teal" : "bg-transparent")} aria-hidden="true" />
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 sm:px-6">
         <Link href="/" aria-label="Preflight home" className="shrink-0 rounded">
           <Logo />
@@ -400,7 +375,7 @@ export function AppHeader({ onHelp }: { onHelp: () => void }) {
           {groups.map((g) => {
             const active = inGroup(g, pathname);
             return (
-              <Link key={g.href} href={g.href} aria-current={active ? "page" : undefined} className={clsx("-mb-px flex items-center whitespace-nowrap border-b-2 px-3 text-[15px] transition-colors duration-150", active ? "border-ink font-medium text-ink" : "border-transparent text-graphite hover:text-ink")}>
+              <Link key={g.href} href={g.href} aria-current={active ? "page" : undefined} className={clsx("-mb-px flex items-center whitespace-nowrap border-b-2 px-3 text-[15px] transition-colors duration-150", active ? "border-teal font-medium text-ink" : "border-transparent text-graphite hover:text-ink")}>
                 {g.label}
               </Link>
             );

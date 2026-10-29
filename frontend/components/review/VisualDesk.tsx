@@ -1,12 +1,13 @@
 "use client";
 
 // The Proof Desk for images and scans: the page with boxes for each finding (and, on request,
-// every line OCR read and the logo it found), margin notes beside it, the palette compared
+// every line OCR read and the logo it found), margin notes beside it joined to their boxes by
+// connectors, the palette compared
 // with the brand colours, every text line's measured contrast, and the text read from the
 // image set as a proof sheet.
 
 import { clsx } from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { API_URL } from "@/lib/api";
 import { SEVERITY_STYLE } from "@/lib/format";
@@ -15,7 +16,8 @@ import type { Block, Finding, Region, Report, Severity, VisualPage } from "@/lib
 import { Skeleton } from "../ui";
 import { DraftView, NoteNumber } from "./DraftView";
 import { MarginNote } from "./MarginNote";
-import { numberFindings } from "./ProofDesk";
+import { ConnectorLayer, type ConnectorPath, type ConnectorSpec, routeConnectors } from "./connectors";
+import { numberFindings, useWide } from "./ProofDesk";
 import { ProofSummary } from "./ProofSummary";
 import { ACCEPT_ALL, useDecisions } from "./useDecisions";
 
@@ -70,6 +72,58 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
   const onPage = shown.filter((f) => f.region && f.region.page === pageIndex);
   const elsewhere = shown.filter((f) => !f.region);
 
+  // Connectors from each box on this page to its note, from 1024 px up.
+  const wide = useWide();
+  const deskRef = useRef<HTMLDivElement>(null);
+  const proofRef = useRef<HTMLElement>(null);
+  const notesRef = useRef<HTMLDivElement>(null);
+  const [connectors, setConnectors] = useState<ConnectorPath[]>([]);
+  const boxedIds = (layers.findings ? onPage : []).map((f) => f.id).join(" ");
+  const drawConnectors = useCallback(() => {
+    const desk = deskRef.current;
+    const proof = proofRef.current;
+    const notes = notesRef.current;
+    if (!wide || pending || !desk || !proof || !notes) return setConnectors([]);
+    const origin = desk.getBoundingClientRect();
+    const specs: ConnectorSpec[] = [];
+    for (const id of boxedIds ? boxedIds.split(" ") : []) {
+      const f = main.find((x) => x.id === id);
+      const target = desk.querySelector<HTMLElement>(`[data-box="${id}"]`);
+      const badge = notes.querySelector<HTMLElement>(`[data-note="${id}"] [data-badge]`);
+      if (!f || !target || !badge) continue;
+      const b = target.getBoundingClientRect();
+      const n = badge.getBoundingClientRect();
+      specs.push({
+        id,
+        colour: OPEN.has(f.status) ? SEVERITY_STYLE[f.severity].stroke : "rgb(var(--teal))",
+        start: { x: b.right - origin.left, y: b.top + b.height / 2 - origin.top },
+        end: { x: n.left - origin.left, y: n.top + n.height / 2 - origin.top },
+      });
+    }
+    const next = routeConnectors(specs, { left: proof.getBoundingClientRect().right - origin.left, right: notes.getBoundingClientRect().left - origin.left });
+    setConnectors((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+  }, [wide, pending, boxedIds, main]);
+
+  useLayoutEffect(() => {
+    drawConnectors();
+  }, [drawConnectors, active, focused]);
+
+  useEffect(() => {
+    if (!wide) return;
+    let frame = 0;
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(drawConnectors);
+    };
+    const observer = new ResizeObserver(schedule);
+    [deskRef.current, notesRef.current, proofRef.current].forEach((el) => el && observer.observe(el));
+    void document.fonts?.ready.then(schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [drawConnectors, wide]);
+
   const note = (f: Finding) => (
     <MarginNote
       key={f.id}
@@ -106,8 +160,8 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
           onAcceptAll={() => void acceptAll(main)}
         />
       )}
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
-        <section className="proof-paper h-fit px-4 py-6 sm:px-8" aria-label="Visual proof">
+      <div ref={deskRef} className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:gap-12">
+        <section ref={proofRef} className="proof-paper h-fit px-4 py-6 sm:px-8" aria-label="Visual proof">
           {header}
           {pending || !page ? (
             <Skeleton className="aspect-[1.9] w-full" />
@@ -117,7 +171,7 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
                 {visual && visual.pages.length > 1 && (
                   <span className="flex gap-1" role="tablist" aria-label="Pages">
                     {visual.pages.map((p) => (
-                      <button key={p.index} type="button" role="tab" aria-selected={p.index === pageIndex} onClick={() => setPageIndex(p.index)} className={clsx("tag", p.index === pageIndex && "border-ink")}>
+                      <button key={p.index} type="button" role="tab" aria-selected={p.index === pageIndex} onClick={() => setPageIndex(p.index)} className={clsx("tag", p.index === pageIndex && "border-teal")}>
                         p{p.index + 1}
                       </button>
                     ))}
@@ -139,10 +193,10 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
               </div>
               <figure className="relative w-full overflow-hidden border border-rule bg-paper" style={{ aspectRatio: `${page.width} / ${page.height}` }}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- dynamic API image, sized by its own aspect ratio */}
-                <img src={`${API_URL}/api/assets/${page.asset_id}`} alt="The reviewed visual" className="absolute inset-0 h-full w-full" />
+                <img src={`${API_URL}/api/assets/${page.asset_id}`} alt="The reviewed visual" className="absolute inset-0 h-full w-full" onLoad={drawConnectors} />
                 {layers.ocr &&
                   page.contrast.map((c, i) => (
-                    <span key={`ocr-${i}`} className="pointer-events-none absolute border border-dashed border-slate/80" style={box(c.region)} aria-hidden="true" />
+                    <span key={`ocr-${i}`} className="pointer-events-none absolute border border-dashed border-graphite/80" style={box(c.region)} aria-hidden="true" />
                   ))}
                 {layers.logo && page.logo && (
                   <>
@@ -158,6 +212,7 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
                       <button
                         key={f.id}
                         type="button"
+                        data-box={f.id}
                         onClick={() => onFocus(f.id)}
                         onMouseEnter={() => setHovered(f.id)}
                         onMouseLeave={() => setHovered(null)}
@@ -180,7 +235,7 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
           )}
         </section>
 
-        <div aria-label="Margin notes">
+        <div ref={notesRef} aria-label="Margin notes">
           {pending ? (
             <div className="space-y-3">
               <Skeleton className="h-24" />
@@ -200,6 +255,7 @@ export function VisualDesk({ blocks, findings, report, pending, focused, onFocus
           )}
           {error && <p role="alert" className="mt-3 border-l-2 border-signal bg-sheet px-3 py-2 text-sm text-signal-700">{error}</p>}
         </div>
+        {wide && !pending && <ConnectorLayer paths={connectors} active={active} />}
       </div>
 
       {page && !pending && visual && (

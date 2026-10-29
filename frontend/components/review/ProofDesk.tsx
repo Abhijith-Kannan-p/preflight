@@ -1,8 +1,8 @@
 "use client";
 
 // The Proof Sheet: the draft set like a printed proof, numbered proof marks on the flagged
-// text, and margin notes in the gutter, each level with the line its mark is on. Only the note
-// being pointed at (or opened) is joined to its mark by a connector. The sheet grows to the
+// text, and margin notes in the gutter, each level with the line its mark is on and joined to
+// its mark by a connector (the active note's at full strength). The sheet grows to the
 // height of the notes and its text stays in view beside them. Below 1024px the notes sit
 // inline under the paragraph they belong to.
 
@@ -17,6 +17,7 @@ import { Skeleton } from "../ui";
 import { DraftView } from "./DraftView";
 import { MarginNote } from "./MarginNote";
 import { ProofSummary } from "./ProofSummary";
+import { ConnectorLayer, type ConnectorPath, type ConnectorSpec, routeConnectors } from "./connectors";
 import { ACCEPT_ALL, useDecisions } from "./useDecisions";
 
 const GAP = 8;
@@ -55,13 +56,6 @@ export function numberFindings(findings: Finding[]): Record<string, number> {
 const OPEN = new Set(["open", "escalated", "disputed"]);
 const byPosition = (a: Finding, b: Finding) => a.span.block - b.span.block || a.span.start - b.span.start;
 
-interface Connector {
-  d: string;
-  colour: string;
-  x: number;
-  y: number;
-}
-
 interface Props {
   blocks: Block[];
   findings: Finding[];
@@ -83,7 +77,7 @@ export function ProofDesk({ blocks, findings, pending, focused, onFocus, canDeci
   const noteRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [layout, setLayout] = useState<{ tops: Record<string, number>; height: number } | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
-  const [connector, setConnector] = useState<Connector | null>(null);
+  const [connectors, setConnectors] = useState<ConnectorPath[]>([]);
   const [hidden, setHidden] = useState<Set<Severity>>(new Set());
   const [showReview, setShowReview] = useState(false);
 
@@ -137,47 +131,83 @@ export function ProofDesk({ blocks, findings, pending, focused, onFocus, canDeci
     };
   }, [measure, wide]);
 
-  // One connector, for the note being pointed at or opened, redrawn as the page scrolls.
-  const drawConnector = useCallback(() => {
+  // A connector for every note on show, redrawn as the page scrolls (the text is sticky, so its
+  // marks move against the notes).
+  const drawConnectors = useCallback(() => {
     const desk = deskRef.current;
     const sheet = sheetRef.current;
-    if (!wide || !desk || !sheet || !active) return setConnector(null);
-    const f = main.find((x) => x.id === active);
-    const marker = desk.querySelector<HTMLElement>(`[data-marker="${active}"]`) ?? desk.querySelector<HTMLElement>(`[data-covers~="${active}"]`);
-    const note = noteRefs.current[active];
-    if (!f || !marker || !note) return setConnector(null);
+    const gutter = gutterRef.current;
+    if (!wide || !desk || !sheet || !gutter || pending) return setConnectors([]);
     const box = desk.getBoundingClientRect();
-    const m = marker.getBoundingClientRect();
-    const n = note.getBoundingClientRect();
-    const edge = sheet.getBoundingClientRect().right - box.left;
-    // From the sheet's edge, level with the marker, to the note: inside the text the lit mark
-    // and its filled number already show which words the note is about.
-    const y1 = m.top - box.top + m.height / 2;
-    const x2 = n.left - box.left;
-    const y2 = n.top - box.top + 14;
-    const colour = OPEN.has(f.status) ? SEVERITY_STYLE[f.severity].stroke : "rgb(var(--teal))";
-    setConnector({ d: `M ${edge} ${y1} L ${edge + 8} ${y1} L ${x2 - 8} ${y2} L ${x2} ${y2}`, colour, x: edge, y: y1 });
-  }, [wide, active, main]);
+    const rows = new Map<number, number>();
+    const specs: ConnectorSpec[] = [];
+    for (const f of shown) {
+      const marker = desk.querySelector<HTMLElement>(`[data-marker="${f.id}"]`);
+      const mark = desk.querySelector<HTMLElement>(`[data-covers~="${f.id}"]`);
+      const note = noteRefs.current[f.id];
+      if (!marker || !mark || !note) continue;
+      const m = marker.getBoundingClientRect();
+      const lines = mark.getClientRects();
+      const line = lines[lines.length - 1] ?? mark.getBoundingClientRect();
+      // Several marks on one line each take their own row in the line spacing below it.
+      const key = Math.round(line.bottom);
+      const nth = rows.get(key) ?? 0;
+      rows.set(key, nth + 1);
+      const badge = note.querySelector<HTMLElement>("[data-badge]")?.getBoundingClientRect() ?? note.getBoundingClientRect();
+      specs.push({
+        id: f.id,
+        colour: OPEN.has(f.status) ? SEVERITY_STYLE[f.severity].stroke : "rgb(var(--teal))",
+        start: { x: m.left + m.width / 2 - box.left, y: m.bottom - box.top },
+        via: line.bottom - box.top + 3 + nth * 2,
+        end: { x: badge.left - box.left, y: badge.top + badge.height / 2 - box.top },
+      });
+    }
+    const next = routeConnectors(specs, { left: sheet.getBoundingClientRect().right - box.left, right: gutter.getBoundingClientRect().left - box.left });
+    setConnectors((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+  }, [wide, shown, pending]);
 
   useLayoutEffect(() => {
-    drawConnector();
-  }, [drawConnector, layout]);
+    drawConnectors();
+  }, [drawConnectors, layout, active]);
 
   useEffect(() => {
     if (!wide) return;
     let frame = 0;
     const schedule = () => {
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(drawConnector);
+      frame = requestAnimationFrame(drawConnectors);
     };
+    // While notes slide to new places (a 200 ms transition), the lines follow them frame by frame.
+    // A deadline rather than a count: a note removed mid-slide never reports the end.
+    let until = 0;
+    const follow = () => {
+      drawConnectors();
+      frame = performance.now() < until ? requestAnimationFrame(follow) : 0;
+    };
+    const onRun = (e: TransitionEvent) => {
+      if (e.propertyName !== "top") return;
+      until = performance.now() + 260;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(follow);
+    };
+    const onEnd = (e: TransitionEvent) => {
+      if (e.propertyName === "top") schedule();
+    };
+    const desk = deskRef.current;
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
+    desk?.addEventListener("transitionrun", onRun);
+    desk?.addEventListener("transitionend", onEnd);
+    desk?.addEventListener("transitioncancel", onEnd);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
+      desk?.removeEventListener("transitionrun", onRun);
+      desk?.removeEventListener("transitionend", onEnd);
+      desk?.removeEventListener("transitioncancel", onEnd);
     };
-  }, [drawConnector, wide]);
+  }, [drawConnectors, wide]);
 
   // Bring a note into view when the reader opens one, not for a note open on arrival.
   const initialFocus = useRef(focused);
@@ -229,7 +259,7 @@ export function ProofDesk({ blocks, findings, pending, focused, onFocus, canDeci
           onAcceptAll={() => void acceptAll(main)}
         />
       )}
-      <div ref={deskRef} className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
+      <div ref={deskRef} className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:gap-12">
         <section ref={sheetRef} className="proof-paper px-6 py-8 sm:px-10" style={{ minHeight: wide && layout ? layout.height + padBottom + 32 : undefined }} aria-label="Proof sheet">
           <div ref={textRef} className="lg:sticky lg:top-32">
             {header}
@@ -272,12 +302,7 @@ export function ProofDesk({ blocks, findings, pending, focused, onFocus, canDeci
           )}
         </div>
 
-        {wide && connector && !pending && (
-          <svg className="pointer-events-none absolute inset-0 hidden h-full w-full overflow-visible lg:block" aria-hidden="true">
-            <path d={connector.d} stroke={connector.colour} strokeWidth="1.25" fill="none" />
-            <circle cx={connector.x} cy={connector.y} r="2.5" fill={connector.colour} />
-          </svg>
-        )}
+        {wide && !pending && <ConnectorLayer paths={connectors} active={active} />}
       </div>
 
       {error && <p role="alert" className="mt-4 rounded border border-rule border-l-[3px] border-l-signal bg-sheet px-3 py-2 text-sm text-signal-700">{error}</p>}

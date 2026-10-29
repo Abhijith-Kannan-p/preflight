@@ -24,7 +24,7 @@ export function Tip({ text, children, className, below = false }: { text: string
       <span
         role="tooltip"
         className={clsx(
-          "pointer-events-none absolute left-1/2 z-50 hidden w-max max-w-[260px] -translate-x-1/2 rounded bg-ink px-3 py-2 text-xs font-normal leading-snug text-sheet group-focus-within:block group-hover:block",
+          "pointer-events-none absolute left-1/2 z-50 hidden w-max max-w-[260px] -translate-x-1/2 rounded bg-ink px-3 py-2 text-xs font-normal leading-snug text-sheet dark:border dark:border-rule dark:bg-raised dark:text-ink group-focus-within:block group-hover:block",
           below ? "top-full mt-2" : "bottom-full mb-2",
         )}
       >
@@ -134,15 +134,15 @@ export function Skeleton({ className }: { className?: string }) {
   return <div className={clsx("skeleton", className)} aria-hidden="true" />;
 }
 
-/** Each section's icon and tint (the header draws the same colour as its accent line). */
-const SECTIONS: { prefix: string; icon: typeof BookOpen; tint: string }[] = [
-  { prefix: "/app/queue", icon: Inbox, tint: "bg-paper-100 text-ink" },
-  { prefix: "/app/rulebook", icon: BookOpen, tint: "bg-amber-50 text-amber-700" },
-  { prefix: "/app/governance", icon: Compass, tint: "bg-slate-50 text-slate-700" },
-  { prefix: "/app/insights", icon: Compass, tint: "bg-slate-50 text-slate-700" },
-  { prefix: "/app/evaluation", icon: Gauge, tint: "bg-cleared-50 text-cleared-700" },
-  { prefix: "/app/settings", icon: Settings2, tint: "bg-paper-100 text-graphite" },
-  { prefix: "/app", icon: FileCheck2, tint: "bg-teal-50 text-teal-700" },
+/** Each section's icon. Sections stay quiet (teal on a neutral chip) so colour keeps meaning severity. */
+const SECTIONS: { prefix: string; icon: typeof BookOpen }[] = [
+  { prefix: "/app/queue", icon: Inbox },
+  { prefix: "/app/rulebook", icon: BookOpen },
+  { prefix: "/app/governance", icon: Compass },
+  { prefix: "/app/insights", icon: Compass },
+  { prefix: "/app/evaluation", icon: Gauge },
+  { prefix: "/app/settings", icon: Settings2 },
+  { prefix: "/app", icon: FileCheck2 },
 ];
 
 /** Serif page title, one sentence on what the screen is for, the rest under "How this works",
@@ -158,7 +158,7 @@ export function PageHeader({ title, subtitle, actions, eyebrow }: { title: strin
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-rule pb-5">
       <div className="flex min-w-0 items-start gap-3">
         {Icon && (
-          <span className={clsx("mt-1 hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:inline-flex", section.tint)} aria-hidden="true">
+          <span className={clsx("mt-1 hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-paper-100 text-teal-700 sm:inline-flex")} aria-hidden="true">
             <Icon className="h-5 w-5" strokeWidth={1.75} />
           </span>
         )}

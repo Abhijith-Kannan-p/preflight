@@ -11,8 +11,8 @@ import { EmptyState, Skeleton } from "./ui";
 
 const BOARD: Record<ReviewListItem["state"], string> = {
   draft: "text-graphite",
-  in_review: "text-slate-700",
-  changes_requested: "text-amber-700",
+  in_review: "text-teal-700",
+  changes_requested: "text-ink",
   approved: "text-cleared-700",
   published: "text-ink",
 };

@@ -20,7 +20,7 @@ const STATUS_LABEL: Record<string, { text: string; className: string }> = {
   accepted: { text: "Accepted · applies on re-check", className: "border-teal text-teal-700" },
   edited: { text: "Edited · applies on re-check", className: "border-teal text-teal-700" },
   disputed: { text: "Disputed · the approver decides", className: "border-graphite text-graphite" },
-  escalated: { text: "Escalated to a reviewer", className: "border-slate text-slate-700" },
+  escalated: { text: "Escalated to a reviewer", className: "border-teal text-teal-700" },
   resolved: { text: "Overridden by approver", className: "border-graphite text-graphite" },
 };
 

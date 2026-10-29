@@ -21,7 +21,7 @@ const GLYPH: Record<RowState, React.ReactNode> = {
     </span>
   ),
   checking: (
-    <span className={clsx(chip, "bg-slate-50 text-slate-700")} aria-hidden="true">
+    <span className={clsx(chip, "bg-teal-50 text-teal-700")} aria-hidden="true">
       <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} />
     </span>
   ),
@@ -31,7 +31,7 @@ const GLYPH: Record<RowState, React.ReactNode> = {
     </span>
   ),
   failed: (
-    <span className={clsx(chip, "bg-amber-50 text-amber-700")} aria-hidden="true">
+    <span className={clsx(chip, "bg-paper-100 text-graphite")} aria-hidden="true">
       <AlertTriangle className="h-3 w-3" strokeWidth={2} />
     </span>
   ),

@@ -1,6 +1,6 @@
 "use client";
 
-// Night Desk (dark) and Paper Desk (light). The choice follows the system until the visitor
+// Warm Night Desk (dark) and Paper Desk (light). The choice follows the system until the visitor
 // picks one in the header; the pick is kept in localStorage (when storage is available).
 
 import { useCallback, useEffect, useState } from "react";

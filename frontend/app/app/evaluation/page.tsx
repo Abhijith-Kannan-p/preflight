@@ -50,7 +50,7 @@ function Tile({ label, value, hint, target }: { label: string; value: string; hi
     <div className="card p-5">
       <p className="label flex items-center gap-1">{label} <InfoTip text={hint} /></p>
       <p className="display-number mt-1">{value}</p>
-      {target && <p className={`mt-1 text-xs font-medium ${target.met ? "text-teal-700" : "text-amber-700"}`}>{target.met ? "✓ " : "Below target · "}{target.text}</p>}
+      {target && <p className={`mt-1 text-xs font-medium ${target.met ? "text-teal-700" : "text-graphite"}`}>{target.met ? "✓ " : "Below target · "}{target.text}</p>}
     </div>
   );
 }
@@ -176,7 +176,7 @@ function ClaimsEvaluation() {
                   <span className="font-mono text-xs text-navy-500">{f.id}</span>
                   <span className="flex-1">“{f.claim}”</span>
                   <span className="text-xs">
-                    expected <strong>{f.expected.replace("_", " ")}</strong>, got <strong className="text-danger-700">{f.predicted.replace("_", " ")}</strong>
+                    expected <strong>{f.expected.replace("_", " ")}</strong>, got <strong className="text-ink">{f.predicted.replace("_", " ")}</strong>
                     {f.predicted_fact && <span className="text-navy-500"> ({f.predicted_fact})</span>}
                   </span>
                 </li>
@@ -238,7 +238,7 @@ function VisualEvaluation() {
         risky claims in the image) and four composed samples. Every asset goes through the same OCR, visual checks and text checkers as a review; a check counts as positive when it
         raises at least one finding on the asset.
       </p>
-      <p className="border-l-2 border-amber bg-sheet px-3 py-2 text-xs text-ink">
+      <p className="border-l-2 border-teal bg-sheet px-3 py-2 text-xs text-ink">
         Precomputed run ({data.environment.processor}, Python {data.environment.python}, {new Date(data.created_at).toLocaleDateString("en-GB", { dateStyle: "medium" })}), not
         computed live: reading 100 images would occupy the 0.1-CPU host for about ten minutes. Run it yourself with <span className="font-mono">python -m app.eval.visual</span>. The
         set is synthetic, so real-world banners (photos, unusual fonts) will score lower.
@@ -308,7 +308,7 @@ function HoldoutNote() {
   if (!data) return null;
   const m = data.metrics;
   return (
-    <section className="border-l-2 border-amber bg-sheet px-4 py-3 text-sm" aria-labelledby="holdout">
+    <section className="border-l-2 border-teal bg-sheet px-4 py-3 text-sm" aria-labelledby="holdout">
       <h2 id="holdout" className="label">Held-out check (precomputed)</h2>
       <p className="max-w-[80ch] text-ink">
         The Round 3 rules (hedged wording goes to a person; facts about another payment method or app store are set aside) were tuned on the set above, so its numbers flatter them. On{" "}
@@ -360,7 +360,7 @@ function Codes({ codes, tone }: { codes: string[]; tone?: "miss" | "extra" }) {
   return (
     <span className="flex flex-wrap gap-1">
       {codes.map((c) => (
-        <span key={c} className={`tag ${tone === "miss" ? "border-signal text-signal-700" : tone === "extra" ? "border-amber text-ink" : ""}`}>
+        <span key={c} className={`tag ${tone === "miss" ? "border-ink font-semibold text-ink" : tone === "extra" ? "border-dashed border-graphite text-ink" : ""}`}>
           {c}
         </span>
       ))}
@@ -379,7 +379,7 @@ function DraftsEvaluation() {
         and the Claim Ledger, as in the app. A rule counts when the review raises a confident finding for it; “needs a human look” findings cost no points and are listed separately.
         Scores are over (draft, rule) pairs.
       </p>
-      <p className="border-l-2 border-amber bg-sheet px-3 py-2 text-xs text-ink">
+      <p className="border-l-2 border-teal bg-sheet px-3 py-2 text-xs text-ink">
         Precomputed on {new Date(data.config.created_at).toLocaleDateString("en-GB", { dateStyle: "medium" })} in {data.config.mode} ({data.config.processor}), facts valid on{" "}
         {data.config.eval_date}. Run it with <span className="font-mono">python -m app.eval.drafts</span>. Labels were written before the first run; that run exposed two engine bugs (a
         low-confidence tone finding hid a punctuation finding; claims written as “we” were not read as PayWise), which were fixed before these numbers.
@@ -494,7 +494,7 @@ function CompilerEvaluation() {
         precision, the share of candidates that match a labelled rule. A candidate counts as acceptable without edits when its values equal the label. Guidance rules are free text, so
         they match on page, category and a keyword.
       </p>
-      <p className="border-l-2 border-amber bg-sheet px-3 py-2 text-xs text-ink">
+      <p className="border-l-2 border-teal bg-sheet px-3 py-2 text-xs text-ink">
         Precomputed on {new Date(data.generated_at).toLocaleDateString("en-GB", { dateStyle: "medium" })} with <span className="font-mono">python -m app.eval.compiler</span>. LLM output
         varies between calls, so the LLM run is repeated and averaged. Two labels were added after the first LLM run found rules the labelling had missed (pages 4 and 8).
       </p>
@@ -557,7 +557,7 @@ export default function EvaluationPage() {
       <PageHeader eyebrow="Measured, not claimed" title="Evaluation" subtitle="Each check is run against a labelled set and reported with its failures." />
       <div role="tablist" aria-label="Evaluations" className="mb-5 flex gap-6 overflow-x-auto border-b border-rule">
         {EVAL_TABS.map((t) => (
-          <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => setTab(t)} className={`-mb-px whitespace-nowrap border-b-2 pb-2 pt-1 text-sm ${tab === t ? "border-ink font-medium text-ink" : "border-transparent text-graphite hover:text-ink"}`}>
+          <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => setTab(t)} className={`-mb-px whitespace-nowrap border-b-2 pb-2 pt-1 text-sm ${tab === t ? "border-teal font-medium text-ink" : "border-transparent text-graphite hover:text-ink"}`}>
             {t}
           </button>
         ))}

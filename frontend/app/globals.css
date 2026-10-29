@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* Proof Desk tokens (RGB triplets so Tailwind can apply opacity).
- * Paper Desk (light) is the base. Night Desk (dark) overrides it under [data-theme="dark"].
+ * Paper Desk (light) is the base. Warm Night Desk (dark) overrides it under [data-theme="dark"].
  * Anything inside .paper-scope (the proof sheet, certificate, stamp) re-declares the light
  * values, so a lit paper sheet sits on the dark desk. */
 :root,
@@ -39,8 +39,12 @@
   --cleared-wash: 231 244 237;
   /* Primary action fill. White on the brand teal is 4.2:1, so buttons use the deep teal. */
   --action: 11 107 97;
-  --action-hover: 42 59 95;
+  --action-hover: 8 86 78;
   --on-action: 255 255 255;
+  --on-signal: 255 255 255;
+  --oxblood: 155 28 28; /* #9B1C1C logo mark and hero accents only */
+  --hero-action: 11 107 97;
+  --on-hero-action: 255 255 255;
   --shadow: 27 42 74;
   --matrix-max: 0.63; /* strongest confusion-matrix fill behind ink numbers */
   color-scheme: light;
@@ -51,51 +55,58 @@
   color: rgb(var(--ink));
 }
 
-/* On the night desk the paper casts a real, dark shadow. */
+/* Under the desk lamp: a faint warm glow around the sheet and paper grain on it (CSS only). */
 [data-theme="dark"] .proof-paper {
   box-shadow:
     0 1px 2px rgb(0 0 0 / 0.5),
-    0 24px 48px -20px rgb(0 0 0 / 0.85);
+    0 24px 48px -20px rgb(0 0 0 / 0.85),
+    0 0 140px 24px rgb(255 196 128 / 0.07);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .3 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
 }
 
 /* The certificate's punched holes show the desk through the paper. */
 [data-theme="dark"] .proof-paper .ticket-hole {
-  background: rgb(20 20 20);
+  background: rgb(28 24 22);
 }
 
-/* Night Desk: layered warm greys, ivory text, muted accents used as text and thin lines. */
+/* Warm Night Desk: warm near-black desk, ivory text, teal as the single accent. Red, amber and
+ * blue mean severity only; oxblood is for the logo and hero accents. */
 [data-theme="dark"] {
-  --paper: 20 20 20; /* #141414 desk */
-  --paper-deep: 38 38 38; /* #262626 muted surface */
-  --sheet: 27 27 27; /* #1B1B1B card */
-  --raised: 34 34 34; /* #222222 raised surface */
-  --ink: 236 232 223; /* #ECE8DF warm ivory */
-  --ink-soft: 217 212 199;
-  --graphite: 168 163 154; /* #A8A39A secondary */
-  --graphite-light: 124 119 111; /* #7C776F tertiary */
-  --rule: 42 42 42; /* #2A2A2A borders */
-  --teal: 43 168 154; /* #2BA89A brand teal */
+  --paper: 28 24 22; /* #1C1816 desk */
+  --paper-deep: 43 37 34; /* #2B2522 muted surface */
+  --sheet: 36 31 28; /* #241F1C card, margin notes, menus */
+  --raised: 43 37 34; /* #2B2522 inputs, hover, raised */
+  --ink: 237 230 220; /* #EDE6DC warm ivory */
+  --ink-soft: 214 205 193;
+  --graphite: 179 168 156; /* #B3A89C secondary */
+  --graphite-light: 140 129 119; /* #8C8177 tertiary, non-essential labels only */
+  --rule: 58 51 46; /* #3A332E hairlines */
+  --teal: 43 168 154; /* #2BA89A the accent */
   --teal-deep: 92 197 184;
-  --teal-wash: 22 38 36;
-  --teal-wash-strong: 27 52 48;
-  --signal: 239 68 68; /* #EF4444 critical */
-  --signal-deep: 248 128 128;
-  --signal-wash: 44 24 24;
-  --signal-wash-strong: 64 30 30;
+  --teal-wash: 30 44 40;
+  --teal-wash-strong: 33 60 55;
+  --signal: 229 72 77; /* #E5484D critical */
+  --signal-deep: 244 138 140;
+  --signal-wash: 52 28 27;
+  --signal-wash-strong: 72 33 32;
   --amber: 224 164 74; /* #E0A44A major */
   --amber-deep: 234 188 120;
-  --amber-wash: 40 32 20;
-  --amber-wash-strong: 58 45 24;
+  --amber-wash: 46 36 22;
+  --amber-wash-strong: 64 48 26;
   --slate: 107 155 216; /* #6B9BD8 minor */
   --slate-deep: 150 184 230;
-  --slate-wash: 24 32 44;
-  --slate-wash-strong: 30 42 60;
+  --slate-wash: 30 33 42;
+  --slate-wash-strong: 36 44 60;
   --cleared: 76 175 122; /* #4CAF7A cleared */
   --cleared-deep: 120 200 155;
-  --cleared-wash: 22 36 28;
-  --action: 217 212 199; /* #D9D4C7 ivory fill */
-  --action-hover: 236 232 223;
-  --on-action: 20 20 20;
+  --cleared-wash: 28 40 30;
+  --oxblood: 155 28 28; /* #9B1C1C */
+  --action: 43 168 154; /* teal #2BA89A */
+  --action-hover: 52 191 175; /* #34BFAF */
+  --on-action: 16 32 30; /* #10201E */
+  --on-signal: 18 14 12;
+  --hero-action: 232 223 208; /* #E8DFD0 ivory, the hero's main button only */
+  --on-hero-action: 28 24 22;
   --shadow: 0 0 0;
   --matrix-max: 0.3;
   color-scheme: dark;
@@ -143,10 +154,12 @@
   .surface-raised {
     @apply border border-rule bg-raised;
   }
+  /* Ink on paper; on the Warm Night Desk ivory is kept for text (and the hero's main button),
+   * so primary buttons take the teal action there. */
   .btn-primary {
-    @apply btn bg-ink text-sheet hover:bg-ink-soft;
+    @apply btn bg-ink text-sheet hover:bg-ink-soft dark:bg-action dark:text-on-action dark:hover:bg-action-hover;
   }
-  /* The main action: deep teal on paper, ivory on the night desk (see --action). */
+  /* The main action: teal in both themes (deep teal on paper for contrast with white text). */
   .btn-teal {
     @apply btn bg-action text-on-action hover:bg-action-hover;
   }
@@ -154,7 +167,7 @@
     @apply btn border border-rule bg-sheet text-ink hover:border-graphite/40 hover:bg-raised;
   }
   .btn-danger {
-    @apply btn bg-signal text-sheet hover:bg-signal-700;
+    @apply btn bg-signal text-on-signal hover:bg-signal-700;
   }
   .input {
     @apply w-full rounded border border-rule bg-raised px-3 py-2 text-sm text-ink placeholder:text-graphite focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/25;
@@ -220,13 +233,17 @@
   }
 }
 
-/* The landing intro is hidden for the rest of a session once passed; "Replay intro" only
- * shows then. */
-html[data-intro="seen"] .intro-stage {
-  display: none;
+/* The landing hero: the sky before the canvas paints (same colours as the murmuration
+ * presets, so nothing flashes), and a soft scrim that keeps the text block at AA contrast
+ * over the glow. */
+.hero {
+  background: linear-gradient(180deg, #f7f4ec 0%, #f3ecdd 45%, #efe3cc 62%, #f5f0e5 80%, #f7f4ec 100%);
 }
-html:not([data-intro="seen"]) .replay-intro {
-  display: none;
+[data-theme="dark"] .hero {
+  background: linear-gradient(180deg, #2b211d 0%, #5c3628 28%, #b5683f 50%, #d99560 62%, #7a4a31 72%, #2b211d 86%, #1c1816 100%);
+}
+.hero-scrim {
+  background: radial-gradient(closest-side, rgb(var(--paper) / 0.92), rgb(var(--paper) / 0.78) 60%, rgb(var(--paper) / 0));
 }
 
 @media print {

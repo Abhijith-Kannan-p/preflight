@@ -2,9 +2,10 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { Footer } from "@/components/Footer";
-import { Intro, ReplayIntro } from "@/components/intro/Intro";
+import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingProof } from "@/components/LandingProof";
 import { Logo } from "@/components/Logo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { API_URL, GITHUB_URL } from "@/lib/api";
 
 const PROOF_POINTS = [
@@ -23,28 +24,28 @@ const STEPS = [
 export default function Landing() {
   return (
     <>
-      <Intro />
-      <div id="landing" className="scroll-mt-0">
-      <header className="border-b border-rule bg-paper">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Logo />
-          <nav className="flex items-center gap-5 text-sm">
-            <ReplayIntro />
-            <a href={`${API_URL}/docs`} target="_blank" rel="noreferrer" className="hidden text-graphite hover:text-ink sm:inline">API</a>
-            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="hidden text-graphite hover:text-ink sm:inline">GitHub</a>
-            <Link href="/app" className="btn-ghost py-1.5">Sign in to the desk</Link>
-          </nav>
-        </div>
-      </header>
+      <LandingHero>
+        <header>
+          <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+            <Logo />
+            <nav className="flex items-center gap-2 text-sm sm:gap-4" aria-label="Site">
+              <a href={`${API_URL}/docs`} target="_blank" rel="noreferrer" className="hidden rounded px-1 text-ink/80 hover:text-ink sm:inline">API</a>
+              <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="hidden rounded px-1 text-ink/80 hover:text-ink sm:inline">GitHub</a>
+              <ThemeToggle />
+              <Link href="/app" className="btn-ghost py-1.5">Sign in to the desk</Link>
+            </nav>
+          </div>
+        </header>
+      </LandingHero>
 
-      <main>
-        <section className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 lg:pt-16" aria-labelledby="hero">
+      <main id="overview" tabIndex={-1} className="scroll-mt-0 outline-none">
+        <section className="mx-auto max-w-7xl px-4 pb-16 pt-14 sm:px-6 lg:pt-20" aria-labelledby="hero">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-end">
             <div>
               <p className="kicker">Pre-publication brand governance · PayWise demo</p>
-              <h1 id="hero" className="mt-3 max-w-[18ch] font-serif text-[40px] leading-[1.1] text-ink sm:text-[48px]">
+              <h2 id="hero" className="mt-3 max-w-[18ch] font-serif text-[40px] leading-[1.1] text-ink sm:text-[48px]">
                 Every claim checked against the rulebook before it goes live.
-              </h1>
+              </h2>
             </div>
             <div>
               <p className="max-w-[56ch] text-base leading-relaxed text-graphite">
@@ -99,7 +100,6 @@ export default function Landing() {
           </div>
         </section>
       </main>
-      </div>
       <Footer />
     </>
   );

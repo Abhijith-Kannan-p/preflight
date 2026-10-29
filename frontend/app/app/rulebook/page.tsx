@@ -313,7 +313,7 @@ function FactForm({ fact, mode, onDone }: { fact: Fact | null; mode: "new" | "ed
   return (
     <div className="grid gap-3 text-sm sm:grid-cols-2">
       {mode === "supersede" && fact && (
-        <p className="rounded-xl bg-amber-50 p-3 text-amber-700 sm:col-span-2">
+        <p className="rounded-xl border-l-2 border-teal bg-teal-50 p-3 text-ink sm:col-span-2">
           {fact.id} “{fact.statement}” ends the day before the new fact starts. Drafts that still use the old wording are flagged as outdated (CLM-03) and pointed at the new fact.
         </p>
       )}
@@ -378,7 +378,7 @@ function FactsTab({ canEdit }: { canEdit: boolean }) {
               <p className="mt-0.5 text-xs text-navy-500">
                 {f.source_ref.replace("#p", " p")} · v{f.version}
                 {f.superseded_by && (
-                  <span className="ml-1 inline-flex items-center gap-1 font-medium text-amber-700">
+                  <span className="ml-1 inline-flex items-center gap-1 font-medium text-ink">
                     {f.id} <ArrowRight className="h-3 w-3" aria-hidden="true" /> {f.superseded_by}
                   </span>
                 )}
@@ -646,11 +646,11 @@ export default function RulebookPage() {
         subtitle="The PayWise Brand Knowledge Base: versioned rules with their source pages, approved facts with validity dates, terminology, channel limits and confidential terms. Every finding Preflight raises cites an entry here."
       />
       {!canEdit && (
-        <p className="mb-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">Read-only for your role. Switch to abhi3 (Brand Manager) in the top right to edit rules and facts.</p>
+        <p className="mb-4 rounded-xl border-l-2 border-teal bg-teal-50 px-3 py-2 text-sm text-ink">Read-only for your role. Switch to abhi3 (Brand Manager) in the top right to edit rules and facts.</p>
       )}
       <div role="tablist" aria-label="Rulebook sections" className="mb-4 flex gap-1 overflow-x-auto rounded-xl bg-paper-100 p-1">
         {TABS.map((t) => (
-          <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium", tab === t ? "bg-paper-50 text-navy shadow-card" : "text-navy-500 hover:text-navy")}>
+          <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx("whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium", tab === t ? "bg-paper-50 text-ink shadow-[inset_0_-2px_0_rgb(var(--teal))]" : "text-navy-500 hover:text-navy")}>
             {t}
           </button>
         ))}

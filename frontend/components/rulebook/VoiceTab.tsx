@@ -102,7 +102,7 @@ export function VoiceTab({ canEdit }: { canEdit: boolean }) {
       </div>
 
       {heuristic > 0 && (
-        <p className="border-l-2 border-amber bg-sheet px-3 py-2 text-xs text-ink">
+        <p className="border-l-2 border-teal bg-sheet px-3 py-2 text-xs text-ink">
           {heuristic} of {data.items} items were scored by the offline tone heuristic (the demo history is generated without the LLM), so these traits are estimates. Items reviewed with the
           LLM add LLM scores.
         </p>

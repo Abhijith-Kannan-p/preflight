@@ -40,6 +40,7 @@ function segments(block: Block, findings: Finding[]): Segment[] {
 export function NoteNumber({ n, severity, settled = false, active = false, className }: { n: number; severity: Finding["severity"]; settled?: boolean; active?: boolean; className?: string }) {
   return (
     <span
+      data-badge=""
       className={clsx(
         "inline-flex h-4 min-w-4 items-center justify-center rounded-full border px-[3px] font-sans text-[10px] font-semibold leading-none tabular-nums transition-colors duration-150",
         settled ? "border-teal-700 text-teal-700" : SEVERITY_STYLE[severity].number,

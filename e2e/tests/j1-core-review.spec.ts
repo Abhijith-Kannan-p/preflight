@@ -13,14 +13,12 @@ test("J1 core review: off-brand LinkedIn post to cleared certificate", async ({ 
   });
   page.on("pageerror", (err) => consoleErrors.push(err.message));
 
-  // Landing: the intro, skipped, then the hero with the demo button.
+  // Landing: the murmuration hero with the demo button.
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Every claim, cleared." })).toBeVisible();
-  await shot(page, "01-intro", false);
-  await page.getByRole("button", { name: "Skip intro" }).first().click();
+  await expect(page.getByRole("heading", { level: 1, name: "Every claim earns its place." })).toBeVisible();
   const demo = page.getByRole("link", { name: "Open the demo desk" }).first();
   await expect(demo).toBeInViewport({ timeout: 10_000 });
-  await shot(page, "02-landing", false);
+  await shot(page, "01-landing", false);
   await demo.click();
 
   await page.getByRole("button", { name: /LinkedIn post \(off-brand\)/ }).click();
@@ -55,6 +53,8 @@ test("J1 core review: off-brand LinkedIn post to cleared certificate", async ({ 
   const submit = page.getByRole("button", { name: "Submit for approval" });
   await expect(submit).toBeEnabled();
   await skipTour(page);
+  // After the re-check every note left on the new revision is joined to its mark.
+  await expect.poll(async () => (await page.locator("[data-connector]").count()) - (await page.locator("[data-note]").count())).toBe(0);
   await shot(page, "05-revision-2", false);
   await submit.click();
   await expect(page.getByText("Holding", { exact: true }).first()).toBeVisible();

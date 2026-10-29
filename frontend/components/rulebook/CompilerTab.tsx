@@ -63,7 +63,7 @@ const KIND_LABEL: Record<string, string> = {
 
 const MATCH_STYLE: Record<Candidate["match_status"], string> = {
   new: "border-teal text-teal-700",
-  update: "border-amber text-ink",
+  update: "border-ink text-ink",
   duplicate: "border-rule text-graphite",
 };
 
@@ -276,7 +276,7 @@ function JobView({ jobId, canEdit, onChanged }: { jobId: string; canEdit: boolea
           const ms = doneMs(stage);
           const running = data.status === "running" && stages[stage]?.state === "running";
           return (
-            <li key={stage} className={clsx("border-t-2 pt-2 text-xs", ms != null ? "border-teal" : running ? "border-amber" : "border-rule")}>
+            <li key={stage} className={clsx("border-t-2 pt-2 text-xs", ms != null ? "border-teal" : running ? "border-graphite" : "border-rule")}>
               <span className="block font-medium text-ink">{label}</span>
               <span className="text-graphite">
                 {running ? (
@@ -298,7 +298,7 @@ function JobView({ jobId, canEdit, onChanged }: { jobId: string; canEdit: boolea
 
       {data.status === "failed" && <ErrorState message={r.error ?? "The compiler could not read this document."} />}
       {data.status === "ready" && r.llm && r.llm.llm !== "ok" && (
-        <p role="status" className="border-l-2 border-amber bg-sheet px-3 py-2 text-sm">
+        <p role="status" className="border-l-2 border-teal bg-sheet px-3 py-2 text-sm">
           {r.llm.llm === "failed" ? "The LLM did not answer in time" : "No LLM is configured on this server"}, so only structured extraction ran: tables, word lists, colours, limits
           and quoted phrases. Rules written only as prose (logo, accessibility, facts) are missing; compile again later to add them.
         </p>

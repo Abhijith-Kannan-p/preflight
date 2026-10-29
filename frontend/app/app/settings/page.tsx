@@ -56,7 +56,7 @@ const EVENTS: { id: string; label: string }[] = [
 
 const DELIVERY_STYLE: Record<Delivery["status"], string> = {
   delivered: "text-teal-700",
-  retrying: "text-amber-700",
+  retrying: "text-graphite",
   failed: "text-danger-700",
 };
 
@@ -103,7 +103,7 @@ function AiSection({ admin }: { admin: boolean }) {
     <Section title="AI and privacy" description="The hosted LLM only proposes claims, scores tone and words suggestions. Verdicts come from the local NLI model and exact comparisons.">
       <dl className="grid gap-4 text-sm sm:grid-cols-3">
         <div><dt className="label">Provider</dt><dd className="font-semibold">{data.provider === "none" ? "None" : `${data.provider} · ${data.model}`}</dd></div>
-        <div><dt className="label">Status</dt><dd><Chip className={data.mode === "llm" ? "bg-teal-50 text-teal-700 ring-teal/30" : "bg-amber-50 text-amber-700 ring-amber/30"}>{MODE_TEXT[data.mode]}</Chip></dd></div>
+        <div><dt className="label">Status</dt><dd><Chip className={data.mode === "llm" ? "bg-teal-50 text-teal-700 ring-teal/30" : "bg-paper-100 text-graphite ring-rule"}>{MODE_TEXT[data.mode]}</Chip></dd></div>
         <div><dt className="label">Timeout</dt><dd className="font-semibold">{data.timeout_seconds} s, one retry, then fallback</dd></div>
       </dl>
       <label className="mt-5 flex items-start gap-3 rounded-xl bg-paper-100 p-3 text-sm">
@@ -277,7 +277,7 @@ function WebhooksSection() {
           <div key={h.id} className="rounded-xl border border-paper-200 p-4 text-sm">
             <div className="flex flex-wrap items-center gap-2">
               <code className="flex-1 break-all font-mono text-xs">{h.url}</code>
-              {h.slack_format && <Chip className="bg-purple-50 text-purple-700 ring-purple/30">Slack</Chip>}
+              {h.slack_format && <Chip className="bg-paper-100 text-graphite ring-rule">Slack</Chip>}
               <button type="button" className="btn-ghost py-1 text-xs" disabled={busy === h.id} onClick={() => act(h.id, () => post(`/api/settings/webhooks/${h.id}/test`, undefined, `test-${h.id}-${Date.now()}`))}>
                 {busy === h.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" aria-hidden="true" />} Send test event
               </button>
@@ -398,7 +398,7 @@ export default function SettingsPage() {
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader title="Settings" subtitle="Integrations, AI and privacy, and the audit log." />
-      {!admin && <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-700">API keys, webhooks, masking and the demo reset are managed by the admin. Switch to abhi5 (Admin) in the top right.</p>}
+      {!admin && <p className="rounded-xl border-l-2 border-teal bg-teal-50 px-3 py-2 text-sm text-ink">API keys, webhooks, masking and the demo reset are managed by the admin. Switch to abhi5 (Admin) in the top right.</p>}
       <AiSection admin={admin} />
       {admin && <KeysSection />}
       {admin && <WebhooksSection />}

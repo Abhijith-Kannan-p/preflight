@@ -164,12 +164,12 @@ function Workspace() {
         </section>
 
         {revision.degraded && (
-          <div role="status" className="mb-4 flex items-center gap-2 border-l-2 border-amber bg-sheet px-3 py-2 text-sm text-amber-700">
+          <div role="status" className="mb-4 flex items-center gap-2 border-l-2 border-teal bg-sheet px-3 py-2 text-sm text-ink">
             <AlertTriangle className="h-4 w-4" aria-hidden="true" /> AI checks temporarily limited. Deterministic checks and the local Claim Ledger still ran; tone and wording used offline fallbacks.
           </div>
         )}
         {pending && stream.degraded && !revision.degraded && (
-          <div role="status" className="mb-4 border-l-2 border-amber bg-sheet px-3 py-2 text-sm text-amber-700">AI checks temporarily limited: {stream.degraded}</div>
+          <div role="status" className="mb-4 border-l-2 border-teal bg-sheet px-3 py-2 text-sm text-ink">AI checks temporarily limited: {stream.degraded}</div>
         )}
         {revision.review_status === "failed" && (
           <div className="mb-4">
@@ -179,7 +179,7 @@ function Workspace() {
 
         <div role="tablist" aria-label="Review sections" className="mb-5 flex gap-6 overflow-x-auto border-b border-rule" data-tour="tabs">
           {TABS.map((t) => (
-            <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx("-mb-px whitespace-nowrap border-b-2 pb-2 pt-1 text-sm", tab === t ? "border-ink font-medium text-ink" : "border-transparent text-graphite hover:text-ink")}>
+            <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx("-mb-px whitespace-nowrap border-b-2 pb-2 pt-1 text-sm", tab === t ? "border-teal font-medium text-ink" : "border-transparent text-graphite hover:text-ink")}>
               {t}
               {t === "Proof" && !pending && <span className="ml-1.5 font-mono text-xs text-graphite">{findings.length}</span>}
               {t === "Claim Ledger" && !pending && <span className="ml-1.5 font-mono text-xs text-graphite">{claims.length}</span>}

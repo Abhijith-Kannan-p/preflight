@@ -1,4 +1,4 @@
-// The README and handover screenshots: nine scenes at 1440 × 900 in Night Desk and Paper Desk.
+// The README and handover screenshots: nine scenes at 1440 × 900 in Warm Night Desk and Paper Desk.
 // Usage: node scripts/readme-shots.mjs <frontend URL> <API URL> <out dir>
 import { chromium } from "playwright";
 
@@ -34,18 +34,18 @@ for (const scheme of ["dark", "light"]) {
   await page.addInitScript(() => localStorage.setItem("preflight.tour.done", "1"));
   const shot = (name) => page.screenshot({ path: `${OUT}/${name}-${scheme}.png` });
 
-  // Intro frame and the landing page.
+  // The hero, while the flock holds PREFLIGHT (it forms about 5 s after load), then the
+  // landing specimen with its connected notes.
   await page.goto(`${WEB}/`);
-  await page.getByRole("heading", { name: "Every claim, cleared." }).waitFor();
-  await page.evaluate(() => window.scrollTo(0, 0.5 * (document.querySelector(".intro-stage").offsetHeight - innerHeight)));
-  await page.mouse.move(820, 380);
+  await page.getByRole("heading", { level: 1, name: "Every claim earns its place." }).waitFor();
+  await page.waitForTimeout(6500);
+  await shot("hero");
+  await page.getByRole("region", { name: "Proof sheet" }).first().scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollBy(0, -170));
   await page.waitForTimeout(900);
-  await shot("intro");
-  await page.getByRole("button", { name: "Skip intro" }).first().click();
-  await page.waitForTimeout(1200);
   await shot("landing");
 
-  // A review, then its proof sheet with numbered notes (note 2 open, note 1 pointed at).
+  // A review, then its proof sheet with every note connected (note 2 open, note 1 pointed at).
   await runSample(page, "sample_linkedin");
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(400);

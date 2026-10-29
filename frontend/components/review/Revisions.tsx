@@ -75,7 +75,7 @@ export function Revisions({ reviewId, revisions }: { reviewId: string; revisions
               part.added ? (
                 <ins key={i} className="rounded bg-teal-100 px-0.5 no-underline">{part.value}</ins>
               ) : part.removed ? (
-                <del key={i} className="rounded bg-danger-100 px-0.5 text-navy-500">{part.value}</del>
+                <del key={i} className="rounded bg-paper-100 px-0.5 text-navy-500">{part.value}</del>
               ) : (
                 <span key={i} className="whitespace-pre-wrap">{part.value}</span>
               ),
@@ -98,7 +98,7 @@ export function Revisions({ reviewId, revisions }: { reviewId: string; revisions
               <ul className="space-y-1 text-sm">
                 {data.introduced.map((f) => (
                   <li key={f.id}>
-                    <span className="font-mono text-xs font-semibold text-amber-700">{f.rule.id}</span> “{f.text}”
+                    <span className="font-mono text-xs font-semibold text-ink">{f.rule.id}</span> “{f.text}”
                   </li>
                 ))}
                 {!data.introduced.length && <li className="text-navy-500">None</li>}

@@ -163,7 +163,7 @@ function RewordDialog({ rule, onClose, onPublished }: { rule: RuleHealth; onClos
           </button>
         ) : (
           <>
-            <p className={clsx("border-l-2 px-3 py-1 text-xs", draft.source === "llm" ? "border-slate text-slate-700" : "border-amber text-amber-700")}>
+            <p className={clsx("border-l-2 px-3 py-1 text-xs", draft.source === "llm" ? "border-teal text-teal-700" : "border-rule text-graphite")}>
               {draft.source === "llm" ? "Drafted by the hosted LLM from the rule and the dispute reasons. Edit freely; nothing changes until you publish." : "The LLM is unavailable: this is a deterministic draft that quotes the most common objection. Edit it into a clear exception before publishing."}
             </p>
             <div>
@@ -234,7 +234,7 @@ function HealthTab() {
                   <p className="label">What writers said, grouped</p>
                   <ul className="space-y-2">
                     {rule.reason_groups.map((g, i) => (
-                      <li key={i} className="border-l-2 border-amber bg-sheet pl-3 text-sm">
+                      <li key={i} className="border-l-2 border-rule bg-sheet pl-3 text-sm">
                         <span className="font-mono text-[11px] text-graphite">{g.count}×</span> <span className="font-serif text-ink">“{g.examples[0]}”</span>
                         {g.examples.length > 1 && <span className="block text-xs text-graphite">also: {g.examples.slice(1).map((e) => `“${e}”`).join(" · ")}</span>}
                       </li>
@@ -262,7 +262,7 @@ function HealthTab() {
                       v{c.from_version} {pct(c.before)} ({rule.versions.find((v) => v.version === c.from_version)?.raised} findings) <ArrowRight className="inline h-3 w-3" aria-hidden="true" /> v{c.to_version} {pct(c.after)} ({rule.versions.find((v) => v.version === c.to_version)?.raised} findings)
                     </span>
                   </span>
-                  <span className={clsx("font-mono text-sm", c.relative <= -0.3 ? "text-cleared-700" : "text-amber-700")}>
+                  <span className={clsx("font-mono text-sm", c.relative <= -0.3 ? "text-cleared-700" : "text-ink")}>
                     {c.relative > 0 ? "+" : ""}
                     {Math.round(c.relative * 100)}% {c.relative <= -0.3 ? "· target met" : ""}
                   </span>
@@ -296,7 +296,7 @@ function HealthTab() {
                   <td className="py-2 text-right font-mono">{rate(r.overall.dispute_rate)}</td>
                   <td className="py-2 text-right font-mono">{rate(r.overall.override_rate)}</td>
                   <td className="py-2 text-right font-mono">{rate(r.overall.acceptance_rate)}</td>
-                  <td className={clsx("py-2 text-right font-mono", r.flagged && "text-signal-700")}>{rate(r.current.ambiguity)}</td>
+                  <td className={clsx("py-2 text-right font-mono", r.flagged && "font-semibold text-ink")}>{rate(r.current.ambiguity)}</td>
                 </tr>
               ))}
             </tbody>
@@ -397,14 +397,14 @@ function RadarTab() {
                 </div>
                 <div className="text-sm">
                   <p className="flex flex-wrap items-center gap-2">
-                    <FactTag id={e.fact_id} /> <span className="tag border-signal/40 text-signal-700">{CHANGE_LABEL[e.change]}</span>
+                    <FactTag id={e.fact_id} /> <span className="tag border-ink/40 text-ink">{CHANGE_LABEL[e.change]}</span>
                     {e.new_fact_id && (
                       <>
                         <ArrowRight className="h-3 w-3" aria-hidden="true" /> <FactTag id={e.new_fact_id} />
                       </>
                     )}
                   </p>
-                  <p className="mt-1 text-graphite line-through decoration-signal/60">{e.old_value}</p>
+                  <p className="mt-1 text-graphite line-through decoration-graphite">{e.old_value}</p>
                   {e.new_value && <p className="text-ink">{e.new_value}</p>}
                 </div>
                 {can("submit_content") ? (
@@ -483,7 +483,7 @@ function CoachTab() {
         <p className="text-sm text-graphite">Each author&apos;s recurring mistakes and the tips they see before writing. Tips come from the rulebook&apos;s own wording and the author&apos;s past fixes; no LLM is involved.</p>
         <div role="tablist" aria-label="Authors" className="flex flex-wrap gap-2">
           {team.data.map((p) => (
-            <button key={p.user.id} type="button" role="tab" aria-selected={p.user.id === current?.user.id} onClick={() => setSelected(p.user.id)} className={clsx("tag px-2 py-1 text-xs", p.user.id === current?.user.id && "border-ink")}>
+            <button key={p.user.id} type="button" role="tab" aria-selected={p.user.id === current?.user.id} onClick={() => setSelected(p.user.id)} className={clsx("tag px-2 py-1 text-xs", p.user.id === current?.user.id && "border-teal")}>
               {p.user.name} · {p.user.title}
             </button>
           ))}

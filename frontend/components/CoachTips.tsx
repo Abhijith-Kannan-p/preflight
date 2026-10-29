@@ -49,7 +49,7 @@ export function TipCard({ tip }: { tip: CoachTip }) {
       )}
       {tip.your_example && (
         <p className="mt-1 text-xs">
-          Last time you wrote <span className="font-serif text-signal-700 line-through decoration-signal/50">{tip.your_example}</span>
+          Last time you wrote <span className="font-serif text-ink line-through decoration-graphite">{tip.your_example}</span>
           {tip.your_fix && (
             <>
               {" "}
