@@ -182,6 +182,11 @@ def _clone_into(session: Session, template: str, ws: str) -> dict[str, int]:
     return counts
 
 
+# One clone at a time: each holds the template's audit chain in memory while re-chaining it,
+# and five visitors arriving together would otherwise hold five copies on a 512 MB host.
+_clone_lock = threading.Lock()
+
+
 def create_sandbox(session: Session, template: str = TEMPLATE_WORKSPACE_ID) -> Workspace:
     """Clone the template into a new sandbox workspace and commit it."""
     started = time.perf_counter()
@@ -202,8 +207,9 @@ def create_sandbox(session: Session, template: str = TEMPLATE_WORKSPACE_ID) -> W
         )
     )
     session.flush()
-    counts = _clone_into(session, template, ws)
-    session.commit()
+    with _clone_lock:
+        counts = _clone_into(session, template, ws)
+        session.commit()
     log.info(
         "sandbox %s created in %.0f ms: %s", ws, (time.perf_counter() - started) * 1000, counts
     )
@@ -224,8 +230,9 @@ def reset_sandbox(session: Session, workspace_id: str) -> Workspace:
     workspace.factbook_version = max(workspace.factbook_version, source.factbook_version) + 1
     workspace.last_active_at = utcnow()
     session.flush()
-    _clone_into(session, TEMPLATE_WORKSPACE_ID, workspace_id)
-    session.commit()
+    with _clone_lock:
+        _clone_into(session, TEMPLATE_WORKSPACE_ID, workspace_id)
+        session.commit()
     return workspace
 
 

@@ -72,8 +72,9 @@
   .btn-primary {
     @apply btn bg-ink text-sheet hover:bg-ink-soft;
   }
+  /* Fill is the deep teal: white on #0F8B7E is 4.2:1, under WCAG AA for button text. */
   .btn-teal {
-    @apply btn bg-teal text-white hover:bg-teal-700;
+    @apply btn bg-teal-700 text-white hover:bg-ink-soft;
   }
   .btn-ghost {
     @apply btn border border-rule bg-sheet text-ink hover:border-graphite/40 hover:bg-paper;

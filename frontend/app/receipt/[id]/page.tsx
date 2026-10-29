@@ -65,7 +65,7 @@ function Field({ label, value, mono = false }: { label: string; value: React.Rea
   return (
     <div className="min-w-0">
       <p className="label mb-0.5">{label}</p>
-      <p className={mono ? "font-mono text-sm text-ink" : "break-words text-sm font-medium text-ink"}>{value}</p>
+      <p className={mono ? "break-all font-mono text-sm text-ink" : "break-words text-sm font-medium text-ink"}>{value}</p>
     </div>
   );
 }
@@ -150,7 +150,7 @@ export default function ReceiptPage() {
                 </div>
               </div>
 
-              <aside className="relative flex flex-col items-start gap-3 border-t-2 border-dashed border-rule p-6 md:border-l-2 md:border-t-0" aria-label="Certificate stub">
+              <aside className="relative flex min-w-0 flex-col items-start gap-3 border-t-2 border-dashed border-rule p-6 md:border-l-2 md:border-t-0" aria-label="Certificate stub">
                 <span className="absolute -left-3 -top-3 hidden h-6 w-6 rounded-full bg-paper md:block" aria-hidden="true" />
                 <span className="absolute -bottom-3 -left-3 hidden h-6 w-6 rounded-full bg-paper md:block" aria-hidden="true" />
                 {url && <div className="self-center"><Qr value={url} /></div>}

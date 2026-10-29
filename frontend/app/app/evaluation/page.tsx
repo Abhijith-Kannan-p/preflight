@@ -129,7 +129,7 @@ function ClaimsEvaluation() {
               <p className="mt-3 text-xs text-navy-500">Latency per claim: p50 {latest.latency_ms_p50} ms · p95 {latest.latency_ms_p95} ms (CPU).</p>
             </section>
 
-            <section className="card overflow-x-auto p-5" aria-labelledby="confusion">
+            <section className="card overflow-x-auto p-5" aria-labelledby="confusion" tabIndex={0}>
               <h2 id="confusion" className="mb-1 font-semibold">Confusion matrix</h2>
               <p className="mb-3 text-xs text-navy-500">Rows: the label. Columns: what Preflight said. The diagonal is correct.</p>
               <table className="w-full border-separate border-spacing-0.5 text-center text-xs">
@@ -152,8 +152,9 @@ function ClaimsEvaluation() {
                           <td
                             key={col}
                             title={`Labelled ${row}, predicted ${col}: ${n}`}
-                            className={`h-10 min-w-12 rounded-md font-mono font-semibold ${strength > 0.55 ? "text-white" : "text-navy"} ${row === col ? "ring-1 ring-inset ring-navy/30" : ""}`}
-                            style={{ background: n ? `rgba(18,165,148,${0.12 + 0.88 * strength})` : "#F6F1E3" }}
+                            className={`h-10 min-w-12 rounded-md font-mono font-semibold text-navy ${row === col ? "ring-1 ring-inset ring-navy/30" : ""}`}
+                            // Ink text on every cell, so the darkest fill stays light enough for it.
+                            style={{ background: n ? `rgba(18,165,148,${0.12 + 0.63 * strength})` : "#F6F1E3" }}
                           >
                             {n}
                           </td>

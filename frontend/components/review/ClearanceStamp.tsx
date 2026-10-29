@@ -11,12 +11,12 @@ export const stampTime = (iso: string) =>
   new Date(iso).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).toUpperCase() + " UTC";
 
 export function Stamp({ tone, title, lines, className }: { tone: "cleared" | "amber"; title: string; lines: string[]; className?: string }) {
-  const colour = tone === "cleared" ? "border-cleared text-cleared" : "border-amber text-amber-700";
+  const colour = tone === "cleared" ? "border-cleared text-cleared-700" : "border-amber text-amber-700";
   return (
     <div className={clsx("inline-block -rotate-[8deg] animate-stamp select-none border-[3px] border-double px-4 py-2 text-center font-mono uppercase mix-blend-multiply", colour, className)}>
       <p className="text-[15px] font-medium tracking-[0.18em]">{title}</p>
       {lines.map((l) => (
-        <p key={l} className="text-[10px] tracking-[0.12em] opacity-90">{l}</p>
+        <p key={l} className="text-[10px] tracking-[0.12em]">{l}</p>
       ))}
     </div>
   );

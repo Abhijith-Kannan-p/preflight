@@ -248,12 +248,17 @@ export function AppHeader({ onHelp }: { onHelp: () => void }) {
           <RoleSwitcher />
         </div>
       </div>
-      <nav className="flex gap-1 overflow-x-auto border-t border-rule px-4 py-1 md:hidden" aria-label="Main (mobile)">
-        {NAV.filter((n) => !n.permission || can(n.permission)).map((n) => (
-          <Link key={n.href} href={n.href} className="whitespace-nowrap px-2 py-1 text-xs text-graphite">
-            {n.label}
-          </Link>
-        ))}
+      {/* Scrolls sideways on phones; the right edge fades so the clipped items read as "more". */}
+      <nav className="flex gap-1 overflow-x-auto border-t border-rule px-4 py-1 [mask-image:linear-gradient(to_right,black_85%,transparent)] md:hidden" aria-label="Main (mobile)">
+        {NAV.filter((n) => !n.permission || can(n.permission)).map((n) => {
+          const active = n.exact ? pathname === n.href : pathname.startsWith(n.href);
+          return (
+            <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={clsx("whitespace-nowrap px-2 py-1 text-xs", active ? "font-medium text-ink underline decoration-2 underline-offset-4" : "text-graphite")}>
+              {n.label}
+            </Link>
+          );
+        })}
+        <span className="w-6 shrink-0" aria-hidden="true" />
       </nav>
     </header>
   );

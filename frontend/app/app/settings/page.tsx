@@ -187,7 +187,7 @@ function KeysSection() {
       </ul>
       <div className="mt-4">
         <div className="mb-1 flex items-center justify-between"><span className="label">Try it</span><CopyButton text={curl} /></div>
-        <pre className="overflow-x-auto rounded-xl bg-navy p-3 text-xs leading-relaxed text-paper-50">{curl}</pre>
+        <pre tabIndex={0} aria-label="curl example" className="overflow-x-auto rounded-xl bg-navy p-3 text-xs leading-relaxed text-paper-50">{curl}</pre>
         <p className="mt-2 text-xs text-navy-500">Full reference: <a className="font-medium text-teal-700 underline" href={`${API_URL}/docs`} target="_blank" rel="noreferrer">OpenAPI docs</a>. A runnable CMS example is in <code>examples/cms_hook.py</code> on GitHub.</p>
       </div>
     </Section>
